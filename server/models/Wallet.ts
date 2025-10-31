@@ -1,14 +1,12 @@
 // server/models/Wallet.ts
-// Purpose: Wallet Model with FIXED Balance type using index signature
+// Fixed Wallet model - REMOVED duplicate userId index
+// Purpose: Wallet Model with multi-currency support and gold holdings
 
 import mongoose, { Schema, Document, Model, Types } from 'mongoose';
 import type { Balance } from '@/types/index';
 
-// ✅ FIXED: Now uses Balance type from types/index.ts which has index signature
 export interface IWallet extends Document {
   userId: Types.ObjectId;
-  
-  // ✅ FIXED: Use Balance type with index signature [key: string]: number
   balance: Balance;
   
   gold: {
@@ -71,10 +69,9 @@ const WalletSchema = new Schema<IWallet, IWalletModel>(
       ref: 'User',
       required: true,
       unique: true,
-      index: true,
+      // ✅ FIX: Removed `index: true` here since we define it below with WalletSchema.index()
     },
     
-    // ✅ FIXED: This now matches Balance type with index signature
     balance: {
       USD: { type: Number, default: 0 },
       EUR: { type: Number, default: 0 },
@@ -124,31 +121,26 @@ const WalletSchema = new Schema<IWallet, IWalletModel>(
   }
 );
 
-// Indexes
+// ✅ Indexes (defined here to avoid duplication)
 WalletSchema.index({ userId: 1 });
 WalletSchema.index({ isActive: 1, isFrozen: 1 });
 
 // Instance Methods
-
-// ✅ FIXED: Now wallet.balance[currency] works due to index signature
 WalletSchema.methods.getBalance = function (currency: string): number {
   return this.balance[currency as keyof Balance] || 0;
 };
 
 WalletSchema.methods.setBalance = async function (currency: string, amount: number): Promise<void> {
-  // ✅ FIXED: Type-safe access with index signature
   this.balance[currency as keyof Balance] = amount;
   await this.save();
 };
 
 WalletSchema.methods.addToBalance = async function (currency: string, amount: number): Promise<void> {
-  // ✅ FIXED: Type-safe access with index signature
   this.balance[currency as keyof Balance] = (this.balance[currency as keyof Balance] || 0) + amount;
   await this.save();
 };
 
 WalletSchema.methods.subtractFromBalance = async function (currency: string, amount: number): Promise<void> {
-  // ✅ FIXED: Type-safe access with index signature
   this.balance[currency as keyof Balance] -= amount;
   await this.save();
 };

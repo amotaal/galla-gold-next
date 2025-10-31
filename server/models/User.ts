@@ -1,5 +1,6 @@
 // server/models/User.ts
-// Purpose: User model with FIXED kycStatus enum including "none"
+// Fixed User model - REMOVED duplicate email index
+// Purpose: User model with authentication, KYC, and MFA functionality
 
 import mongoose, { Schema, Document, Model, Types } from "mongoose";
 import bcrypt from "bcryptjs";
@@ -37,7 +38,6 @@ export interface IUser extends Document {
   mfaSecret?: string;
   mfaBackupCodes?: string[];
 
-  // ✅ FIXED: Added "none" to match types/index.ts
   kycStatus: "none" | "pending" | "submitted" | "verified" | "rejected";
   kycSubmittedAt?: Date;
   kycVerifiedAt?: Date;
@@ -87,7 +87,7 @@ const UserSchema = new Schema<IUser, IUserModel>(
       unique: true,
       lowercase: true,
       trim: true,
-      index: true,
+      // ✅ FIX: Removed `index: true` here since we define it below with UserSchema.index()
     },
     password: {
       type: String,
@@ -121,7 +121,6 @@ const UserSchema = new Schema<IUser, IUserModel>(
     mfaSecret: String,
     mfaBackupCodes: [String],
 
-    // ✅ FIXED: Added "none" to enum
     kycStatus: {
       type: String,
       enum: ["none", "pending", "submitted", "verified", "rejected"],
@@ -159,7 +158,7 @@ const UserSchema = new Schema<IUser, IUserModel>(
   }
 );
 
-// Indexes
+// ✅ Indexes (defined here to avoid duplication)
 UserSchema.index({ email: 1 });
 UserSchema.index({ kycStatus: 1 });
 UserSchema.index({ isActive: 1, isSuspended: 1 });
