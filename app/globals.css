@@ -152,7 +152,7 @@
     border-color: hsl(var(--primary) / 0.3);
   }
 
-  /* Gold glow effect for buttons */
+  /* Gold glow effect for buttons - Tailwind v4 compatible */
   .shadow-gold-glow {
     box-shadow: 0 0 20px rgba(255, 184, 0, 0.3);
   }
@@ -182,37 +182,64 @@
 }
 
 /* ============================================================================
-   COMPONENT OVERRIDES
+   COMPONENT OVERRIDES - Tailwind v4 Compatible (No @apply)
    ============================================================================ */
 
 @layer components {
-  /* Button variations */
+  /* Button variations - Pure CSS, no @apply */
   .btn-gold {
-    @apply bg-gradient-to-r from-[#FFB800] to-[#FFA500];
-    @apply text-black font-semibold;
-    @apply shadow-gold-glow;
-    @apply transition-all duration-300;
-    @apply hover:shadow-gold-glow;
+    background: linear-gradient(to right, #FFB800, #FFA500);
+    color: black;
+    font-weight: 600;
+    box-shadow: 0 0 20px rgba(255, 184, 0, 0.3);
+    transition: all 0.3s ease;
   }
   
-  /* Input styling for auth forms */
+  .btn-gold:hover {
+    box-shadow: 0 0 30px rgba(255, 184, 0, 0.5);
+  }
+  
+  /* Input styling for auth forms - Pure CSS */
   .input-auth {
-    @apply w-full px-4 py-2.5;
-    @apply bg-white dark:bg-white/10;
-    @apply border border-gray-300 dark:border-white/20;
-    @apply rounded-lg;
-    @apply text-gray-900 dark:text-white;
-    @apply placeholder-gray-500 dark:placeholder-gray-400;
-    @apply focus:outline-none focus:ring-2 focus:ring-primary;
-    @apply transition-all duration-200;
+    width: 100%;
+    padding: 0.625rem 1rem;
+    background-color: white;
+    border: 1px solid rgb(209 213 219);
+    border-radius: 0.5rem;
+    color: rgb(17 24 39);
+    transition: all 0.2s;
   }
   
-  /* Card styling */
+  .dark .input-auth {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: white;
+  }
+  
+  .input-auth::placeholder {
+    color: rgb(107 114 128);
+  }
+  
+  .dark .input-auth::placeholder {
+    color: rgb(156 163 175);
+  }
+  
+  .input-auth:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px hsl(var(--primary));
+  }
+  
+  /* Card styling - Pure CSS */
   .card-auth {
-    @apply bg-white dark:bg-white/5;
-    @apply border border-gray-200 dark:border-white/10;
-    @apply backdrop-blur-md;
-    @apply rounded-2xl;
-    @apply shadow-2xl;
+    background-color: white;
+    border: 1px solid rgb(229 231 235);
+    backdrop-filter: blur(12px);
+    border-radius: 1rem;
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  }
+  
+  .dark .card-auth {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
   }
 }

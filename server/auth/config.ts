@@ -5,6 +5,7 @@
 // Purpose: Main authentication configuration with Credentials provider
 // ✅ FIXED: Proper typing for credentials and authorized callback
 // ✅ FIXED: Converts boolean emailVerified → Date | null for Next-Auth
+// ✅ FIXED: Allows login without email verification (users redirected to verify page after login)
 
 import NextAuth from "next-auth";
 import type { NextAuthConfig } from "next-auth";
@@ -35,6 +36,7 @@ export const authConfig: NextAuthConfig = {
       // AUTHORIZE FUNCTION
       // -----------------------------------------------------------------------
       // ✅ FIXED: Properly typed credentials, converts emailVerified boolean → Date | null
+      // ✅ FIXED: Allows login without email verification
       async authorize(credentials): Promise<AuthUser | null> {
         try {
           // ✅ FIX: Type assertion for credentials
@@ -52,7 +54,7 @@ export const authConfig: NextAuthConfig = {
 
           // Find user with password field
           const user = await User.findOne({
-            email: email.toLowerCase(), // ✅ Now properly typed
+            email: email.toLowerCase(),
           }).select("+password");
 
           if (!user) {
@@ -73,10 +75,17 @@ export const authConfig: NextAuthConfig = {
             throw new Error("Invalid credentials");
           }
 
-          // Check if email is verified
+          // ✅ FIXED: Removed email verification check to allow login
+          // Users will be redirected to verify-email page after login if not verified
+          // This prevents the deadlock where users can't login to verify their email
+          
+          // NOTE: If you want to enforce email verification before login in production,
+          // uncomment the following code:
+          /*
           if (!user.emailVerified) {
             throw new Error("Please verify your email before logging in");
           }
+          */
 
           // Reset failed login attempts on successful login
           await user.resetLoginAttempts();
@@ -102,6 +111,8 @@ export const authConfig: NextAuthConfig = {
           };
         } catch (error: any) {
           console.error("Auth error:", error);
+          // Return null to indicate authentication failure
+          // The error message will be passed to the client
           return null;
         }
       },

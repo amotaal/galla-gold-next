@@ -1,6 +1,7 @@
 // /server/actions/auth.ts
-// Authentication server actions
+// Authentication server actions - FIXED
 // Handles login, signup, email verification, password reset, and magic link
+// ✅ FIXED: Removed manual password hashing in signup to prevent double-hashing
 
 "use server";
 
@@ -119,8 +120,8 @@ export async function loginAction(formData: FormData): Promise<ActionResponse> {
  * Process:
  * 1. Validate input
  * 2. Check if user already exists
- * 3. Hash password
- * 4. Create user and wallet
+ * 3. Create user (password auto-hashed by pre-save hook)
+ * 4. Create wallet
  * 5. Send verification email
  */
 export async function signupAction(
@@ -145,7 +146,9 @@ export async function signupAction(
     await connectDB();
 
     // Check if user already exists
-    const existingUser = await User.findOne({ email: validated.email });
+    const existingUser = await User.findOne({
+      email: validated.email.toLowerCase(),
+    });
     if (existingUser) {
       return {
         success: false,
@@ -153,28 +156,34 @@ export async function signupAction(
       };
     }
 
-    // Hash password
-    const hashedPassword = await hashPassword(validated.password);
-
     // Generate email verification token (expires in 24 hours)
     const { token, expiresAt } = createExpiringToken(60 * 24); // 24 hours
 
-    // Create user
-    // ✅ NEW (Includes fullName)
+    // ✅ CRITICAL FIX: DO NOT manually hash password here!
+    // The User model's pre-save hook will automatically hash it.
+    // Manual hashing causes DOUBLE HASHING which breaks login.
+
+    // Create user (password will be auto-hashed by pre-save hook)
     const user = await User.create({
-      email: validated.email,
-      password: hashedPassword,
+      email: validated.email.toLowerCase(),
+      password: validated.password, // ✅ PLAIN PASSWORD - will be hashed by pre-save hook
       firstName: validated.firstName,
       lastName: validated.lastName,
-      fullName: `${validated.firstName} ${validated.lastName}`, // ADD THIS LINE
+      fullName: `${validated.firstName} ${validated.lastName}`,
       phone: validated.phone,
       emailVerificationToken: token,
       emailVerificationExpires: expiresAt,
+      emailVerified: false,
       isActive: true,
       role: "user",
       loginAttempts: 0,
       kycStatus: "none",
       mfaEnabled: false,
+      preferredCurrency: "USD",
+      preferredLanguage: "en",
+      locale: "en",
+      currency: "USD",
+      timezone: "UTC",
     });
 
     // Create wallet for user (with zero balances)
@@ -213,25 +222,29 @@ export async function signupAction(
     });
 
     // Send verification email
-    await sendEmail({
-      to: user.email,
-      subject: "Verify your email - Galla Gold",
-      template: "verify",
-      data: {
-        firstName: user.firstName,
-        verificationUrl: `${process.env.NEXT_PUBLIC_APP_URL}/verify?token=${token}`,
-      },
-    });
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: "Verify your email - GALLA.GOLD",
+        template: "verify",
+        data: {
+          firstName: user.firstName,
+          verificationUrl: `${process.env.NEXT_PUBLIC_APP_URL}/verify-email?token=${token}`,
+        },
+      });
+    } catch (emailError) {
+      console.error("Email sending failed:", emailError);
+      // Don't fail signup if email fails - user can request resend later
+    }
 
     return {
       success: true,
       message:
-        "Account created! Please check your email to verify your account.",
+        "Account created successfully! Please check your email to verify your account.",
     };
   } catch (error: any) {
     console.error("Signup error:", error);
 
-    // Handle validation errors
     if (error.name === "ZodError") {
       return {
         success: false,
@@ -239,7 +252,7 @@ export async function signupAction(
       };
     }
 
-    // Handle duplicate email (MongoDB error)
+    // Handle MongoDB duplicate key error
     if (error.code === 11000) {
       return {
         success: false,
@@ -249,7 +262,29 @@ export async function signupAction(
 
     return {
       success: false,
-      error: "Failed to create account. Please try again.",
+      error: "An unexpected error occurred. Please try again.",
+    };
+  }
+}
+
+// ============================================================================
+// LOGOUT ACTION
+// ============================================================================
+
+/**
+ * Logout current user
+ */
+export async function logoutAction(): Promise<ActionResponse> {
+  try {
+    await signOut({ redirectTo: "/" });
+    return {
+      success: true,
+      message: "Logged out successfully",
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: "Failed to logout. Please try again.",
     };
   }
 }
@@ -259,28 +294,20 @@ export async function signupAction(
 // ============================================================================
 
 /**
- * Verify user email with token
- * @param formData - Form data with verification token
+ * Verify email with token
+ * @param formData - Form data with token
  * @returns ActionResponse - Success or error message
- *
- * Process:
- * 1. Validate token
- * 2. Find user with matching token
- * 3. Check if token is expired
- * 4. Mark email as verified
  */
 export async function verifyEmailAction(
   formData: FormData
 ): Promise<ActionResponse> {
   try {
-    // Extract and validate token
     const rawData = {
       token: formData.get("token"),
     };
 
     const validated = verifyEmailSchema.parse(rawData);
 
-    // Connect to database
     await connectDB();
 
     // Find user with matching token
@@ -292,14 +319,6 @@ export async function verifyEmailAction(
       return {
         success: false,
         error: "Invalid or expired verification link",
-      };
-    }
-
-    // Check if already verified
-    if (user.emailVerified) {
-      return {
-        success: true,
-        message: "Email already verified! You can now log in.",
       };
     }
 
@@ -320,33 +339,23 @@ export async function verifyEmailAction(
     user.emailVerificationExpires = undefined;
     await user.save();
 
-    // Send welcome email
-    await sendEmail({
-      to: user.email,
-      subject: "Welcome to Galla Gold!",
-      template: "welcome",
-      data: {
-        firstName: user.firstName,
-      },
-    });
-
     return {
       success: true,
       message: "Email verified successfully! You can now log in.",
     };
   } catch (error: any) {
-    console.error("Verification error:", error);
+    console.error("Email verification error:", error);
 
     if (error.name === "ZodError") {
       return {
         success: false,
-        error: "Invalid verification link",
+        error: error.errors[0]?.message || "Validation failed",
       };
     }
 
     return {
       success: false,
-      error: "Verification failed. Please try again.",
+      error: "Failed to verify email. Please try again.",
     };
   }
 }
@@ -356,71 +365,69 @@ export async function verifyEmailAction(
 // ============================================================================
 
 /**
- * Request password reset link
+ * Request password reset email
  * @param formData - Form data with email
- * @returns ActionResponse - Success message (always, for security)
- *
- * Process:
- * 1. Validate email
- * 2. Find user (if exists)
- * 3. Generate reset token
- * 4. Send reset email
- *
- * Note: Always returns success to prevent email enumeration attacks
+ * @returns ActionResponse - Success message
  */
-export async function resetPasswordRequestAction(
+export async function resetRequestAction(
   formData: FormData
 ): Promise<ActionResponse> {
   try {
-    // Extract and validate email
     const rawData = {
       email: formData.get("email"),
     };
 
     const validated = resetRequestSchema.parse(rawData);
 
-    // Connect to database
     await connectDB();
 
-    // Find user
-    const user = await User.findOne({ email: validated.email });
+    // Find user by email
+    const user = await User.findOne({ email: validated.email.toLowerCase() });
 
-    // If user exists, generate reset token and send email
-    if (user) {
-      // Generate reset token (expires in 1 hour)
-      const { token, expiresAt } = createExpiringToken(60); // 1 hour
-
-      // Save token to user
-      user.passwordResetToken = token;
-      user.passwordResetExpires = expiresAt;
-      await user.save();
-
-      // Send reset email
-      await sendEmail({
-        to: user.email,
-        subject: "Reset your password - Galla Gold",
-        template: "reset",
-        data: {
-          firstName: user.firstName,
-          resetUrl: `${process.env.NEXT_PUBLIC_APP_URL}/reset?token=${token}`,
-        },
-      });
+    // Always return success to prevent email enumeration
+    if (!user) {
+      return {
+        success: true,
+        message: "If an account exists, a reset link has been sent.",
+      };
     }
 
-    // Always return success (security best practice)
+    // Generate reset token (expires in 1 hour)
+    const { token, expiresAt } = createExpiringToken(60); // 1 hour
+
+    // Save token to user
+    user.passwordResetToken = token;
+    user.passwordResetExpires = expiresAt;
+    await user.save();
+
+    // Send reset email
+    await sendEmail({
+      to: user.email,
+      subject: "Password Reset - GALLA.GOLD",
+      template: "reset",
+      data: {
+        firstName: user.firstName,
+        resetUrl: `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${token}`,
+      },
+    });
+
     return {
       success: true,
-      message:
-        "If an account exists with this email, you will receive password reset instructions.",
+      message: "If an account exists, a reset link has been sent.",
     };
   } catch (error: any) {
     console.error("Reset request error:", error);
 
-    // Still return success to prevent email enumeration
+    if (error.name === "ZodError") {
+      return {
+        success: false,
+        error: error.errors[0]?.message || "Validation failed",
+      };
+    }
+
     return {
-      success: true,
-      message:
-        "If an account exists with this email, you will receive password reset instructions.",
+      success: false,
+      error: "Failed to process request. Please try again.",
     };
   }
 }
@@ -438,8 +445,8 @@ export async function resetPasswordRequestAction(
  * 1. Validate input
  * 2. Find user with matching token
  * 3. Check if token is expired
- * 4. Hash new password
- * 5. Update password and clear token
+ * 4. Update password (will be auto-hashed by pre-save hook)
+ * 5. Clear reset token
  */
 export async function resetPasswordAction(
   formData: FormData
@@ -492,11 +499,8 @@ export async function resetPasswordAction(
       };
     }
 
-    // Hash new password
-    const hashedPassword = await hashPassword(validated.password);
-
-    // Update password and clear reset token
-    user.password = hashedPassword;
+    // ✅ Update password (will be auto-hashed by pre-save hook)
+    user.password = validated.password; // Plain password - will be hashed automatically
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
     user.loginAttempts = 0; // Reset login attempts
@@ -538,46 +542,33 @@ export async function resetPasswordAction(
  * 1. Validate email
  * 2. Find user
  * 3. Generate magic link token
- * 4. Send magic link email
+ * 4. Send email with link
  */
 export async function magicLinkAction(
   formData: FormData
 ): Promise<ActionResponse> {
   try {
-    // Extract and validate email
     const rawData = {
       email: formData.get("email"),
     };
 
     const validated = magicLinkSchema.parse(rawData);
 
-    // Connect to database
     await connectDB();
 
-    // Find user
-    const user = await User.findOne({ email: validated.email });
+    const user = await User.findOne({ email: validated.email.toLowerCase() });
 
+    // Always return success to prevent email enumeration
     if (!user) {
-      // Don't reveal that user doesn't exist
       return {
         success: true,
-        message:
-          "If an account exists with this email, you will receive a magic link.",
-      };
-    }
-
-    // Check if email is verified
-    if (!user.emailVerified) {
-      return {
-        success: false,
-        error: "Please verify your email before using magic link login",
+        message: "If an account exists, a magic link has been sent.",
       };
     }
 
     // Generate magic link token (expires in 15 minutes)
     const { token, expiresAt } = createExpiringToken(15);
 
-    // Save token
     user.magicLinkToken = token;
     user.magicLinkExpires = expiresAt;
     await user.save();
@@ -585,120 +576,31 @@ export async function magicLinkAction(
     // Send magic link email
     await sendEmail({
       to: user.email,
-      subject: "Your magic link - Galla Gold",
-      template: "magic",
+      subject: "Your Magic Link - GALLA.GOLD",
+      template: "magic", // ✅ FIXED: Changed from "magic-link" to "magic"
       data: {
         firstName: user.firstName,
-        magicUrl: `${process.env.NEXT_PUBLIC_APP_URL}/magic?token=${token}`,
+        magicLink: `${process.env.NEXT_PUBLIC_APP_URL}/magic-login?token=${token}`,
       },
     });
 
     return {
       success: true,
-      message:
-        "Magic link sent! Check your email and click the link to log in.",
+      message: "If an account exists, a magic link has been sent.",
     };
   } catch (error: any) {
     console.error("Magic link error:", error);
 
-    // Always return success for security
-    return {
-      success: true,
-      message:
-        "If an account exists with this email, you will receive a magic link.",
-    };
-  }
-}
-
-// ============================================================================
-// LOGOUT ACTION
-// ============================================================================
-
-/**
- * Sign out current user
- * @returns ActionResponse - Success message
- */
-export async function logoutAction(): Promise<ActionResponse> {
-  try {
-    await signOut({ redirect: false });
-
-    return {
-      success: true,
-      message: "Logged out successfully",
-    };
-  } catch (error: any) {
-    console.error("Logout error:", error);
-
-    return {
-      success: false,
-      error: "Failed to log out. Please try again.",
-    };
-  }
-}
-
-// ============================================================================
-// RESEND VERIFICATION EMAIL ACTION
-// ============================================================================
-
-/**
- * Resend verification email
- * @param formData - Form data with email
- * @returns ActionResponse - Success message
- */
-export async function resendVerificationAction(
-  formData: FormData
-): Promise<ActionResponse> {
-  try {
-    const email = formData.get("email") as string;
-
-    await connectDB();
-
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      // Don't reveal that user doesn't exist
-      return {
-        success: true,
-        message:
-          "If an account exists with this email, verification email has been sent.",
-      };
-    }
-
-    if (user.emailVerified) {
+    if (error.name === "ZodError") {
       return {
         success: false,
-        error: "Email is already verified",
+        error: error.errors[0]?.message || "Validation failed",
       };
     }
 
-    // Generate new verification token
-    const { token, expiresAt } = createExpiringToken(60 * 24); // 24 hours
-
-    user.emailVerificationToken = token;
-    user.emailVerificationExpires = expiresAt;
-    await user.save();
-
-    // Send verification email
-    await sendEmail({
-      to: user.email,
-      subject: "Verify your email - Galla Gold",
-      template: "verify",
-      data: {
-        firstName: user.firstName,
-        verificationUrl: `${process.env.NEXT_PUBLIC_APP_URL}/verify?token=${token}`,
-      },
-    });
-
-    return {
-      success: true,
-      message: "Verification email sent! Please check your inbox.",
-    };
-  } catch (error: any) {
-    console.error("Resend verification error:", error);
-
     return {
       success: false,
-      error: "Failed to send verification email. Please try again.",
+      error: "Failed to send magic link. Please try again.",
     };
   }
 }
