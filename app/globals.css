@@ -1,456 +1,117 @@
-/*
- * app/globals.css - FIXED VERSION for Tailwind CSS v4+
- * GALLA.GOLD - Professional Design System with Proper Light/Dark Mode
- *
- * FIXES:
- * 1. Corrected @layer base to use CSS variables directly, resolving the
- * "Cannot apply unknown utility class" error.
- * 2. Kept @import "tailwindcss" for v4.
- * 3. Kept hover: syntax fixes.
- */
+/* /app/globals.css - FIXED Tailwind v4 CSS */
 
-/* ------------------------------------
-   1. CORE TAILWIND v4+ IMPORT (MANDATORY)
-   ------------------------------------ */
 @import "tailwindcss";
 
-/* ------------------------------------
-   2. CUSTOM CSS VARIABLES & BASE LAYERS
-   ------------------------------------ */
+@theme {
+  /* Define custom properties for Tailwind v4 */
+  --color-border: hsl(240 5.9% 90%);
+  --color-input: hsl(240 5.9% 90%);
+  --color-ring: hsl(38 92% 50%);
+  
+  --color-background: hsl(0 0% 100%);
+  --color-foreground: hsl(240 10% 3.9%);
+  
+  --color-primary: hsl(38 92% 50%);
+  --color-primary-foreground: hsl(0 0% 98%);
+  
+  --color-secondary: hsl(240 4.8% 95.9%);
+  --color-secondary-foreground: hsl(240 5.9% 10%);
+  
+  --color-muted: hsl(240 4.8% 95.9%);
+  --color-muted-foreground: hsl(240 3.8% 46.1%);
+  
+  --color-accent: hsl(240 4.8% 95.9%);
+  --color-accent-foreground: hsl(240 5.9% 10%);
+  
+  --color-destructive: hsl(0 84.2% 60.2%);
+  --color-destructive-foreground: hsl(0 0% 98%);
+  
+  --color-success: hsl(142 76% 36%);
+  --color-success-foreground: hsl(0 0% 98%);
+  
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(240 10% 3.9%);
+  
+  --color-popover: hsl(0 0% 100%);
+  --color-popover-foreground: hsl(240 10% 3.9%);
+  
+  --radius: 0.5rem;
+}
+
 @layer base {
   :root {
-    /* ====================================
-       LIGHT MODE - Clean Professional Theme
-       ==================================== */
-
-    /* Backgrounds */
-    --background: 0 0% 98%;
-    /* #FAFAFA */
-    --foreground: 0 0% 10%;
-    /* #1A1A1A */
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
-    /* #FFFFFF */
-    --card-foreground: 0 0% 10%;
-    /* #1A1A1A */
-
-    /* Primary - Vibrant Gold */
-    --primary: 45 100% 50%;
-    /* #FFB800 */
-    --primary-foreground: 0 0% 10%;
-    /* #1A1A1A */
-
-    /* Secondary - Light elevated surfaces */
-    --secondary: 0 0% 95%;
-    /* #F2F2F2 */
-    --secondary-foreground: 0 0% 10%;
-    /* #1A1A1A */
-
-    /* Muted - Subtle backgrounds and text */
-    --muted: 0 0% 92%;
-    /* #EBEBEB */
-    --muted-foreground: 0 0% 45%;
-    /* #737373 */
-
-    /* Accent - Gold highlights */
-    --accent: 45 100% 50%;
-    /* #FFB800 */
-    --accent-foreground: 0 0% 10%;
-    /* #1A1A1A */
-
-    /* Destructive - Red for errors */
-    --destructive: 0 72% 51%;
-    /* #DC2626 */
-    --destructive-foreground: 0 0% 100%;
-    /* #FFFFFF */
-
-    /* Chart colors */
-    --chart-1: 45 100% 50%;
-    --chart-2: 142 76% 36%;
-    --chart-3: 0 72% 51%;
-    --chart-4: 217 91% 60%;
-    --chart-5: 280 89% 60%;
-
-    /* Border radius */
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 38 92% 50%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 38 92% 50%;
     --radius: 0.5rem;
   }
 
   .dark {
-    /* ====================================
-       DARK MODE - Premium Dark Theme
-       ==================================== */
-
-    /* Backgrounds */
-    --background: 0 0% 5%;
-    /* #0D0D0D */
-    --foreground: 0 0% 95%;
-    /* #F2F2F2 */
-    --card: 0 0% 8%;
-    /* #141414 */
-    --card-foreground: 0 0% 95%;
-    /* #F2F2F2 */
-
-    /* Primary - Gold (same as light mode) */
-    --primary: 45 100% 50%;
-    /* #FFB800 */
-    --primary-foreground: 0 0% 10%;
-    /* #1A1A1A */
-
-    /* Secondary - Elevated dark surfaces */
-    --secondary: 0 0% 15%;
-    /* #262626 */
-    --secondary-foreground: 0 0% 95%;
-    /* #F2F2F2 */
-
-    /* Muted - Darker greys */
-    --muted: 0 0% 20%;
-    /* #333333 */
-    --muted-foreground: 0 0% 60%;
-    /* #999999 */
-
-    /* Accent - Gold highlights */
-    --accent: 45 100% 50%;
-    /* #FFB800 */
-    --accent-foreground: 0 0% 10%;
-    /* #1A1A1A */
-
-    /* Destructive - Red for errors */
-    --destructive: 0 72% 51%;
-    /* #DC2626 */
-    --destructive-foreground: 0 0% 100%;
-    /* #FFFFFF */
-
-    /* Success - Green for success states */
-    --success: 142 76% 36%;
-    /* #16A34A */
-    --success-foreground: 0 0% 100%;
-    /* #FFFFFF */
-
-    /* Border, Input, Ring */
-    --border: 0 0% 20%;
-    /* #333333 */
-    --input: 0 0% 15%;
-    /* #262626 */
-    --ring: 45 100% 50%;
-    /* #FFB800 */
-
-    /* Popover & Dropdown */
-    --popover: 0 0% 10%;
-    /* #1A1A1A */
-    --popover-foreground: 0 0% 95%;
-    /* #F2F2F2 */
-
-    /* Chart colors (same as light mode) */
-    --chart-1: 45 100% 50%;
-    --chart-2: 142 76% 36%;
-    --chart-3: 0 72% 51%;
-    --chart-4: 217 91% 60%;
-    --chart-5: 280 89% 60%;
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 38 92% 50%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 38 92% 50%;
   }
 
-  /* ====================================
-     GLOBAL RESETS & BASE STYLES
-     ==================================== */
-
   * {
-    /* FIX: Use CSS variable directly instead of @apply */
     border-color: hsl(var(--border));
   }
 
   body {
-    /* FIX: Use CSS variables directly instead of @apply */
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
-    font-feature-settings: "rlig"1, "calt"1;
-  }
-
-  /* Smooth scrolling for anchor links */
-  html {
-    scroll-behavior: smooth;
-  }
-
-  /* Remove spinner buttons from number inputs */
-  input[type="number"]::-webkit-inner-spin-button,
-  input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-
-  input[type="number"] {
-    -moz-appearance: textfield;
   }
 }
 
-/* ------------------------------------
-   3. CUSTOM COMPONENT CLASSES (GALLA.GOLD)
-   ------------------------------------ */
-@layer components {
-  /* Glass Card - Glassmorphism effect for premium look */
-  .glass-card {
-    @apply bg-card/60 backdrop-blur-md border border-border shadow-lg;
-  }
-
-  /* Interactive Glass - Glassmorphism with hover effect */
-  .interactive-glass {
-    /* FIX: Kept space removal after hover: */
-    @apply transition-all duration-300 hover:bg-card/80 hover:shadow-xl hover:scale-[1.02];
-  }
-
-  /* Gold Gradient Text - For headings and emphasis */
-  .text-gold-gradient {
-    @apply bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 bg-clip-text text-transparent;
-  }
-
-  /* Gold Shadow Glow - Glowing effect around elements */
-  .shadow-gold-glow {
-    box-shadow: 0 0 20px rgba(255, 184, 0, 0.3),
-      0 0 40px rgba(255, 184, 0, 0.2),
-      0 0 60px rgba(255, 184, 0, 0.1);
-  }
-
-  /* Hero Glow - Larger glow for hero sections */
-  .hero-glow {
-    box-shadow: 0 0 40px rgba(255, 184, 0, 0.4),
-      0 0 80px rgba(255, 184, 0, 0.3),
-      0 0 120px rgba(255, 184, 0, 0.2);
-  }
-
-  /* Card Hover Effect - Subtle lift on hover */
-  .card-hover {
-    @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
-  }
-
-  /* Button Primary - Gold-themed button */
-  .btn-primary {
-    /* FIX: Kept space removal after hover: */
-    @apply bg-primary text-primary-foreground hover:bg-primary/90 shadow-gold-glow hover:shadow-xl transition-all duration-300;
-  }
-
-  /* Button Secondary - Subtle button */
-  .btn-secondary {
-    /* FIX: Kept space removal after hover: */
-    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-all duration-300;
-  }
-
-  /* Scrollbar Styling (Webkit browsers) */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    @apply bg-muted rounded-full;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-primary/50 rounded-full hover:bg-primary/70;
-  }
-
-  /* Loading Spinner */
-  .spinner {
-    @apply animate-spin rounded-full border-4 border-muted border-t-primary;
-  }
-}
-
-/* ------------------------------------
-   4. CUSTOM UTILITY CLASSES
-   ------------------------------------ */
 @layer utilities {
-  /* Text Shadow for better readability on backgrounds */
-  .text-shadow {
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  .gold-gradient {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
   }
 
-  .text-shadow-lg {
-    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  }
-
-  /* Gradient Backgrounds */
-  .bg-gradient-gold {
-    background: linear-gradient(135deg, #FFB800 0%, #FFA500 100%);
-  }
-
-  .bg-gradient-dark {
-    background: linear-gradient(135deg, #0D0D0D 0%, #1A1A1A 100%);
-  }
-
-  /* Backdrop Blur Variations */
-  .backdrop-blur-light {
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-  }
-
-  .backdrop-blur-heavy {
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-  }
-
-  /* Animations */
-  .animate-fade-in {
-    animation: fadeIn 0.5s ease-in forwards;
-  }
-
-  .animate-fade-in-up {
-    animation: fadeInUp 0.6s ease-out forwards;
-  }
-
-  .animate-scale-in {
-    animation: scaleIn 0.4s ease-out forwards;
-  }
-
-Examples of such tags include [Image of the human digestive system],  etc. Be very economical in your use of image tags, only add multiple tags if each additional tag is adding instructive value beyond pure illustration. Place the image tag immediately before or after the relevant text without disrupting the flow of the response.
-  .animate-slide-in-left {
-    animation: slideInLeft 0.5s ease-out forwards;
-  }
-
-  .animate-slide-in-right {
-    animation: slideInRight 0.5s ease-out forwards;
-  }
-
-  .animate-pulse-slow {
-    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-
-  .animate-shimmer {
-    animation: shimmer 2s linear infinite;
-  }
-
-  /* Hover Effects */
-  .hover-lift {
-    /* FIX: Kept space removal after hover: */
-    @apply transition-transform duration-300 hover:-translate-y-1;
-  }
-
-  .hover-glow {
-    /* FIX: Kept space removal after hover: */
-    @apply transition-shadow duration-300 hover:shadow-gold-glow;
-  }
-
-  /* Focus Ring - Gold-themed */
-  .focus-gold {
-    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background;
-  }
-}
-
-/* ------------------------------------
-   5. KEYFRAME ANIMATIONS
-   ------------------------------------ */
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-30px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(30px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -1000px 0;
-  }
-
-  100% {
-    background-position: 1000px 0;
-  }
-}
-
-/* ------------------------------------
-   6. RESPONSIVE UTILITIES & PRINT
-   ------------------------------------ */
-
-@media (max-width: 768px) {
-  /* Mobile-specific styles */
   .glass-card {
-    @apply bg-card/80;
-    /* Stronger background on mobile */
+    background-color: hsl(var(--card) / 0.4);
+    backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--border) / 0.5);
   }
 
-  .shadow-gold-glow {
-    box-shadow: 0 0 10px rgba(255, 184, 0, 0.2),
-      0 0 20px rgba(255, 184, 0, 0.1);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  /* Disable animations for users who prefer reduced motion */
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-
-  html {
-    scroll-behavior: auto;
+  .glass-card-strong {
+    background-color: hsl(var(--card) / 0.6);
+    backdrop-filter: blur(16px);
+    border: 1px solid hsl(var(--border) / 0.7);
   }
 }
-
-@media print {
-  /* Optimize for printing */
-  body {
-    @apply bg-white text-black;
-  }
-
-  .no-print {
-    display: none !important;
-  }
-
-  .glass-card,
-  .shadow-gold-glow,
-  .backdrop-blur-md {
-    background: white !important;
-    box-shadow: none !important;
-    backdrop-filter: none !important;
-  }
-}
-

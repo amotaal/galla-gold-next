@@ -1,368 +1,446 @@
 // /server/lib/currency.ts
-// Currency conversion utilities for multi-currency support and gold price calculations
-// Handles exchange rates, currency formatting, and gold price conversions
+// Currency and Gold Price Utilities
+// Purpose: Handle currency conversions, gold pricing, and fee calculations
 
-import { CURRENCIES, GOLD_FEES } from "@/lib/constants";
+import type { Currency } from "@/types";
 
-// ============================================================================
-// TYPES
-// ============================================================================
-
-type Currency = "USD" | "EUR" | "GBP" | "EGP" | "SAR";
+// =============================================================================
+// EXCHANGE RATES (In production, fetch from API)
+// =============================================================================
 
 /**
- * Exchange rates structure
- * All rates are relative to USD (base currency)
+ * Current exchange rates relative to USD
+ * In production, these should be fetched from a real-time currency API
  */
-interface ExchangeRates {
-  USD: number; // Always 1.0 (base currency)
-  EUR: number;
-  GBP: number;
-  EGP: number;
-  SAR: number;
-  lastUpdated: Date;
-}
-
-// ============================================================================
-// EXCHANGE RATES (Mock - Replace with real API in production)
-// ============================================================================
+const EXCHANGE_RATES: Record<Currency, number> = {
+  USD: 1.0,
+  EUR: 0.92,
+  GBP: 0.79,
+  EGP: 48.5,
+  AED: 3.67,
+  SAR: 3.75,
+};
 
 /**
- * Get current exchange rates
- * @returns Promise<ExchangeRates> - Current exchange rates
- * 
- * TODO: In production, integrate with a real forex API:
- * - ExchangeRate-API (https://www.exchangerate-api.com/)
- * - Open Exchange Rates (https://openexchangerates.org/)
- * - Fixer.io (https://fixer.io/)
- * 
- * For now, using approximate rates for development
+ * Gold price per gram in USD
+ * In production, this should be fetched from a real-time gold price API
  */
-export async function getExchangeRates(): Promise<ExchangeRates> {
-  // Mock exchange rates (approximate as of October 2024)
-  // In production, fetch from a real API and cache for 1 hour
-  return {
-    USD: 1.0, // Base currency
-    EUR: 0.92, // 1 USD = 0.92 EUR
-    GBP: 0.79, // 1 USD = 0.79 GBP
-    EGP: 49.0, // 1 USD = 49 EGP
-    SAR: 3.75, // 1 USD = 3.75 SAR
-    lastUpdated: new Date(),
-  };
-}
+const GOLD_PRICE_PER_GRAM_USD = 65.5;
+
+// =============================================================================
+// CURRENCY CONVERSION
+// =============================================================================
 
 /**
  * Convert amount from one currency to another
- * @param amount - Amount to convert
- * @param fromCurrency - Source currency
- * @param toCurrency - Target currency
- * @returns Promise<number> - Converted amount
  * 
- * Conversion process:
- * 1. Convert from source currency to USD
- * 2. Convert from USD to target currency
+ * @param amount - Amount to convert
+ * @param from - Source currency
+ * @param to - Target currency
+ * @returns Converted amount
+ * 
+ * @example
+ * const eurAmount = await convertCurrency(100, 'USD', 'EUR');
  */
 export async function convertCurrency(
   amount: number,
-  fromCurrency: Currency,
-  toCurrency: Currency
+  from: Currency,
+  to: Currency
 ): Promise<number> {
-  // If same currency, return as is
-  if (fromCurrency === toCurrency) {
-    return amount;
-  }
+  if (from === to) return amount;
 
-  // Get current exchange rates
-  const rates = await getExchangeRates();
+  // Convert to USD first
+  const usdAmount = amount / EXCHANGE_RATES[from];
 
-  // Convert to USD first (base currency)
-  const amountInUSD = amount / rates[fromCurrency];
+  // Then convert to target currency
+  const convertedAmount = usdAmount * EXCHANGE_RATES[to];
 
-  // Convert from USD to target currency
-  const convertedAmount = amountInUSD * rates[toCurrency];
-
-  // Round to 2 decimal places for fiat currencies
   return Math.round(convertedAmount * 100) / 100;
 }
 
 /**
  * Get exchange rate between two currencies
- * @param fromCurrency - Source currency
- * @param toCurrency - Target currency
- * @returns Promise<number> - Exchange rate
+ * 
+ * @param from - Source currency
+ * @param to - Target currency
+ * @returns Exchange rate
+ * 
+ * @example
+ * const rate = getExchangeRate('USD', 'EUR'); // => 0.92
  */
-export async function getExchangeRate(
-  fromCurrency: Currency,
-  toCurrency: Currency
-): Promise<number> {
-  if (fromCurrency === toCurrency) {
-    return 1.0;
-  }
+export function getExchangeRate(from: Currency, to: Currency): number {
+  if (from === to) return 1;
 
-  const rates = await getExchangeRates();
-  
-  // Calculate cross rate via USD
-  return (rates[toCurrency] / rates[fromCurrency]);
+  const usdRate = 1 / EXCHANGE_RATES[from];
+  return usdRate * EXCHANGE_RATES[to];
 }
 
-// ============================================================================
-// GOLD PRICE CALCULATIONS
-// ============================================================================
+/**
+ * Get all exchange rates
+ * 
+ * @returns Record of all exchange rates
+ */
+export function getAllExchangeRates(): Record<Currency, number> {
+  return { ...EXCHANGE_RATES };
+}
+
+// =============================================================================
+// GOLD PRICE FUNCTIONS
+// =============================================================================
 
 /**
  * Get current gold price per gram in specified currency
- * @param currency - Target currency
- * @returns Promise<number> - Gold price per gram
  * 
- * TODO: In production, integrate with a real gold price API:
- * - GoldAPI (https://www.goldapi.io/)
- * - Metals-API (https://metals-api.com/)
- * - OANDA (https://www.oanda.com/)
+ * @param currency - Target currency (default: USD)
+ * @returns Gold price per gram
  * 
- * Base price is in USD per troy ounce, converted to per gram
+ * @example
+ * const priceInEUR = await getGoldPricePerGram('EUR');
  */
-export async function getGoldPricePerGram(currency: Currency): Promise<number> {
-  // Mock gold price (approximate as of October 2024)
-  // Current spot price: ~$2,650 USD per troy ounce
-  const pricePerOunceUSD = 2650;
+export async function getGoldPricePerGram(
+  currency: Currency = "USD"
+): Promise<number> {
+  const priceInUSD = GOLD_PRICE_PER_GRAM_USD;
 
-  // Convert troy ounce to grams (1 troy oz = 31.1034768 grams)
-  const pricePerGramUSD = pricePerOunceUSD / 31.1034768;
+  if (currency === "USD") {
+    return priceInUSD;
+  }
 
-  // Convert to target currency
-  const priceInCurrency = await convertCurrency(pricePerGramUSD, "USD", currency);
-
-  // Round to 2 decimal places
-  return Math.round(priceInCurrency * 100) / 100;
+  const convertedPrice = await convertCurrency(priceInUSD, "USD", currency);
+  return Math.round(convertedPrice * 100) / 100;
 }
 
 /**
- * Calculate total cost to buy gold (including fees)
+ * Get gold price per ounce (1 oz = 31.1035 grams)
+ * 
+ * @param currency - Target currency (default: USD)
+ * @returns Gold price per ounce
+ * 
+ * @example
+ * const pricePerOz = await getGoldPricePerOunce('USD');
+ */
+export async function getGoldPricePerOunce(
+  currency: Currency = "USD"
+): Promise<number> {
+  const pricePerGram = await getGoldPricePerGram(currency);
+  return Math.round(pricePerGram * 31.1035 * 100) / 100;
+}
+
+/**
+ * Calculate total cost for buying gold
+ * 
  * @param grams - Amount of gold in grams
- * @param currency - Currency for transaction
- * @returns Promise<object> - Breakdown of costs
+ * @param currency - Currency for payment
+ * @returns Object with breakdown of costs
+ * 
+ * @example
+ * const cost = await calculateBuyGoldCost(10, 'USD');
  */
 export async function calculateBuyGoldCost(
   grams: number,
   currency: Currency
-) {
+): Promise<{
+  grams: number;
+  pricePerGram: number;
+  subtotal: number;
+  fee: number;
+  feePercentage: number;
+  total: number;
+  currency: Currency;
+}> {
   const pricePerGram = await getGoldPricePerGram(currency);
-  const subtotal = grams * pricePerGram;
-  
-  // Apply buy fee (e.g., 2%)
-  const feePercentage = GOLD_FEES.BUY_FEE_PERCENT;
-  const fee = subtotal * (feePercentage / 100);
-  
-  const total = subtotal + fee;
+  const subtotal = Math.round(grams * pricePerGram * 100) / 100;
+
+  // Fee: 2% of transaction
+  const feePercentage = 0.02;
+  const fee = Math.round(subtotal * feePercentage * 100) / 100;
+
+  const total = Math.round((subtotal + fee) * 100) / 100;
 
   return {
     grams,
     pricePerGram,
-    subtotal: Math.round(subtotal * 100) / 100,
-    fee: Math.round(fee * 100) / 100,
+    subtotal,
+    fee,
     feePercentage,
-    total: Math.round(total * 100) / 100,
+    total,
     currency,
   };
 }
 
 /**
- * Calculate total proceeds from selling gold (after fees)
+ * Calculate proceeds from selling gold
+ * 
  * @param grams - Amount of gold in grams
- * @param currency - Currency for transaction
- * @returns Promise<object> - Breakdown of proceeds
+ * @param currency - Currency for proceeds
+ * @returns Object with breakdown of proceeds
+ * 
+ * @example
+ * const proceeds = await calculateSellGoldProceeds(10, 'USD');
  */
 export async function calculateSellGoldProceeds(
   grams: number,
   currency: Currency
-) {
+): Promise<{
+  grams: number;
+  pricePerGram: number;
+  subtotal: number;
+  fee: number;
+  feePercentage: number;
+  netProceeds: number;
+  currency: Currency;
+}> {
   const pricePerGram = await getGoldPricePerGram(currency);
-  const subtotal = grams * pricePerGram;
-  
-  // Apply sell fee (e.g., 1%)
-  const feePercentage = GOLD_FEES.SELL_FEE_PERCENT;
-  const fee = subtotal * (feePercentage / 100);
-  
-  const total = subtotal - fee;
+  const subtotal = Math.round(grams * pricePerGram * 100) / 100;
+
+  // Fee: 1.5% of transaction (lower fee for selling)
+  const feePercentage = 0.015;
+  const fee = Math.round(subtotal * feePercentage * 100) / 100;
+
+  const netProceeds = Math.round((subtotal - fee) * 100) / 100;
 
   return {
     grams,
     pricePerGram,
-    subtotal: Math.round(subtotal * 100) / 100,
-    fee: Math.round(fee * 100) / 100,
+    subtotal,
+    fee,
     feePercentage,
-    total: Math.round(total * 100) / 100,
+    netProceeds,
     currency,
   };
 }
 
+// =============================================================================
+// DELIVERY COST CALCULATION
+// =============================================================================
+
 /**
- * Calculate physical delivery cost
+ * Calculate cost for physical gold delivery
+ * 
  * @param grams - Amount of gold in grams
- * @param deliveryType - Type of delivery (standard, express, insured)
+ * @param deliveryMethod - Delivery method (standard, express, insured)
  * @param currency - Currency for cost
- * @returns Promise<object> - Delivery cost breakdown
+ * @returns Delivery cost
+ * 
+ * @example
+ * const cost = await calculateDeliveryCost(10, 'standard', 'USD');
  */
 export async function calculateDeliveryCost(
   grams: number,
-  deliveryType: "standard" | "express" | "insured",
+  deliveryMethod: "standard" | "express" | "insured",
   currency: Currency
-) {
-  // Base delivery costs in USD
-  const baseCosts = {
-    standard: 25, // Flat fee
-    express: 50, // Flat fee + faster shipping
-    insured: 75, // Includes insurance up to full value
-  };
+): Promise<number> {
+  // Base cost in USD
+  let baseCost = 0;
 
-  let baseCost = baseCosts[deliveryType];
-
-  // Add weight-based cost for large orders (>100g)
-  if (grams > 100) {
-    const extraGrams = grams - 100;
-    baseCost += Math.ceil(extraGrams / 100) * 10; // $10 per 100g over base
+  if (deliveryMethod === "standard") {
+    baseCost = 25;
+  } else if (deliveryMethod === "express") {
+    baseCost = 50;
+  } else if (deliveryMethod === "insured") {
+    // Insured delivery costs more for higher gold values
+    const goldValue = grams * GOLD_PRICE_PER_GRAM_USD;
+    baseCost = 75 + goldValue * 0.01; // 1% of gold value
   }
 
   // Convert to target currency
-  const cost = await convertCurrency(baseCost, "USD", currency);
+  const costInCurrency = await convertCurrency(baseCost, "USD", currency);
+  return Math.round(costInCurrency * 100) / 100;
+}
+
+// =============================================================================
+// TRANSACTION FEES
+// =============================================================================
+
+/**
+ * Calculate deposit fee
+ * 
+ * @param amount - Deposit amount
+ * @param paymentMethod - Payment method
+ * @returns Fee amount
+ * 
+ * @example
+ * const fee = calculateDepositFee(1000, 'bank_transfer');
+ */
+export function calculateDepositFee(
+  amount: number,
+  paymentMethod: "bank_transfer" | "credit_card" | "debit_card" | "wire_transfer" | "crypto"
+): number {
+  let feePercentage = 0;
+
+  switch (paymentMethod) {
+    case "bank_transfer":
+      feePercentage = 0; // Free
+      break;
+    case "credit_card":
+      feePercentage = 0.029; // 2.9%
+      break;
+    case "debit_card":
+      feePercentage = 0.015; // 1.5%
+      break;
+    case "wire_transfer":
+      feePercentage = 0; // Free
+      break;
+    case "crypto":
+      feePercentage = 0.01; // 1%
+      break;
+  }
+
+  return Math.round(amount * feePercentage * 100) / 100;
+}
+
+/**
+ * Calculate withdrawal fee
+ * 
+ * @param amount - Withdrawal amount
+ * @param paymentMethod - Payment method
+ * @returns Fee amount
+ * 
+ * @example
+ * const fee = calculateWithdrawalFee(1000, 'bank_transfer');
+ */
+export function calculateWithdrawalFee(
+  amount: number,
+  paymentMethod: "bank_transfer" | "wire_transfer" | "crypto"
+): number {
+  let fee = 0;
+
+  switch (paymentMethod) {
+    case "bank_transfer":
+      fee = 5; // Flat fee
+      break;
+    case "wire_transfer":
+      fee = 25; // Flat fee
+      break;
+    case "crypto":
+      fee = amount * 0.01; // 1%
+      break;
+  }
+
+  return Math.round(fee * 100) / 100;
+}
+
+// =============================================================================
+// PROFIT/LOSS CALCULATION
+// =============================================================================
+
+/**
+ * Calculate profit or loss from gold investment
+ * 
+ * @param grams - Amount of gold
+ * @param averagePurchasePrice - Average price paid per gram
+ * @param currentPrice - Current price per gram (optional)
+ * @returns Object with profit/loss info
+ * 
+ * @example
+ * const pl = await calculateProfitLoss(10, 60);
+ */
+export async function calculateProfitLoss(
+  grams: number,
+  averagePurchasePrice: number,
+  currentPrice?: number
+): Promise<{
+  totalInvestment: number;
+  currentValue: number;
+  profitLoss: number;
+  profitLossPercentage: number;
+}> {
+  const totalInvestment = Math.round(grams * averagePurchasePrice * 100) / 100;
+
+  const price = currentPrice || (await getGoldPricePerGram("USD"));
+  const currentValue = Math.round(grams * price * 100) / 100;
+
+  const profitLoss = Math.round((currentValue - totalInvestment) * 100) / 100;
+
+  const profitLossPercentage =
+    totalInvestment > 0
+      ? Math.round((profitLoss / totalInvestment) * 10000) / 100
+      : 0;
 
   return {
-    grams,
-    deliveryType,
-    baseCost: Math.round(baseCost * 100) / 100,
-    cost: Math.round(cost * 100) / 100,
-    currency,
+    totalInvestment,
+    currentValue,
+    profitLoss,
+    profitLossPercentage,
   };
 }
 
-// ============================================================================
-// CURRENCY FORMATTING
-// ============================================================================
+// =============================================================================
+// VALIDATION
+// =============================================================================
 
 /**
- * Format amount as currency string
+ * Validate if amount is within acceptable range
+ * 
+ * @param amount - Amount to validate
+ * @param type - Transaction type
+ * @returns Validation result
+ * 
+ * @example
+ * const result = validateTransactionAmount(100, 'deposit');
+ */
+export function validateTransactionAmount(
+  amount: number,
+  type: "deposit" | "withdrawal" | "gold_purchase" | "gold_sale"
+): { isValid: boolean; message?: string } {
+  const limits = {
+    deposit: { min: 10, max: 100000 },
+    withdrawal: { min: 10, max: 50000 },
+    gold_purchase: { min: 1, max: 1000 }, // in grams
+    gold_sale: { min: 1, max: 1000 }, // in grams
+  };
+
+  const limit = limits[type];
+
+  if (amount < limit.min) {
+    return {
+      isValid: false,
+      message: `Minimum ${type.replace("_", " ")} amount is ${limit.min}`,
+    };
+  }
+
+  if (amount > limit.max) {
+    return {
+      isValid: false,
+      message: `Maximum ${type.replace("_", " ")} amount is ${limit.max}`,
+    };
+  }
+
+  return { isValid: true };
+}
+
+// =============================================================================
+// FORMATTING
+// =============================================================================
+
+/**
+ * Format gold amount with proper precision
+ * 
+ * @param grams - Amount in grams
+ * @returns Formatted string
+ * 
+ * @example
+ * formatGoldAmount(10.123456) // => "10.12g"
+ */
+export function formatGoldAmount(grams: number): string {
+  return `${grams.toFixed(2)}g`;
+}
+
+/**
+ * Format currency amount
+ * 
  * @param amount - Amount to format
  * @param currency - Currency code
- * @param locale - Locale for formatting (default: 'en-US')
- * @returns string - Formatted currency string
+ * @returns Formatted string
  * 
- * Examples:
- * - formatCurrency(1234.56, 'USD') => "$1,234.56"
- * - formatCurrency(1234.56, 'EUR') => "€1,234.56"
- * - formatCurrency(1234.56, 'EGP', 'ar-EG') => "١٬٢٣٤٫٥٦ ج.م.‏"
+ * @example
+ * formatCurrencyAmount(1234.56, 'USD') // => "$1,234.56"
  */
-export function formatCurrency(
-  amount: number,
-  currency: Currency,
-  locale: string = "en-US"
-): string {
-  return new Intl.NumberFormat(locale, {
+export function formatCurrencyAmount(amount: number, currency: Currency): string {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: currency,
+    currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);
-}
-
-/**
- * Format gold amount with precision
- * @param grams - Amount in grams
- * @param locale - Locale for formatting
- * @returns string - Formatted gold amount
- * 
- * Examples:
- * - formatGold(10.123456) => "10.123456 g"
- * - formatGold(0.001) => "0.001 g"
- */
-export function formatGold(grams: number, locale: string = "en-US"): string {
-  return new Intl.NumberFormat(locale, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 6,
-  }).format(grams) + " g";
-}
-
-/**
- * Format percentage
- * @param value - Percentage value (e.g., 2.5 for 2.5%)
- * @param locale - Locale for formatting
- * @returns string - Formatted percentage
- */
-export function formatPercentage(value: number, locale: string = "en-US"): string {
-  return new Intl.NumberFormat(locale, {
-    style: "percent",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value / 100);
-}
-
-// ============================================================================
-// CURRENCY UTILITIES
-// ============================================================================
-
-/**
- * Get currency symbol
- * @param currency - Currency code
- * @returns string - Currency symbol
- */
-export function getCurrencySymbol(currency: Currency): string {
-  const symbols: Record<Currency, string> = {
-    USD: "$",
-    EUR: "€",
-    GBP: "£",
-    EGP: "E£",
-    SAR: "﷼",
-  };
-
-  return symbols[currency] || currency;
-}
-
-/**
- * Get currency name
- * @param currency - Currency code
- * @returns string - Full currency name
- */
-export function getCurrencyName(currency: Currency): string {
-  return CURRENCIES.find((c) => c.code === currency)?.name || currency;
-}
-
-/**
- * Validate currency code
- * @param currency - Currency code to validate
- * @returns boolean - True if valid currency
- */
-export function isValidCurrency(currency: string): currency is Currency {
-  const validCurrencies: Currency[] = ["USD", "EUR", "GBP", "EGP", "SAR"];
-  return validCurrencies.includes(currency as Currency);
-}
-
-/**
- * Round to currency precision
- * @param amount - Amount to round
- * @param precision - Decimal places (default 2)
- * @returns number - Rounded amount
- */
-export function roundToCurrencyPrecision(
-  amount: number,
-  precision: number = 2
-): number {
-  const multiplier = Math.pow(10, precision);
-  return Math.round(amount * multiplier) / multiplier;
-}
-
-/**
- * Convert grams to troy ounces
- * @param grams - Amount in grams
- * @returns number - Amount in troy ounces
- */
-export function gramsToTroyOunces(grams: number): number {
-  return grams / 31.1034768;
-}
-
-/**
- * Convert troy ounces to grams
- * @param ounces - Amount in troy ounces
- * @returns number - Amount in grams
- */
-export function troyOuncesToGrams(ounces: number): number {
-  return ounces * 31.1034768;
 }
