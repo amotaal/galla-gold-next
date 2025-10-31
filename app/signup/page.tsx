@@ -1,6 +1,7 @@
 // app/signup/page.tsx
-// Signup Page for GALLA.GOLD
+// Signup Page for GALLA.GOLD - FIXED
 // Purpose: User registration with email/password credentials
+// ✅ FIX: Extracted password toggle buttons to separate component
 
 "use client";
 
@@ -16,9 +17,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/providers/auth";
 import { signupAction } from "@/server/actions/auth";
+import { PasswordToggleButton } from "@/components/password-toggle";
 import {
-  Eye,
-  EyeOff,
   Mail,
   Lock,
   User,
@@ -107,8 +107,8 @@ export default function SignupPage() {
 
     if (password !== confirmPassword) {
       toast({
-        title: "Passwords Do Not Match",
-        description: "Please make sure your passwords match.",
+        title: "Password Mismatch",
+        description: "Passwords do not match.",
         variant: "destructive",
       });
       return;
@@ -126,47 +126,41 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      // Create FormData for server action
+      // Create form data
       const formData = new FormData();
-      formData.append("email", email);
-      formData.append("password", password);
-      formData.append("confirmPassword", confirmPassword);
       formData.append("firstName", firstName);
       formData.append("lastName", lastName);
-      formData.append("acceptTerms", acceptTerms.toString());
+      formData.append("email", email);
+      formData.append("password", password);
 
-      // Call signup server action
+      // Call signup action
       const result = await signupAction(formData);
 
-      if (result.success) {
-        // Show success message
-        setShowSuccess(true);
-
+      if (!result.success) {
         toast({
-          title: "Account Created!",
-          description: "Please check your email to verify your account.",
-        });
-
-        // Clear form
-        setFirstName("");
-        setLastName("");
-        setEmail("");
-        setPassword("");
-        setConfirmPassword("");
-        setAcceptTerms(false);
-      } else {
-        // Show error
-        toast({
-          title: "Registration Failed",
-          description: result.error || "An error occurred. Please try again.",
+          title: "Signup Failed",
+          description: result.error || "Unable to create account.",
           variant: "destructive",
         });
+        return;
       }
+
+      // Success!
+      setShowSuccess(true);
+      toast({
+        title: "Account Created!",
+        description: "Please check your email to verify your account.",
+      });
+
+      // Redirect to login after 3 seconds
+      setTimeout(() => {
+        router.push("/login");
+      }, 3000);
     } catch (error: any) {
       console.error("Signup error:", error);
       toast({
-        title: "Error",
-        description: error.message || "An error occurred. Please try again.",
+        title: "Signup Error",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -174,313 +168,276 @@ export default function SignupPage() {
     }
   };
 
-  // Show loading spinner while checking authentication
+  // Show loading state while checking authentication
   if (isAuthLoading) {
     return (
-      <div className="dark min-h-screen bg-background flex items-center justify-center">
-        <div className="spinner w-12 h-12" />
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  // Show success message if registration completed
+  // Don't show signup page if already authenticated
+  if (isAuthenticated) {
+    return null;
+  }
+
+  // Show success message
   if (showSuccess) {
     return (
-      <div className="dark min-h-screen bg-background flex flex-col">
-        <header className="p-6">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group"
-          >
-            <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-            <span>Back to Home</span>
-          </Link>
-        </header>
-
-        <main className="flex-1 flex items-center justify-center p-6">
-          <Card className="glass-card p-12 max-w-md text-center space-y-6 animate-fade-in">
-            <div className="flex justify-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-muted/20">
+        <Card className="w-full max-w-md bg-card/80 backdrop-blur-md border-border shadow-2xl">
+          <div className="p-8 text-center">
+            <div className="mb-6 flex justify-center">
+              <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center ring-4 ring-primary/10">
                 <CheckCircle2 className="w-10 h-10 text-primary" />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <h2 className="text-2xl font-bold">Account Created!</h2>
-              <p className="text-muted-foreground">
-                We've sent a verification email to <strong>{email}</strong>
-              </p>
-            </div>
+            <h2 className="text-2xl font-bold mb-4">Account Created!</h2>
+            <p className="text-muted-foreground mb-2">
+              We've sent a verification email to:
+            </p>
+            <p className="font-medium text-primary mb-6">{email}</p>
+            <p className="text-sm text-muted-foreground">
+              Please check your inbox and click the verification link to activate
+              your account.
+            </p>
 
-            <div className="space-y-4 text-left bg-muted/30 p-4 rounded-lg">
-              <p className="text-sm font-semibold">Next steps:</p>
-              <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
-                <li>Check your email inbox</li>
-                <li>Click the verification link</li>
-                <li>Sign in to your account</li>
-                <li>Start investing in gold!</li>
-              </ol>
+            <div className="mt-8">
+              <Link href="/login">
+                <Button className="w-full">Go to Login</Button>
+              </Link>
             </div>
-
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                Didn't receive the email? Check your spam folder or{" "}
-                <button
-                  onClick={() => setShowSuccess(false)}
-                  className="text-primary hover:text-primary/80 underline"
-                >
-                  try again
-                </button>
-              </p>
-            </div>
-
-            <Link href="/login">
-              <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-gold-glow">
-                Go to Login
-              </Button>
-            </Link>
-          </Card>
-        </main>
+          </div>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="dark min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="p-6">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group"
-        >
-          <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-          <span>Back to Home</span>
-        </Link>
-      </header>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-muted/20">
+      {/* Decorative background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+      </div>
 
-      {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center p-6">
-        <div
-          className={`w-full max-w-md space-y-8 transition-all duration-500 ${
-            mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-          }`}
-        >
-          {/* Logo and Title */}
-          <div className="text-center space-y-4">
-            <div className="flex justify-center">
-              <div className="relative w-16 h-16">
-                <Image
-                  src="/gold-bars.gif"
-                  alt="GALLA.GOLD"
-                  width={64}
-                  height={64}
-                  className="object-contain"
-                  unoptimized
-                />
-              </div>
+      {/* Signup Card */}
+      <Card
+        className={`w-full max-w-md relative bg-card/80 backdrop-blur-md border-border shadow-2xl transition-all duration-700 ${
+          mounted ? "opacity-100 scale-100" : "opacity-0 scale-95"
+        }`}
+      >
+        <div className="p-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            {/* Logo */}
+            <div className="flex justify-center mb-6">
+              <Image
+                src="/logo.png"
+                alt="GALLA.GOLD"
+                width={120}
+                height={40}
+                className="h-10 w-auto"
+                priority
+              />
             </div>
-            <div>
-              <h1 className="text-3xl font-extrabold text-gold-gradient">
-                GALLA.GOLD
-              </h1>
-              <p className="text-xl font-semibold text-foreground mt-2">
-                Create Your Account
-              </p>
-              <p className="text-muted-foreground mt-1">
-                Start investing in physical gold today
-              </p>
-            </div>
+
+            {/* Title */}
+            <h1 className="text-2xl font-bold mb-2">Create Your Account</h1>
+            <p className="text-muted-foreground text-sm">
+              Start investing in gold today
+            </p>
           </div>
 
           {/* Signup Form */}
-          <Card className="glass-card p-8 space-y-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Name Fields */}
-              <div className="grid grid-cols-2 gap-4">
-                {/* First Name */}
-                <div className="space-y-2">
-                  <Label htmlFor="firstName" className="text-sm font-medium">
-                    First Name
-                  </Label>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Name Fields - Side by Side */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* First Name */}
+              <div className="space-y-2">
+                <Label htmlFor="firstName" className="text-sm font-medium">
+                  First Name
+                </Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
                     id="firstName"
                     type="text"
                     placeholder="John"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
+                    className="pl-10"
                     autoComplete="given-name"
+                    autoFocus
                     required
                   />
                 </div>
+              </div>
 
-                {/* Last Name */}
-                <div className="space-y-2">
-                  <Label htmlFor="lastName" className="text-sm font-medium">
-                    Last Name
-                  </Label>
+              {/* Last Name */}
+              <div className="space-y-2">
+                <Label htmlFor="lastName" className="text-sm font-medium">
+                  Last Name
+                </Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
                     id="lastName"
                     type="text"
                     placeholder="Doe"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
+                    className="pl-10"
                     autoComplete="family-name"
                     required
                   />
                 </div>
               </div>
-
-              {/* Email Field */}
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium">
-                  Email Address
-                </Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
-                    autoComplete="email"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Password Field */}
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium">
-                  Password
-                </Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="At least 8 characters"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10"
-                    autoComplete="new-password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-5 h-5" />
-                    ) : (
-                      <Eye className="w-5 h-5" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Confirm Password Field */}
-              <div className="space-y-2">
-                <Label
-                  htmlFor="confirmPassword"
-                  className="text-sm font-medium"
-                >
-                  Confirm Password
-                </Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    id="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    placeholder="Re-enter your password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="pl-10 pr-10"
-                    autoComplete="new-password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="w-5 h-5" />
-                    ) : (
-                      <Eye className="w-5 h-5" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Terms Checkbox */}
-              <div className="flex items-start space-x-2">
-                <Checkbox
-                  id="terms"
-                  checked={acceptTerms}
-                  onCheckedChange={(checked) =>
-                    setAcceptTerms(checked as boolean)
-                  }
-                />
-                <label
-                  htmlFor="terms"
-                  className="text-sm text-muted-foreground leading-relaxed cursor-pointer"
-                >
-                  I agree to the{" "}
-                  <Link
-                    href="/terms"
-                    className="text-primary hover:text-primary/80 underline"
-                  >
-                    Terms of Service
-                  </Link>{" "}
-                  and{" "}
-                  <Link
-                    href="/privacy"
-                    className="text-primary hover:text-primary/80 underline"
-                  >
-                    Privacy Policy
-                  </Link>
-                </label>
-              </div>
-
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-gold-glow"
-                size="lg"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Creating Account...
-                  </>
-                ) : (
-                  "Create Account"
-                )}
-              </Button>
-            </form>
-
-            {/* Login Link */}
-            <div className="text-center text-sm text-muted-foreground">
-              Already have an account?{" "}
-              <Link
-                href="/login"
-                className="text-primary hover:text-primary/80 font-semibold transition-colors"
-              >
-                Sign in
-              </Link>
             </div>
-          </Card>
 
-          {/* Security Notice */}
-          <p className="text-center text-xs text-muted-foreground">
-            Your information is protected with bank-level encryption
-          </p>
+            {/* Email Field */}
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-medium">
+                Email Address
+              </Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-10"
+                  autoComplete="email"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Password Field */}
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-sm font-medium">
+                Password
+              </Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="At least 8 characters"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-10 pr-10"
+                  autoComplete="new-password"
+                  required
+                />
+                <PasswordToggleButton
+                  show={showPassword}
+                  onToggle={() => setShowPassword(!showPassword)}
+                />
+              </div>
+            </div>
+
+            {/* Confirm Password Field */}
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword" className="text-sm font-medium">
+                Confirm Password
+              </Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Re-enter your password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="pl-10 pr-10"
+                  autoComplete="new-password"
+                  required
+                />
+                <PasswordToggleButton
+                  show={showConfirmPassword}
+                  onToggle={() => setShowConfirmPassword(!showConfirmPassword)}
+                />
+              </div>
+            </div>
+
+            {/* Terms Checkbox */}
+            <div className="flex items-start space-x-3">
+              <Checkbox
+                id="terms"
+                checked={acceptTerms}
+                onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
+              />
+              <label
+                htmlFor="terms"
+                className="text-sm text-muted-foreground leading-relaxed cursor-pointer"
+              >
+                I agree to the{" "}
+                <Link href="/terms" className="text-primary hover:underline">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" className="text-primary hover:underline">
+                  Privacy Policy
+                </Link>
+              </label>
+            </div>
+
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              className="w-full"
+              size="lg"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Creating account...
+                </>
+              ) : (
+                "Create Account"
+              )}
+            </Button>
+          </form>
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">
+                Already have an account?
+              </span>
+            </div>
+          </div>
+
+          {/* Login Link */}
+          <div className="text-center">
+            <Link href="/login">
+              <Button variant="outline" className="w-full" size="lg">
+                Sign In
+              </Button>
+            </Link>
+          </div>
         </div>
-      </main>
+
+        {/* Back to Home */}
+        <div className="border-t border-border p-4">
+          <Link
+            href="/"
+            className="flex items-center justify-center text-sm text-muted-foreground hover:text-foreground transition-colors group"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+            Back to home
+          </Link>
+        </div>
+      </Card>
     </div>
   );
 }
