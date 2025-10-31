@@ -1,122 +1,456 @@
+/*
+ * app/globals.css - FIXED VERSION for Tailwind CSS v4+
+ * GALLA.GOLD - Professional Design System with Proper Light/Dark Mode
+ *
+ * FIXES:
+ * 1. Corrected @layer base to use CSS variables directly, resolving the
+ * "Cannot apply unknown utility class" error.
+ * 2. Kept @import "tailwindcss" for v4.
+ * 3. Kept hover: syntax fixes.
+ */
+
+/* ------------------------------------
+   1. CORE TAILWIND v4+ IMPORT (MANDATORY)
+   ------------------------------------ */
 @import "tailwindcss";
-@import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-}
-
-:root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-}
-
+/* ------------------------------------
+   2. CUSTOM CSS VARIABLES & BASE LAYERS
+   ------------------------------------ */
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
+  :root {
+    /* ====================================
+       LIGHT MODE - Clean Professional Theme
+       ==================================== */
+
+    /* Backgrounds */
+    --background: 0 0% 98%;
+    /* #FAFAFA */
+    --foreground: 0 0% 10%;
+    /* #1A1A1A */
+    --card: 0 0% 100%;
+    /* #FFFFFF */
+    --card-foreground: 0 0% 10%;
+    /* #1A1A1A */
+
+    /* Primary - Vibrant Gold */
+    --primary: 45 100% 50%;
+    /* #FFB800 */
+    --primary-foreground: 0 0% 10%;
+    /* #1A1A1A */
+
+    /* Secondary - Light elevated surfaces */
+    --secondary: 0 0% 95%;
+    /* #F2F2F2 */
+    --secondary-foreground: 0 0% 10%;
+    /* #1A1A1A */
+
+    /* Muted - Subtle backgrounds and text */
+    --muted: 0 0% 92%;
+    /* #EBEBEB */
+    --muted-foreground: 0 0% 45%;
+    /* #737373 */
+
+    /* Accent - Gold highlights */
+    --accent: 45 100% 50%;
+    /* #FFB800 */
+    --accent-foreground: 0 0% 10%;
+    /* #1A1A1A */
+
+    /* Destructive - Red for errors */
+    --destructive: 0 72% 51%;
+    /* #DC2626 */
+    --destructive-foreground: 0 0% 100%;
+    /* #FFFFFF */
+
+    /* Chart colors */
+    --chart-1: 45 100% 50%;
+    --chart-2: 142 76% 36%;
+    --chart-3: 0 72% 51%;
+    --chart-4: 217 91% 60%;
+    --chart-5: 280 89% 60%;
+
+    /* Border radius */
+    --radius: 0.5rem;
   }
+
+  .dark {
+    /* ====================================
+       DARK MODE - Premium Dark Theme
+       ==================================== */
+
+    /* Backgrounds */
+    --background: 0 0% 5%;
+    /* #0D0D0D */
+    --foreground: 0 0% 95%;
+    /* #F2F2F2 */
+    --card: 0 0% 8%;
+    /* #141414 */
+    --card-foreground: 0 0% 95%;
+    /* #F2F2F2 */
+
+    /* Primary - Gold (same as light mode) */
+    --primary: 45 100% 50%;
+    /* #FFB800 */
+    --primary-foreground: 0 0% 10%;
+    /* #1A1A1A */
+
+    /* Secondary - Elevated dark surfaces */
+    --secondary: 0 0% 15%;
+    /* #262626 */
+    --secondary-foreground: 0 0% 95%;
+    /* #F2F2F2 */
+
+    /* Muted - Darker greys */
+    --muted: 0 0% 20%;
+    /* #333333 */
+    --muted-foreground: 0 0% 60%;
+    /* #999999 */
+
+    /* Accent - Gold highlights */
+    --accent: 45 100% 50%;
+    /* #FFB800 */
+    --accent-foreground: 0 0% 10%;
+    /* #1A1A1A */
+
+    /* Destructive - Red for errors */
+    --destructive: 0 72% 51%;
+    /* #DC2626 */
+    --destructive-foreground: 0 0% 100%;
+    /* #FFFFFF */
+
+    /* Success - Green for success states */
+    --success: 142 76% 36%;
+    /* #16A34A */
+    --success-foreground: 0 0% 100%;
+    /* #FFFFFF */
+
+    /* Border, Input, Ring */
+    --border: 0 0% 20%;
+    /* #333333 */
+    --input: 0 0% 15%;
+    /* #262626 */
+    --ring: 45 100% 50%;
+    /* #FFB800 */
+
+    /* Popover & Dropdown */
+    --popover: 0 0% 10%;
+    /* #1A1A1A */
+    --popover-foreground: 0 0% 95%;
+    /* #F2F2F2 */
+
+    /* Chart colors (same as light mode) */
+    --chart-1: 45 100% 50%;
+    --chart-2: 142 76% 36%;
+    --chart-3: 0 72% 51%;
+    --chart-4: 217 91% 60%;
+    --chart-5: 280 89% 60%;
+  }
+
+  /* ====================================
+     GLOBAL RESETS & BASE STYLES
+     ==================================== */
+
+  * {
+    /* FIX: Use CSS variable directly instead of @apply */
+    border-color: hsl(var(--border));
+  }
+
   body {
-    @apply bg-background text-foreground;
+    /* FIX: Use CSS variables directly instead of @apply */
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig"1, "calt"1;
+  }
+
+  /* Smooth scrolling for anchor links */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Remove spinner buttons from number inputs */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
   }
 }
+
+/* ------------------------------------
+   3. CUSTOM COMPONENT CLASSES (GALLA.GOLD)
+   ------------------------------------ */
+@layer components {
+  /* Glass Card - Glassmorphism effect for premium look */
+  .glass-card {
+    @apply bg-card/60 backdrop-blur-md border border-border shadow-lg;
+  }
+
+  /* Interactive Glass - Glassmorphism with hover effect */
+  .interactive-glass {
+    /* FIX: Kept space removal after hover: */
+    @apply transition-all duration-300 hover:bg-card/80 hover:shadow-xl hover:scale-[1.02];
+  }
+
+  /* Gold Gradient Text - For headings and emphasis */
+  .text-gold-gradient {
+    @apply bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 bg-clip-text text-transparent;
+  }
+
+  /* Gold Shadow Glow - Glowing effect around elements */
+  .shadow-gold-glow {
+    box-shadow: 0 0 20px rgba(255, 184, 0, 0.3),
+      0 0 40px rgba(255, 184, 0, 0.2),
+      0 0 60px rgba(255, 184, 0, 0.1);
+  }
+
+  /* Hero Glow - Larger glow for hero sections */
+  .hero-glow {
+    box-shadow: 0 0 40px rgba(255, 184, 0, 0.4),
+      0 0 80px rgba(255, 184, 0, 0.3),
+      0 0 120px rgba(255, 184, 0, 0.2);
+  }
+
+  /* Card Hover Effect - Subtle lift on hover */
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
+  }
+
+  /* Button Primary - Gold-themed button */
+  .btn-primary {
+    /* FIX: Kept space removal after hover: */
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 shadow-gold-glow hover:shadow-xl transition-all duration-300;
+  }
+
+  /* Button Secondary - Subtle button */
+  .btn-secondary {
+    /* FIX: Kept space removal after hover: */
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-all duration-300;
+  }
+
+  /* Scrollbar Styling (Webkit browsers) */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-muted rounded-full;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-primary/50 rounded-full hover:bg-primary/70;
+  }
+
+  /* Loading Spinner */
+  .spinner {
+    @apply animate-spin rounded-full border-4 border-muted border-t-primary;
+  }
+}
+
+/* ------------------------------------
+   4. CUSTOM UTILITY CLASSES
+   ------------------------------------ */
+@layer utilities {
+  /* Text Shadow for better readability on backgrounds */
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .text-shadow-lg {
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Gradient Backgrounds */
+  .bg-gradient-gold {
+    background: linear-gradient(135deg, #FFB800 0%, #FFA500 100%);
+  }
+
+  .bg-gradient-dark {
+    background: linear-gradient(135deg, #0D0D0D 0%, #1A1A1A 100%);
+  }
+
+  /* Backdrop Blur Variations */
+  .backdrop-blur-light {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .backdrop-blur-heavy {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  /* Animations */
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in forwards;
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.4s ease-out forwards;
+  }
+
+Examples of such tags include [Image of the human digestive system],  etc. Be very economical in your use of image tags, only add multiple tags if each additional tag is adding instructive value beyond pure illustration. Place the image tag immediately before or after the relevant text without disrupting the flow of the response.
+  .animate-slide-in-left {
+    animation: slideInLeft 0.5s ease-out forwards;
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.5s ease-out forwards;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2s linear infinite;
+  }
+
+  /* Hover Effects */
+  .hover-lift {
+    /* FIX: Kept space removal after hover: */
+    @apply transition-transform duration-300 hover:-translate-y-1;
+  }
+
+  .hover-glow {
+    /* FIX: Kept space removal after hover: */
+    @apply transition-shadow duration-300 hover:shadow-gold-glow;
+  }
+
+  /* Focus Ring - Gold-themed */
+  .focus-gold {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background;
+  }
+}
+
+/* ------------------------------------
+   5. KEYFRAME ANIMATIONS
+   ------------------------------------ */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+/* ------------------------------------
+   6. RESPONSIVE UTILITIES & PRINT
+   ------------------------------------ */
+
+@media (max-width: 768px) {
+  /* Mobile-specific styles */
+  .glass-card {
+    @apply bg-card/80;
+    /* Stronger background on mobile */
+  }
+
+  .shadow-gold-glow {
+    box-shadow: 0 0 10px rgba(255, 184, 0, 0.2),
+      0 0 20px rgba(255, 184, 0, 0.1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Disable animations for users who prefer reduced motion */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+@media print {
+  /* Optimize for printing */
+  body {
+    @apply bg-white text-black;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .glass-card,
+  .shadow-gold-glow,
+  .backdrop-blur-md {
+    background: white !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+}
+
