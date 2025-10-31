@@ -497,7 +497,7 @@ export async function resetPasswordAction(
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
     user.loginAttempts = 0; // Reset login attempts
-    user.lockedUntil = undefined; // Unlock account if locked
+    user.lockUntil = undefined; // Unlock account if locked
     await user.save();
 
     return {

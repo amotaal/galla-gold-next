@@ -33,12 +33,12 @@ const GOLD_PRICE_PER_GRAM_USD = 65.5;
 
 /**
  * Convert amount from one currency to another
- * 
+ *
  * @param amount - Amount to convert
  * @param from - Source currency
  * @param to - Target currency
  * @returns Converted amount
- * 
+ *
  * @example
  * const eurAmount = await convertCurrency(100, 'USD', 'EUR');
  */
@@ -60,11 +60,11 @@ export async function convertCurrency(
 
 /**
  * Get exchange rate between two currencies
- * 
+ *
  * @param from - Source currency
  * @param to - Target currency
  * @returns Exchange rate
- * 
+ *
  * @example
  * const rate = getExchangeRate('USD', 'EUR'); // => 0.92
  */
@@ -77,7 +77,7 @@ export function getExchangeRate(from: Currency, to: Currency): number {
 
 /**
  * Get all exchange rates
- * 
+ *
  * @returns Record of all exchange rates
  */
 export function getAllExchangeRates(): Record<Currency, number> {
@@ -90,10 +90,10 @@ export function getAllExchangeRates(): Record<Currency, number> {
 
 /**
  * Get current gold price per gram in specified currency
- * 
+ *
  * @param currency - Target currency (default: USD)
  * @returns Gold price per gram
- * 
+ *
  * @example
  * const priceInEUR = await getGoldPricePerGram('EUR');
  */
@@ -112,10 +112,10 @@ export async function getGoldPricePerGram(
 
 /**
  * Get gold price per ounce (1 oz = 31.1035 grams)
- * 
+ *
  * @param currency - Target currency (default: USD)
  * @returns Gold price per ounce
- * 
+ *
  * @example
  * const pricePerOz = await getGoldPricePerOunce('USD');
  */
@@ -128,11 +128,11 @@ export async function getGoldPricePerOunce(
 
 /**
  * Calculate total cost for buying gold
- * 
+ *
  * @param grams - Amount of gold in grams
  * @param currency - Currency for payment
  * @returns Object with breakdown of costs
- * 
+ *
  * @example
  * const cost = await calculateBuyGoldCost(10, 'USD');
  */
@@ -170,11 +170,11 @@ export async function calculateBuyGoldCost(
 
 /**
  * Calculate proceeds from selling gold
- * 
+ *
  * @param grams - Amount of gold in grams
  * @param currency - Currency for proceeds
  * @returns Object with breakdown of proceeds
- * 
+ *
  * @example
  * const proceeds = await calculateSellGoldProceeds(10, 'USD');
  */
@@ -216,12 +216,12 @@ export async function calculateSellGoldProceeds(
 
 /**
  * Calculate cost for physical gold delivery
- * 
+ *
  * @param grams - Amount of gold in grams
  * @param deliveryMethod - Delivery method (standard, express, insured)
  * @param currency - Currency for cost
  * @returns Delivery cost
- * 
+ *
  * @example
  * const cost = await calculateDeliveryCost(10, 'standard', 'USD');
  */
@@ -254,17 +254,22 @@ export async function calculateDeliveryCost(
 
 /**
  * Calculate deposit fee
- * 
+ *
  * @param amount - Deposit amount
  * @param paymentMethod - Payment method
  * @returns Fee amount
- * 
+ *
  * @example
  * const fee = calculateDepositFee(1000, 'bank_transfer');
  */
 export function calculateDepositFee(
   amount: number,
-  paymentMethod: "bank_transfer" | "credit_card" | "debit_card" | "wire_transfer" | "crypto"
+  paymentMethod:
+    | "bank_transfer"
+    | "credit_card"
+    | "debit_card"
+    | "wire_transfer"
+    | "crypto"
 ): number {
   let feePercentage = 0;
 
@@ -291,11 +296,11 @@ export function calculateDepositFee(
 
 /**
  * Calculate withdrawal fee
- * 
+ *
  * @param amount - Withdrawal amount
  * @param paymentMethod - Payment method
  * @returns Fee amount
- * 
+ *
  * @example
  * const fee = calculateWithdrawalFee(1000, 'bank_transfer');
  */
@@ -326,12 +331,12 @@ export function calculateWithdrawalFee(
 
 /**
  * Calculate profit or loss from gold investment
- * 
+ *
  * @param grams - Amount of gold
  * @param averagePurchasePrice - Average price paid per gram
  * @param currentPrice - Current price per gram (optional)
  * @returns Object with profit/loss info
- * 
+ *
  * @example
  * const pl = await calculateProfitLoss(10, 60);
  */
@@ -371,11 +376,11 @@ export async function calculateProfitLoss(
 
 /**
  * Validate if amount is within acceptable range
- * 
+ *
  * @param amount - Amount to validate
  * @param type - Transaction type
  * @returns Validation result
- * 
+ *
  * @example
  * const result = validateTransactionAmount(100, 'deposit');
  */
@@ -415,10 +420,10 @@ export function validateTransactionAmount(
 
 /**
  * Format gold amount with proper precision
- * 
+ *
  * @param grams - Amount in grams
  * @returns Formatted string
- * 
+ *
  * @example
  * formatGoldAmount(10.123456) // => "10.12g"
  */
@@ -428,19 +433,31 @@ export function formatGoldAmount(grams: number): string {
 
 /**
  * Format currency amount
- * 
+ *
  * @param amount - Amount to format
  * @param currency - Currency code
  * @returns Formatted string
- * 
+ *
  * @example
  * formatCurrencyAmount(1234.56, 'USD') // => "$1,234.56"
  */
-export function formatCurrencyAmount(amount: number, currency: Currency): string {
+export function formatCurrencyAmount(
+  amount: number,
+  currency: Currency
+): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);
+}
+
+// At the very end of the file, add:
+
+/**
+ * Format currency (alias for formatCurrencyAmount)
+ */
+export function formatCurrency(amount: number, currency: Currency): string {
+  return formatCurrencyAmount(amount, currency);
 }

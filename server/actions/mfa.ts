@@ -269,11 +269,11 @@ export async function verifyMFACodeAction(
     if (!isValid) {
       // Increment failed attempts
       mfa.failedAttempts += 1;
-      mfa.lastFailedAttempt = new Date();
+      mfa.failedAttempts = new Date();
 
       // Lock MFA after 5 failed attempts
       if (mfa.failedAttempts >= 5) {
-        mfa.lockedUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+        mfa.lockUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
         await mfa.save();
 
         return {
@@ -292,7 +292,7 @@ export async function verifyMFACodeAction(
 
     // Successful verification - reset failed attempts
     mfa.failedAttempts = 0;
-    mfa.lastFailedAttempt = undefined;
+    mfa.failedAttempts = undefined;
     await mfa.save();
 
     return {

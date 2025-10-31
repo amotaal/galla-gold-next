@@ -1,15 +1,19 @@
 // /server/models/User.ts
 // FIXED User Model with all required fields
 
-import mongoose, { Schema, Document, Model } from 'mongoose';
-import bcrypt from 'bcryptjs';
+import mongoose, { Schema, Document, Model } from "mongoose";
+import bcrypt from "bcryptjs";
+import { KYCStatus } from "@/types/index";
 
 export interface IUser extends Document {
   email: string;
   password: string;
   passwordResetToken?: string;
   passwordResetExpires?: Date;
-  
+  // ADD THESE TWO LINES:
+  magicLinkToken?: string;
+  magicLinkExpires?: Date;
+
   fullName: string;
   firstName: string;
   lastName: string;
@@ -23,42 +27,42 @@ export interface IUser extends Document {
     postalCode?: string;
     country?: string;
   };
-  
+
   emailVerified: boolean;
   emailVerificationToken?: string;
   emailVerificationExpires?: Date;
-  
+
   mfaEnabled: boolean;
   mfaSecret?: string;
   mfaBackupCodes?: string[];
-  
-  kycStatus: 'pending' | 'submitted' | 'verified' | 'rejected';
+
+  kycStatus: "pending" | "submitted" | "verified" | "rejected";
   kycSubmittedAt?: Date;
   kycVerifiedAt?: Date;
   kycRejectionReason?: string;
-  
+
   preferredCurrency: string;
   preferredLanguage: string;
   locale: string;
   currency: string;
   timezone: string;
-  role: 'user' | 'admin';
-  
+  role: "user" | "admin";
+
   lastLoginAt?: Date;
   lastLoginIp?: string;
   loginAttempts: number;
   lockUntil?: Date;
-  
+
   isActive: boolean;
   isSuspended: boolean;
   suspensionReason?: string;
-  
+
   deletionRequestedAt?: Date;
   deletionScheduledFor?: Date;
-  
+
   createdAt: Date;
   updatedAt: Date;
-  
+
   comparePassword(candidatePassword: string): Promise<boolean>;
   generatePasswordResetToken(): string;
   generateEmailVerificationToken(): string;
@@ -90,7 +94,11 @@ const UserSchema = new Schema<IUser, IUserModel>(
     },
     passwordResetToken: String,
     passwordResetExpires: Date,
-    
+
+    // ADD THESE TWO LINES:
+    magicLinkToken: String,
+    magicLinkExpires: Date,
+
     fullName: { type: String, required: true },
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
@@ -104,40 +112,40 @@ const UserSchema = new Schema<IUser, IUserModel>(
       postalCode: String,
       country: String,
     },
-    
+
     emailVerified: { type: Boolean, default: false },
     emailVerificationToken: String,
     emailVerificationExpires: Date,
-    
+
     mfaEnabled: { type: Boolean, default: false },
     mfaSecret: String,
     mfaBackupCodes: [String],
-    
+
     kycStatus: {
       type: String,
-      enum: ['pending', 'submitted', 'verified', 'rejected'],
-      default: 'pending',
+      enum: ["none", "pending", "submitted", "verified", "rejected"], // ADD 'none' and 'submitted'
+      default: "pending", // CHANGE from 'pending' to 'none'
     },
     kycSubmittedAt: Date,
     kycVerifiedAt: Date,
     kycRejectionReason: String,
-    
-    preferredCurrency: { type: String, default: 'USD' },
-    preferredLanguage: { type: String, default: 'en' },
-    locale: { type: String, default: 'en' },
-    currency: { type: String, default: 'USD' },
-    timezone: { type: String, default: 'UTC' },
-    role: { type: String, enum: ['user', 'admin'], default: 'user' },
-    
+
+    preferredCurrency: { type: String, default: "USD" },
+    preferredLanguage: { type: String, default: "en" },
+    locale: { type: String, default: "en" },
+    currency: { type: String, default: "USD" },
+    timezone: { type: String, default: "UTC" },
+    role: { type: String, enum: ["user", "admin"], default: "user" },
+
     lastLoginAt: Date,
     lastLoginIp: String,
     loginAttempts: { type: Number, default: 0 },
     lockUntil: Date,
-    
+
     isActive: { type: Boolean, default: true },
     isSuspended: { type: Boolean, default: false },
     suspensionReason: String,
-    
+
     deletionRequestedAt: Date,
     deletionScheduledFor: Date,
   },
@@ -146,26 +154,28 @@ const UserSchema = new Schema<IUser, IUserModel>(
   }
 );
 
-UserSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+UserSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
   const salt = await bcrypt.genSalt(12);
   this.password = await bcrypt.hash(this.password, salt);
   next();
 });
 
-UserSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
+UserSchema.methods.comparePassword = async function (
+  candidatePassword: string
+): Promise<boolean> {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
 UserSchema.methods.generatePasswordResetToken = function (): string {
-  const token = require('crypto').randomBytes(32).toString('hex');
+  const token = require("crypto").randomBytes(32).toString("hex");
   this.passwordResetToken = token;
   this.passwordResetExpires = new Date(Date.now() + 3600000);
   return token;
 };
 
 UserSchema.methods.generateEmailVerificationToken = function (): string {
-  const token = require('crypto').randomBytes(32).toString('hex');
+  const token = require("crypto").randomBytes(32).toString("hex");
   this.emailVerificationToken = token;
   this.emailVerificationExpires = new Date(Date.now() + 86400000);
   return token;
@@ -207,6 +217,8 @@ UserSchema.statics.findByResetToken = function (token: string) {
   });
 };
 
-const User = (mongoose.models.User as IUserModel) || mongoose.model<IUser, IUserModel>('User', UserSchema);
+const User =
+  (mongoose.models.User as IUserModel) ||
+  mongoose.model<IUser, IUserModel>("User", UserSchema);
 
 export default User;

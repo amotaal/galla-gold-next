@@ -88,7 +88,7 @@ export async function getProfileAction(): Promise<
         mfaEnabled: user.mfaEnabled,
         kycStatus: user.kycStatus,
         createdAt: user.createdAt,
-        lastLogin: user.lastLogin,
+        lastLogin: user.lastLoginAt,
       },
     };
   } catch (error: any) {
@@ -271,7 +271,7 @@ export async function changePasswordAction(
     // Update password
     user.password = hashedPassword;
     user.loginAttempts = 0; // Reset login attempts
-    user.lockedUntil = undefined; // Unlock account if locked
+    user.lockUntil = undefined; // Unlock account if locked
     await user.save();
 
     // Send confirmation email

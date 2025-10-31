@@ -1,5 +1,5 @@
 // /types/index.ts
-// Comprehensive TypeScript Types for GALLA.GOLD Application
+// UPDATED - Comprehensive TypeScript Types for GALLA.GOLD Application
 // Purpose: Central type definitions to eliminate TypeScript errors and provide type safety
 
 // =============================================================================
@@ -15,15 +15,19 @@ export interface User {
   firstName: string;
   lastName: string;
   fullName: string;
+  name: string; // Added for Next-Auth compatibility
   phone?: string;
   avatar?: string;
   emailVerified: boolean;
   mfaEnabled: boolean;
-  kycStatus: "pending" | "submitted" | "verified" | "rejected";
+  hasMFA: boolean; // Alias for mfaEnabled
+  kycStatus: KYCStatus;
   preferredCurrency: Currency;
   preferredLanguage: Locale;
+  locale: string; // Added for Next-Auth compatibility
+  role: UserRole;
   createdAt: Date;
-  lastLogin?: Date;
+  lastLoginAt?: Date;
 }
 
 /**
@@ -33,8 +37,29 @@ export interface SessionUser {
   id: string;
   email: string;
   name: string;
+  firstName: string;
+  lastName: string;
   emailVerified: boolean;
+  role: UserRole;
+  hasMFA: boolean;
+  kycStatus: KYCStatus;
+  locale: string;
 }
+
+/**
+ * User roles
+ */
+export type UserRole = "user" | "admin";
+
+/**
+ * KYC verification status - UPDATED with 'submitted'
+ */
+export type KYCStatus = "none" | "pending" | "submitted" | "verified" | "rejected";
+
+/**
+ * Supported locales
+ */
+export type Locale = "en" | "es" | "fr" | "ru" | "ar";
 
 // =============================================================================
 // WALLET TYPES
@@ -46,9 +71,17 @@ export interface SessionUser {
 export type Currency = "USD" | "EUR" | "GBP" | "EGP" | "AED" | "SAR";
 
 /**
- * Multi-currency balance record
+ * Multi-currency balance record - UPDATED with index signature
  */
-export type Balance = Record<Currency, number>;
+export interface Balance {
+  USD: number;
+  EUR: number;
+  GBP: number;
+  EGP: number;
+  AED: number;
+  SAR: number;
+  [key: string]: number; // Allow dynamic access
+}
 
 /**
  * Gold holdings information
@@ -81,7 +114,7 @@ export interface Wallet {
 }
 
 /**
- * Daily transaction limits
+ * Daily transaction limits (in USD)
  */
 export interface DailyLimits {
   deposit: number;
@@ -91,50 +124,37 @@ export interface DailyLimits {
 }
 
 /**
- * Daily usage tracking
+ * Used daily limits tracking
  */
 export interface UsedLimits {
   deposit: number;
   withdrawal: number;
   goldPurchase: number;
   goldSale: number;
+  lastReset: Date;
 }
 
 // =============================================================================
 // TRANSACTION TYPES
 // =============================================================================
 
-// =============================================================================
-// TRANSACTION TYPES (UPDATED)
-// =============================================================================
 /**
-
-Transaction types - with aliases for backward compatibility
-*/
+ * Transaction types - UPDATED with gold_purchase and gold_sale
+ */
 export type TransactionType =
   | "deposit"
   | "withdrawal"
-  | "buy_gold" // Primary
-  | "gold_purchase" // Alias for buy_gold
-  | "sell_gold" // Primary
-  | "gold_sale" // Alias for sell_gold
-  | "physical_delivery";
-
-// Export helpers to normalize transaction types
-export function normalizeTransactionType(type: string): TransactionType {
-  if (type === "gold_purchase") return "buy_gold";
-  if (type === "gold_sale") return "sell_gold";
-  return type as TransactionType;
-}
-export function isGoldPurchase(type: TransactionType): boolean {
-  return type === "buy_gold" || type === "gold_purchase";
-}
-export function isGoldSale(type: TransactionType): boolean {
-  return type === "sell_gold" || type === "gold_sale";
-}
+  | "gold_purchase"    // ADDED
+  | "gold_sale"        // ADDED
+  | "buy_gold"
+  | "sell_gold"
+  | "conversion"
+  | "delivery"
+  | "fee"
+  | "refund";
 
 /**
- * Transaction status states
+ * Transaction status
  */
 export type TransactionStatus =
   | "pending"
@@ -145,47 +165,89 @@ export type TransactionStatus =
   | "refunded";
 
 /**
- * Payment methods
- */
-export type PaymentMethod =
-  | "bank_transfer"
-  | "credit_card"
-  | "debit_card"
-  | "wire_transfer"
-  | "crypto";
-
-/**
- * Complete transaction object
+ * Transaction interface
  */
 export interface Transaction {
   id: string;
   userId: string;
-  walletId: string;
   type: TransactionType;
-  status: TransactionStatus;
   amount: number;
   currency: Currency;
-  fee: number;
-  netAmount: number;
-  goldAmount?: number;
-  goldPricePerGram?: number;
-  paymentMethod?: PaymentMethod;
-  paymentProvider?: string;
-  paymentReference?: string;
+  status: TransactionStatus;
   description: string;
-  deliveryAddress?: DeliveryAddress;
-  trackingNumber?: string;
-  errorMessage?: string;
-  errorCode?: string;
   metadata?: Record<string, any>;
+  fee?: number;
+  
+  // Gold-specific fields
+  goldGrams?: number;
+  goldPricePerGram?: number;
+  
+  // Reference IDs
+  referenceId?: string;
+  externalId?: string;
+  
+  // Timestamps
   createdAt: Date;
+  updatedAt: Date;
   completedAt?: Date;
   failedAt?: Date;
-  updatedAt: Date;
+  
+  // Error tracking
+  errorMessage?: string;
+  errorCode?: string;
+}
+
+// =============================================================================
+// GOLD TYPES
+// =============================================================================
+
+/**
+ * Gold price information
+ */
+export interface GoldPrice {
+  spotPrice: number;
+  buyPrice: number;
+  sellPrice: number;
+  pricePerGram: number; // Added for backward compatibility
+  currency: Currency;
+  lastUpdated: Date;
+  change24h?: number;
+  changePercentage24h?: number;
 }
 
 /**
- * Delivery address for physical gold
+ * Gold purchase calculation
+ */
+export interface GoldPurchaseCalculation {
+  grams: number;
+  pricePerGram: number;
+  subtotal: number;
+  fee: number;
+  feePercentage: number;
+  total: number;
+  currency: Currency;
+}
+
+/**
+ * Gold sale calculation
+ */
+export interface GoldSaleCalculation {
+  grams: number;
+  pricePerGram: number;
+  subtotal: number;
+  fee: number;
+  feePercentage: number;
+  netProceeds: number;
+  total?: number; // Added for backward compatibility
+  currency: Currency;
+}
+
+// =============================================================================
+// DELIVERY TYPES
+// =============================================================================
+
+/**
+ * Delivery address
  */
 export interface DeliveryAddress {
   line1: string;
@@ -196,19 +258,47 @@ export interface DeliveryAddress {
   postalCode: string;
 }
 
+/**
+ * Delivery status
+ */
+export type DeliveryStatus =
+  | "pending"
+  | "processing"
+  | "shipped"
+  | "in_transit"
+  | "delivered"
+  | "failed";
+
+/**
+ * Delivery cost calculation - UPDATED structure
+ */
+export interface DeliveryCost {
+  cost: number;
+  currency: Currency;
+  estimatedDays: number;
+}
+
+/**
+ * Delivery request
+ */
+export interface DeliveryRequest {
+  id: string;
+  userId: string;
+  goldGrams: number;
+  address: DeliveryAddress;
+  status: DeliveryStatus;
+  cost: number; // Also support flat number for backward compatibility
+  currency: Currency;
+  trackingNumber?: string;
+  estimatedDelivery?: Date;
+  deliveredAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // =============================================================================
 // KYC TYPES
 // =============================================================================
-
-/**
- * KYC verification status
- */
-export type KYCStatus =
-  | "pending"
-  | "submitted"
-  | "under_review"
-  | "verified"
-  | "rejected";
 
 /**
  * KYC document type
@@ -217,75 +307,39 @@ export type KYCDocumentType =
   | "passport"
   | "drivers_license"
   | "national_id"
-  | "proof_of_address";
+  | "proof_of_address"
+  | "selfie";
+
+/**
+ * Document status - UPDATED
+ */
+export type DocumentStatus = "pending" | "approved" | "rejected";
 
 /**
  * KYC document
  */
 export interface KYCDocument {
+  id: string;
   type: KYCDocumentType;
+  documentType: string; // Added for backward compatibility
   url: string;
+  status: DocumentStatus;
   uploadedAt: Date;
   verifiedAt?: Date;
+  rejectionReason?: string;
 }
 
 /**
- * Complete KYC information
+ * KYC submission
  */
-export interface KYC {
-  id: string;
+export interface KYCSubmission {
   userId: string;
   status: KYCStatus;
-  firstName: string;
-  lastName: string;
-  dateOfBirth: Date;
-  nationality: string;
-  address: DeliveryAddress;
   documents: KYCDocument[];
   submittedAt?: Date;
   verifiedAt?: Date;
   rejectedAt?: Date;
   rejectionReason?: string;
-  reviewedBy?: string;
-  notes?: string;
-}
-
-// =============================================================================
-// GOLD PRICE TYPES
-// =============================================================================
-
-/**
- * Current gold price information
- */
-export interface GoldPrice {
-  pricePerGram: number;
-  pricePerOunce: number;
-  currency: Currency;
-  timestamp: Date;
-  change24h: number;
-  changePercentage24h: number;
-  high24h: number;
-  low24h: number;
-}
-
-/**
- * Historical gold price data point
- */
-export interface GoldPriceHistoryPoint {
-  timestamp: Date;
-  price: number;
-  volume?: number;
-}
-
-/**
- * Gold price chart data
- */
-export interface GoldPriceChart {
-  timeframe: "24h" | "7d" | "30d" | "90d" | "1y" | "all";
-  data: GoldPriceHistoryPoint[];
-  min: number;
-  max: number;
-  average: number;
 }
 
 // =============================================================================
@@ -293,189 +347,45 @@ export interface GoldPriceChart {
 // =============================================================================
 
 /**
- * MFA setup data
+ * MFA method
+ */
+export type MFAMethod = "totp" | "sms" | "email";
+
+/**
+ * MFA setup
  */
 export interface MFASetup {
   secret: string;
-  qrCode: string;
+  qrCodeUrl: string;
   backupCodes: string[];
 }
 
 /**
- * MFA verification request
+ * MFA verification
  */
 export interface MFAVerification {
+  method: MFAMethod;
   code: string;
-  backupCode?: boolean;
+  timestamp: Date;
+  success: boolean;
+  ipAddress?: string;
+  userAgent?: string;
 }
 
 // =============================================================================
-// FORM TYPES
+// ACTION RESPONSE TYPE
 // =============================================================================
 
 /**
- * Login form data
+ * Standard API response type
  */
-export interface LoginFormData {
-  email: string;
-  password: string;
-  rememberMe?: boolean;
-  mfaCode?: string;
-}
-
-/**
- * Signup form data
- */
-export interface SignupFormData {
-  email: string;
-  password: string;
-  confirmPassword: string;
-  firstName: string;
-  lastName: string;
-  phone?: string;
-  acceptTerms: boolean;
-}
-
-/**
- * Profile update form data
- */
-export interface ProfileUpdateFormData {
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
-  dateOfBirth?: string;
-  address?: Partial<DeliveryAddress>;
-  preferredCurrency?: Currency;
-  preferredLanguage?: Locale;
-}
-
-/**
- * Password change form data
- */
-export interface PasswordChangeFormData {
-  currentPassword: string;
-  newPassword: string;
-  confirmPassword: string;
-}
-
-/**
- * Deposit form data
- */
-export interface DepositFormData {
-  amount: number;
-  currency: Currency;
-  paymentMethod: PaymentMethod;
-}
-
-/**
- * Withdrawal form data
- */
-export interface WithdrawalFormData {
-  amount: number;
-  currency: Currency;
-  paymentMethod: PaymentMethod;
-  bankAccount?: string;
-}
-
-/**
- * Buy gold form data
- */
-export interface BuyGoldFormData {
-  grams: number;
-  currency: Currency;
-  totalCost: number;
-}
-
-/**
- * Sell gold form data
- */
-export interface SellGoldFormData {
-  grams: number;
-  currency: Currency;
-  expectedProceeds: number;
-}
-
-/**
- * Physical delivery form data
- */
-export interface PhysicalDeliveryFormData {
-  grams: number;
-  deliveryAddress: DeliveryAddress;
-  deliveryMethod: "standard" | "express" | "insured";
-  estimatedDeliveryCost: number;
-}
-
-// =============================================================================
-// I18N TYPES
-// =============================================================================
-
-/**
- * Supported locales
- */
-export type Locale = "en" | "es" | "fr" | "ru" | "ar";
-
-/**
- * Translation key-value pairs
- */
-export type Translations = Record<string, string>;
-
-/**
- * I18n context type
- */
-export interface I18nContext {
-  locale: Locale;
-  setLocale: (locale: Locale) => void;
-  t: (key: string, params?: Record<string, string>) => string;
-  isRTL: boolean;
-  isLoading: boolean;
-}
-
-// =============================================================================
-// THEME TYPES
-// =============================================================================
-
-/**
- * Theme mode
- */
-export type Theme = "light" | "dark" | "system";
-
-// =============================================================================
-// API RESPONSE TYPES
-// =============================================================================
-
-/**
- * Standard API success response
- */
-export interface ApiSuccessResponse<T = any> {
-  success: true;
-  data: T;
-  message?: string;
-}
-
-/**
- * Standard API error response
- */
-export interface ApiErrorResponse {
-  success: false;
-  error: string;
-  code?: string;
-  details?: Record<string, any>;
-}
-
-/**
- * Combined API response type
- */
-export type ApiResponse<T = any> = ApiSuccessResponse<T> | ApiErrorResponse;
-
-/**
- * Server action response type
- */
-export type ActionResponse<T = void> = {
+export interface ActionResponse<T = any> {
   success: boolean;
   message?: string;
   data?: T;
   error?: string;
-};
+  errors?: Record<string, string>;
+}
 
 // =============================================================================
 // PAGINATION TYPES
@@ -501,49 +411,8 @@ export interface PaginatedResponse<T> {
     limit: number;
     total: number;
     totalPages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
+    hasMore: boolean;
   };
-}
-
-// =============================================================================
-// STATISTICS TYPES
-// =============================================================================
-
-/**
- * Dashboard statistics
- */
-export interface DashboardStats {
-  totalInvested: number;
-  currentValue: number;
-  profitLoss: number;
-  profitLossPercentage: number;
-  totalTransactions: number;
-  goldGrams: number;
-  cashBalance: number;
-}
-
-/**
- * Transaction statistics
- */
-export interface TransactionStats {
-  totalDeposits: number;
-  totalWithdrawals: number;
-  totalGoldPurchases: number;
-  totalGoldSales: number;
-  totalFees: number;
-  averageTransactionSize: number;
-}
-
-/**
- * Portfolio performance
- */
-export interface PortfolioPerformance {
-  daily: number;
-  weekly: number;
-  monthly: number;
-  yearly: number;
-  allTime: number;
 }
 
 // =============================================================================
@@ -554,16 +423,14 @@ export interface PortfolioPerformance {
  * Notification type
  */
 export type NotificationType =
-  | "info"
-  | "success"
-  | "warning"
-  | "error"
   | "transaction"
   | "kyc"
-  | "security";
+  | "security"
+  | "promotion"
+  | "system";
 
 /**
- * Notification object
+ * Notification
  */
 export interface Notification {
   id: string;
@@ -571,9 +438,6 @@ export interface Notification {
   type: NotificationType;
   title: string;
   message: string;
-  read: boolean;
-  actionUrl?: string;
-  actionLabel?: string;
   metadata?: Record<string, any>;
   createdAt: Date;
   readAt?: Date;
@@ -719,40 +583,23 @@ export interface LoadingProps {
   loadingText?: string;
 }
 
-/**
- * Error state props
- */
-export interface ErrorProps {
-  error: string | null;
-  onRetry?: () => void;
-}
-
 // =============================================================================
-// UTILITY TYPES
+// HELPER TYPE UTILITIES
 // =============================================================================
 
 /**
- * Make all properties optional recursively
+ * Make all properties optional
  */
-export type DeepPartial<T> = {
-  [P in keyof T]?: DeepPartial<T[P]>;
+export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+
+/**
+ * Make all properties required
+ */
+export type RequiredBy<T, K extends keyof T> = Omit<T, K> & Required<Pick<T, K>>;
+
+/**
+ * Exclude null and undefined from a type
+ */
+export type NonNullableFields<T> = {
+  [P in keyof T]: NonNullable<T[P]>;
 };
-
-/**
- * Make all properties required recursively
- */
-export type DeepRequired<T> = {
-  [P in keyof T]-?: DeepRequired<T[P]>;
-};
-
-/**
- * Omit multiple keys from type
- */
-export type OmitMultiple<T, K extends keyof any> = Pick<T, Exclude<keyof T, K>>;
-
-/**
- * Extract keys of specific type
- */
-export type KeysOfType<T, V> = {
-  [K in keyof T]: T[K] extends V ? K : never;
-}[keyof T];
