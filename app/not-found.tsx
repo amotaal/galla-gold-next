@@ -2,17 +2,17 @@
 // 404 Not Found Page for GALLA.GOLD
 // Purpose: Display a professional 404 error page with gold-themed styling
 
-import Link from 'next/link';
-import { AlertCircle, Home, ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import Link from "next/link";
+import { AlertCircle, Home, ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 /**
  * NotFound - 404 Error Page
- * 
+ *
  * This page is automatically shown by Next.js when:
  * - A route doesn't exist
  * - notFound() is called in a page/layout
- * 
+ *
  * Features:
  * - Gold-themed dark design
  * - Clear error message
@@ -31,35 +31,33 @@ export default function NotFound() {
             <div className="relative">
               {/* Gold glow background */}
               <div className="absolute inset-0 rounded-full bg-primary/20 blur-2xl animate-pulse-slow" />
-              
+
               {/* Icon */}
               <div className="relative bg-card border-2 border-primary rounded-full p-6 shadow-gold-glow">
                 <AlertCircle className="w-16 h-16 text-primary" />
               </div>
             </div>
           </div>
-          
+
           {/* Error Code */}
           <div className="space-y-2">
             <h1 className="text-8xl font-extrabold text-gold-gradient animate-fade-in">
               404
             </h1>
-            <p className="text-2xl font-bold text-foreground">
-              Page Not Found
-            </p>
+            <p className="text-2xl font-bold text-foreground">Page Not Found</p>
           </div>
-          
+
           {/* Error Message */}
           <div className="space-y-2">
             <p className="text-xl text-muted-foreground">
               The gold trail went cold.
             </p>
             <p className="text-base text-muted-foreground max-w-md mx-auto">
-              The page you're looking for doesn't exist or has been moved.
-              Let's get you back on track.
+              The page you're looking for doesn't exist or has been moved. Let's
+              get you back on track.
             </p>
           </div>
-          
+
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
             {/* Return Home */}
@@ -72,7 +70,7 @@ export default function NotFound() {
                 Return to Home
               </Button>
             </Link>
-            
+
             {/* Go Back */}
             <Button
               size="lg"
@@ -84,20 +82,20 @@ export default function NotFound() {
               Go Back
             </Button>
           </div>
-          
+
           {/* Help Text */}
           <div className="pt-8 border-t border-border">
             <p className="text-sm text-muted-foreground">
-              Need help?{' '}
-              <Link 
-                href="/support" 
+              Need help?{" "}
+              <Link
+                href="/support"
                 className="text-primary hover:text-primary/80 underline underline-offset-4 transition-colors"
               >
                 Contact support
-              </Link>
-              {' '}or visit our{' '}
-              <Link 
-                href="/faq" 
+              </Link>{" "}
+              or visit our{" "}
+              <Link
+                href="/faq"
                 className="text-primary hover:text-primary/80 underline underline-offset-4 transition-colors"
               >
                 FAQ page
@@ -105,7 +103,7 @@ export default function NotFound() {
             </p>
           </div>
         </div>
-        
+
         {/* Popular Pages */}
         <div className="mt-8 text-center">
           <p className="text-sm text-muted-foreground mb-4">
@@ -140,31 +138,31 @@ export default function NotFound() {
 
 /*
  * USAGE:
- * 
+ *
  * This page is automatically used by Next.js for 404 errors.
  * You can also trigger it programmatically:
- * 
+ *
  * import { notFound } from 'next/navigation';
- * 
+ *
  * export default async function Page({ params }) {
  *   const data = await fetchData(params.id);
- *   
+ *
  *   if (!data) {
  *     notFound(); // Triggers this 404 page
  *   }
- *   
+ *
  *   return <div>{data.title}</div>;
  * }
- * 
- * 
+ *
+ *
  * CUSTOMIZATION:
- * 
+ *
  * To create different 404 pages for specific sections:
- * 
+ *
  * // app/dashboard/not-found.tsx
  * export default function DashboardNotFound() {
  *   return <div>Dashboard resource not found</div>;
  * }
- * 
+ *
  * This will be used for all 404s within /dashboard/*
  */

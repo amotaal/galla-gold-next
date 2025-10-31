@@ -1,38 +1,21 @@
-// /server/models/Wallet.ts
-// FIXED Wallet Model with correct balance and gold structure
+// server/models/Wallet.ts
+// Purpose: Wallet Model with FIXED Balance type using index signature
 
 import mongoose, { Schema, Document, Model, Types } from 'mongoose';
+import type { Balance } from '@/types/index';
 
-export interface ICurrencyBalance {
-  currency: 'USD' | 'EUR' | 'GBP' | 'EGP' | 'AED' | 'SAR';
-  amount: number;
-  lastUpdated: Date;
-}
-
+// ✅ FIXED: Now uses Balance type from types/index.ts which has index signature
 export interface IWallet extends Document {
   userId: Types.ObjectId;
   
-  // Use balances array for compatibility
-  balances: ICurrencyBalance[];
-  // BUT also provide balance object for easy access
-  balance: {
-    USD: number;
-    EUR: number;
-    GBP: number;
-    EGP: number;
-    AED: number;
-    SAR: number;
-  };
+  // ✅ FIXED: Use Balance type with index signature [key: string]: number
+  balance: Balance;
   
   gold: {
     grams: number;
     averagePurchasePrice: number;
     lastUpdated: Date;
   };
-  
-  goldBalance: number;
-  goldLastUpdated: Date;
-  goldAveragePurchasePrice: number;
   
   totalValueUSD: number;
   lastValueUpdate: Date;
@@ -91,25 +74,7 @@ const WalletSchema = new Schema<IWallet, IWalletModel>(
       index: true,
     },
     
-    // Store both formats for compatibility
-    balances: [{
-      currency: {
-        type: String,
-        enum: ['USD', 'EUR', 'GBP', 'EGP', 'AED', 'SAR'],
-        required: true,
-      },
-      amount: {
-        type: Number,
-        required: true,
-        default: 0,
-        min: 0,
-      },
-      lastUpdated: {
-        type: Date,
-        default: Date.now,
-      },
-    }],
-    
+    // ✅ FIXED: This now matches Balance type with index signature
     balance: {
       USD: { type: Number, default: 0 },
       EUR: { type: Number, default: 0 },
@@ -124,10 +89,6 @@ const WalletSchema = new Schema<IWallet, IWalletModel>(
       averagePurchasePrice: { type: Number, default: 0, min: 0 },
       lastUpdated: { type: Date, default: Date.now },
     },
-    
-    goldBalance: { type: Number, default: 0, min: 0 },
-    goldLastUpdated: { type: Date, default: Date.now },
-    goldAveragePurchasePrice: { type: Number, default: 0, min: 0 },
     
     totalValueUSD: { type: Number, default: 0, min: 0 },
     lastValueUpdate: { type: Date, default: Date.now },
@@ -163,22 +124,32 @@ const WalletSchema = new Schema<IWallet, IWalletModel>(
   }
 );
 
+// Indexes
+WalletSchema.index({ userId: 1 });
+WalletSchema.index({ isActive: 1, isFrozen: 1 });
+
+// Instance Methods
+
+// ✅ FIXED: Now wallet.balance[currency] works due to index signature
 WalletSchema.methods.getBalance = function (currency: string): number {
-  return this.balance[currency as keyof typeof this.balance] || 0;
+  return this.balance[currency as keyof Balance] || 0;
 };
 
 WalletSchema.methods.setBalance = async function (currency: string, amount: number): Promise<void> {
-  this.balance[currency as keyof typeof this.balance] = amount;
+  // ✅ FIXED: Type-safe access with index signature
+  this.balance[currency as keyof Balance] = amount;
   await this.save();
 };
 
 WalletSchema.methods.addToBalance = async function (currency: string, amount: number): Promise<void> {
-  this.balance[currency as keyof typeof this.balance] = (this.balance[currency as keyof typeof this.balance] || 0) + amount;
+  // ✅ FIXED: Type-safe access with index signature
+  this.balance[currency as keyof Balance] = (this.balance[currency as keyof Balance] || 0) + amount;
   await this.save();
 };
 
 WalletSchema.methods.subtractFromBalance = async function (currency: string, amount: number): Promise<void> {
-  this.balance[currency as keyof typeof this.balance] -= amount;
+  // ✅ FIXED: Type-safe access with index signature
+  this.balance[currency as keyof Balance] -= amount;
   await this.save();
 };
 
@@ -208,6 +179,7 @@ WalletSchema.methods.updateDailyTotal = async function (type: string, amount: nu
   await this.save();
 };
 
+// Static Methods
 WalletSchema.statics.findByUserId = function (userId: string | Types.ObjectId) {
   return this.findOne({ userId });
 };

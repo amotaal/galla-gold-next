@@ -35,7 +35,7 @@ type ActionResponse<T = void> = {
  */
 export async function getKYCStatusAction(): Promise<
   ActionResponse<{
-    status: "none" | "pending" | "verified" | "rejected";
+    status: "none" | "pending" | "submitted" | "verified" | "rejected";
     submittedAt?: Date;
     reviewedAt?: Date;
     rejectionReason?: string;
@@ -115,7 +115,7 @@ export async function getKYCStatusAction(): Promise<
  * Submit KYC verification documents
  * @param formData - KYC submission form data
  * @returns ActionResponse with submission confirmation
- * 
+ *
  * Process:
  * 1. Validate all documents
  * 2. Create KYC record
@@ -215,7 +215,8 @@ export async function submitKYCAction(
 
     return {
       success: true,
-      message: "KYC verification submitted successfully! We'll review your documents within 2-3 business days.",
+      message:
+        "KYC verification submitted successfully! We'll review your documents within 2-3 business days.",
       data: {
         kycId: kyc._id.toString(),
       },
@@ -245,7 +246,7 @@ export async function submitKYCAction(
  * Resubmit KYC verification after rejection
  * @param formData - KYC resubmission form data
  * @returns ActionResponse with resubmission confirmation
- * 
+ *
  * Allows users to resubmit after rejection with corrected documents
  */
 export async function resubmitKYCAction(
@@ -328,7 +329,8 @@ export async function resubmitKYCAction(
 
     return {
       success: true,
-      message: "KYC verification resubmitted successfully! We'll review your documents within 2-3 business days.",
+      message:
+        "KYC verification resubmitted successfully! We'll review your documents within 2-3 business days.",
       data: {
         kycId: kyc._id.toString(),
       },
@@ -358,7 +360,7 @@ export async function resubmitKYCAction(
  * Approve a user's KYC verification (ADMIN ONLY)
  * @param userId - User ID to approve
  * @returns ActionResponse with approval confirmation
- * 
+ *
  * Note: This should be called from an admin panel with proper authorization
  */
 export async function approveKYCAction(
@@ -444,7 +446,7 @@ export async function approveKYCAction(
  * @param userId - User ID to reject
  * @param reason - Rejection reason
  * @returns ActionResponse with rejection confirmation
- * 
+ *
  * Note: This should be called from an admin panel with proper authorization
  */
 export async function rejectKYCAction(

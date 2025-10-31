@@ -1,38 +1,26 @@
-// /server/models/Transaction.ts
-// Transaction Model for GALLA.GOLD Application
-// Purpose: Record all financial transactions including deposits, withdrawals, and gold trades
-// Provides complete audit trail and transaction history for users
+// server/models/Transaction.ts
+// Purpose: Transaction Model with FIXED TransactionType enum including gold_purchase and gold_sale
 
 import mongoose, { Schema, Document, Model, Types } from "mongoose";
 
-// =============================================================================
-// TYPE DEFINITIONS
-// =============================================================================
-
-/**
- * Transaction types supported by the platform
- */
+// ✅ FIXED: Added "gold_purchase" and "gold_sale" to match action files
 export type TransactionType =
-  | "deposit" // Add cash to wallet
-  | "withdrawal" // Withdraw cash from wallet
-  | "buy_gold" // Purchase gold with cash
-  | "sell_gold" // Sell gold for cash
-  | "physical_delivery"; // Request physical gold delivery
+  | "deposit"
+  | "withdrawal"
+  | "buy_gold"
+  | "sell_gold"
+  | "gold_purchase"  // ✅ FIXED: Added for action compatibility
+  | "gold_sale"      // ✅ FIXED: Added for action compatibility
+  | "physical_delivery";
 
-/**
- * Transaction status states
- */
 export type TransactionStatus =
-  | "pending" // Initiated but not processed
-  | "processing" // Being processed by payment provider
-  | "completed" // Successfully completed
-  | "failed" // Failed due to error
-  | "cancelled" // Cancelled by user or system
-  | "refunded"; // Refunded to user
+  | "pending"
+  | "processing"
+  | "completed"
+  | "failed"
+  | "cancelled"
+  | "refunded";
 
-/**
- * Payment methods for deposits/withdrawals
- */
 export type PaymentMethod =
   | "bank_transfer"
   | "credit_card"
@@ -40,35 +28,27 @@ export type PaymentMethod =
   | "wire_transfer"
   | "crypto";
 
-/**
- * Transaction document interface
- */
 export interface ITransaction extends Document {
-  _id: Types.ObjectId; // ✅ Add this line at the top
+  _id: Types.ObjectId;
 
-  userId: Types.ObjectId; // Reference to User model
-  walletId: Types.ObjectId; // Reference to Wallet model
+  userId: Types.ObjectId;
+  walletId: Types.ObjectId;
 
-  // Transaction details
   type: TransactionType;
   status: TransactionStatus;
 
-  // Amount details
-  amount: number; // Transaction amount
-  currency: string; // Currency code (USD, EUR, etc.)
-  fee: number; // Transaction fee
-  netAmount: number; // Amount after fees
+  amount: number;
+  currency: string;
+  fee: number;
+  netAmount: number;
 
-  // Gold-specific fields (for gold trades)
-  goldAmount?: number; // Amount of gold in grams
-  goldPricePerGram?: number; // Gold price at time of transaction
+  goldAmount?: number;
+  goldPricePerGram?: number;
 
-  // Payment details
   paymentMethod?: PaymentMethod;
-  paymentProvider?: string; // Stripe, PayPal, etc.
-  paymentReference?: string; // External payment reference ID
+  paymentProvider?: string;
+  paymentReference?: string;
 
-  // Delivery details (for physical gold delivery)
   deliveryAddress?: {
     line1: string;
     line2?: string;
@@ -77,33 +57,28 @@ export interface ITransaction extends Document {
     country: string;
     postalCode: string;
   };
-  trackingNumber?: string; // Shipping tracking number
+  trackingNumber?: string;
 
-  // Status details
   statusHistory: {
     status: TransactionStatus;
     timestamp: Date;
     note?: string;
   }[];
 
-  // Error handling
   errorMessage?: string;
   errorCode?: string;
 
-  // Metadata
-  description: string; // Human-readable description
-  metadata?: Record<string, any>; // Additional data
-  ipAddress?: string; // User's IP address
-  userAgent?: string; // User's browser/device info
+  description: string;
+  metadata?: Record<string, any>;
+  ipAddress?: string;
+  userAgent?: string;
 
-  // Timestamps
   completedAt?: Date;
   failedAt?: Date;
   refundedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 
-  // Instance methods
   markAsCompleted(note?: string): Promise<void>;
   markAsFailed(error: string, code?: string): Promise<void>;
   markAsCancelled(reason?: string): Promise<void>;
@@ -111,9 +86,6 @@ export interface ITransaction extends Document {
   addStatusUpdate(status: TransactionStatus, note?: string): Promise<void>;
 }
 
-/**
- * Transaction model interface with static methods
- */
 export interface ITransactionModel extends Model<ITransaction> {
   findByUserId(
     userId: string | Types.ObjectId,
@@ -127,13 +99,7 @@ export interface ITransactionModel extends Model<ITransaction> {
   getUserStats(userId: string | Types.ObjectId): Promise<any>;
 }
 
-// =============================================================================
-// SUBDOCUMENT SCHEMAS
-// =============================================================================
-
-/**
- * Status history subdocument schema
- */
+// Subdocument Schemas
 const StatusHistorySchema = new Schema(
   {
     status: {
@@ -158,9 +124,6 @@ const StatusHistorySchema = new Schema(
   { _id: false }
 );
 
-/**
- * Delivery address subdocument schema
- */
 const DeliveryAddressSchema = new Schema(
   {
     line1: { type: String, required: true },
@@ -173,15 +136,9 @@ const DeliveryAddressSchema = new Schema(
   { _id: false }
 );
 
-// =============================================================================
-// MAIN SCHEMA DEFINITION
-// =============================================================================
-
+// Main Schema
 const TransactionSchema = new Schema<ITransaction, ITransactionModel>(
   {
-    // -------------------------------------------------------------------------
-    // REFERENCES
-    // -------------------------------------------------------------------------
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
@@ -196,9 +153,7 @@ const TransactionSchema = new Schema<ITransaction, ITransactionModel>(
       index: true,
     },
 
-    // -------------------------------------------------------------------------
-    // TRANSACTION DETAILS
-    // -------------------------------------------------------------------------
+    // ✅ FIXED: Added "gold_purchase" and "gold_sale"
     type: {
       type: String,
       enum: [
@@ -206,6 +161,8 @@ const TransactionSchema = new Schema<ITransaction, ITransactionModel>(
         "withdrawal",
         "buy_gold",
         "sell_gold",
+        "gold_purchase",
+        "gold_sale",
         "physical_delivery",
       ],
       required: true,
@@ -227,9 +184,6 @@ const TransactionSchema = new Schema<ITransaction, ITransactionModel>(
       index: true,
     },
 
-    // -------------------------------------------------------------------------
-    // AMOUNT DETAILS
-    // -------------------------------------------------------------------------
     amount: {
       type: Number,
       required: true,
@@ -253,9 +207,6 @@ const TransactionSchema = new Schema<ITransaction, ITransactionModel>(
       required: true,
     },
 
-    // -------------------------------------------------------------------------
-    // GOLD TRADING FIELDS
-    // -------------------------------------------------------------------------
     goldAmount: {
       type: Number,
       min: 0,
@@ -266,9 +217,6 @@ const TransactionSchema = new Schema<ITransaction, ITransactionModel>(
       min: 0,
     },
 
-    // -------------------------------------------------------------------------
-    // PAYMENT DETAILS
-    // -------------------------------------------------------------------------
     paymentMethod: {
       type: String,
       enum: [
@@ -283,15 +231,9 @@ const TransactionSchema = new Schema<ITransaction, ITransactionModel>(
     paymentProvider: String,
     paymentReference: String,
 
-    // -------------------------------------------------------------------------
-    // DELIVERY DETAILS (for physical gold)
-    // -------------------------------------------------------------------------
     deliveryAddress: DeliveryAddressSchema,
     trackingNumber: String,
 
-    // -------------------------------------------------------------------------
-    // STATUS TRACKING
-    // -------------------------------------------------------------------------
     statusHistory: {
       type: [StatusHistorySchema],
       default: function (this: ITransaction) {
@@ -304,15 +246,9 @@ const TransactionSchema = new Schema<ITransaction, ITransactionModel>(
       },
     },
 
-    // -------------------------------------------------------------------------
-    // ERROR HANDLING
-    // -------------------------------------------------------------------------
     errorMessage: String,
     errorCode: String,
 
-    // -------------------------------------------------------------------------
-    // METADATA
-    // -------------------------------------------------------------------------
     description: {
       type: String,
       required: true,
@@ -326,9 +262,6 @@ const TransactionSchema = new Schema<ITransaction, ITransactionModel>(
     ipAddress: String,
     userAgent: String,
 
-    // -------------------------------------------------------------------------
-    // STATUS TIMESTAMPS
-    // -------------------------------------------------------------------------
     completedAt: Date,
     failedAt: Date,
     refundedAt: Date,
@@ -338,22 +271,13 @@ const TransactionSchema = new Schema<ITransaction, ITransactionModel>(
   }
 );
 
-// =============================================================================
-// INDEXES FOR PERFORMANCE
-// =============================================================================
-
+// Indexes
 TransactionSchema.index({ userId: 1, createdAt: -1 });
 TransactionSchema.index({ walletId: 1, createdAt: -1 });
 TransactionSchema.index({ type: 1, status: 1 });
 TransactionSchema.index({ status: 1, createdAt: -1 });
 
-// =============================================================================
-// MIDDLEWARE
-// =============================================================================
-
-/**
- * Calculate net amount before saving
- */
+// Middleware
 TransactionSchema.pre("save", function (next) {
   if (this.isModified("amount") || this.isModified("fee")) {
     this.netAmount = this.amount - this.fee;
@@ -361,14 +285,7 @@ TransactionSchema.pre("save", function (next) {
   next();
 });
 
-// =============================================================================
-// INSTANCE METHODS
-// =============================================================================
-
-/**
- * Mark transaction as completed
- * @param note - Optional completion note
- */
+// Instance Methods
 TransactionSchema.methods.markAsCompleted = async function (
   note?: string
 ): Promise<void> {
@@ -378,11 +295,6 @@ TransactionSchema.methods.markAsCompleted = async function (
   await this.save();
 };
 
-/**
- * Mark transaction as failed
- * @param error - Error message
- * @param code - Optional error code
- */
 TransactionSchema.methods.markAsFailed = async function (
   error: string,
   code?: string
@@ -395,10 +307,6 @@ TransactionSchema.methods.markAsFailed = async function (
   await this.save();
 };
 
-/**
- * Mark transaction as cancelled
- * @param reason - Cancellation reason
- */
 TransactionSchema.methods.markAsCancelled = async function (
   reason?: string
 ): Promise<void> {
@@ -407,10 +315,6 @@ TransactionSchema.methods.markAsCancelled = async function (
   await this.save();
 };
 
-/**
- * Mark transaction as refunded
- * @param reason - Refund reason
- */
 TransactionSchema.methods.markAsRefunded = async function (
   reason?: string
 ): Promise<void> {
@@ -420,11 +324,6 @@ TransactionSchema.methods.markAsRefunded = async function (
   await this.save();
 };
 
-/**
- * Add status update to history
- * @param status - New status
- * @param note - Optional note
- */
 TransactionSchema.methods.addStatusUpdate = async function (
   status: TransactionStatus,
   note?: string
@@ -436,128 +335,59 @@ TransactionSchema.methods.addStatusUpdate = async function (
   });
 };
 
-// =============================================================================
-// STATIC METHODS
-// =============================================================================
-
-/**
- * Find transactions by user ID
- * @param userId - User ID
- * @param limit - Optional limit (default: 50)
- * @returns Promise<ITransaction[]>
- */
+// Static Methods
 TransactionSchema.statics.findByUserId = function (
   userId: string | Types.ObjectId,
   limit: number = 50
 ) {
-  return this.find({ userId }).sort({ createdAt: -1 }).limit(limit).exec();
+  return this.find({ userId })
+    .sort({ createdAt: -1 })
+    .limit(limit);
 };
 
-/**
- * Find transactions by wallet ID
- * @param walletId - Wallet ID
- * @param limit - Optional limit (default: 50)
- * @returns Promise<ITransaction[]>
- */
 TransactionSchema.statics.findByWalletId = function (
   walletId: string | Types.ObjectId,
   limit: number = 50
 ) {
-  return this.find({ walletId }).sort({ createdAt: -1 }).limit(limit).exec();
+  return this.find({ walletId })
+    .sort({ createdAt: -1 })
+    .limit(limit);
 };
 
-/**
- * Find all pending transactions
- * @returns Promise<ITransaction[]>
- */
 TransactionSchema.statics.findPendingTransactions = function () {
-  return this.find({ status: "pending" }).sort({ createdAt: 1 }).exec();
+  return this.find({ status: "pending" }).sort({ createdAt: 1 });
 };
 
-/**
- * Get user transaction statistics
- * @param userId - User ID
- * @returns Promise<any> - Statistics object
- */
 TransactionSchema.statics.getUserStats = async function (
   userId: string | Types.ObjectId
 ) {
-  const stats = await this.aggregate([
-    { $match: { userId: new Types.ObjectId(userId as string) } },
-    {
-      $group: {
-        _id: "$type",
-        count: { $sum: 1 },
-        totalAmount: { $sum: "$amount" },
-        totalFees: { $sum: "$fee" },
-      },
-    },
-  ]);
+  const transactions = await this.find({ userId });
+  
+  const stats = {
+    totalTransactions: transactions.length,
+    totalDeposits: 0,
+    totalWithdrawals: 0,
+    totalGoldPurchases: 0,
+    totalGoldSales: 0,
+  };
+
+  transactions.forEach((tx) => {
+    const amount = tx.amount || 0;
+    if (tx.type === "deposit") stats.totalDeposits += amount;
+    if (tx.type === "withdrawal") stats.totalWithdrawals += amount;
+    // ✅ FIXED: Now both buy_gold and gold_purchase work
+    if (tx.type === "buy_gold" || tx.type === "gold_purchase") {
+      stats.totalGoldPurchases += amount;
+    }
+    if (tx.type === "sell_gold" || tx.type === "gold_sale") {
+      stats.totalGoldSales += amount;
+    }
+  });
 
   return stats;
 };
 
-// =============================================================================
-// MODEL EXPORT
-// =============================================================================
-
-const Transaction =
-  (mongoose.models.Transaction as ITransactionModel) ||
-  mongoose.model<ITransaction, ITransactionModel>(
-    "Transaction",
-    TransactionSchema
-  );
+const Transaction = (mongoose.models.Transaction as ITransactionModel) || 
+  mongoose.model<ITransaction, ITransactionModel>("Transaction", TransactionSchema);
 
 export default Transaction;
-
-// =============================================================================
-// USAGE EXAMPLES FOR DEVELOPERS
-// =============================================================================
-
-/*
- * CREATE DEPOSIT TRANSACTION:
- *
- * const transaction = await Transaction.create({
- *   userId: user._id,
- *   walletId: wallet._id,
- *   type: 'deposit',
- *   amount: 1000,
- *   currency: 'USD',
- *   fee: 10,
- *   netAmount: 990,
- *   paymentMethod: 'bank_transfer',
- *   description: 'Deposit via bank transfer',
- * });
- *
- *
- * CREATE GOLD PURCHASE:
- *
- * const transaction = await Transaction.create({
- *   userId: user._id,
- *   walletId: wallet._id,
- *   type: 'buy_gold',
- *   amount: 650,
- *   currency: 'USD',
- *   fee: 13,
- *   netAmount: 637,
- *   goldAmount: 10,
- *   goldPricePerGram: 65,
- *   description: 'Purchased 10g gold at $65/g',
- * });
- *
- *
- * UPDATE TRANSACTION STATUS:
- *
- * await transaction.markAsCompleted('Payment processed successfully');
- * await transaction.markAsFailed('Insufficient funds', 'E001');
- *
- *
- * GET USER TRANSACTIONS:
- *
- * const transactions = await Transaction.findByUserId(userId, 20);
- *
- *
- * GET USER STATISTICS:
- *
- * const stats = await Transaction.getUserStats(userId);
- */

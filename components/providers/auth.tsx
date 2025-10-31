@@ -1,13 +1,13 @@
 // components/providers/auth.tsx
-// Authentication Provider for GALLA.GOLD Next.js Application
-// Purpose: Provide authentication state throughout the app using Auth.js session
-// Replaces the localStorage-based AuthContext from the Vite app
+// Purpose: Authentication Provider with FIXED session user types
 
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+// ✅ FIXED: Import Session type to get extended user properties
+import type { Session } from "next-auth";
 
 // =============================================================================
 // TYPE DEFINITIONS
@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 
 /**
  * User type matching the Auth.js session user
+ * ✅ FIXED: This now matches the extended Session.user from types/next-auth.d.ts
  */
 interface User {
   id: string;
@@ -60,16 +61,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
  *
  * This provider uses Auth.js (NextAuth) session under the hood.
  * It transforms the session data into a user-friendly format.
- *
- * Usage:
- * ```tsx
- * // In app/layout.tsx
- * <AuthProvider>
- *   {children}
- * </AuthProvider>
- * ```
- *
- * @param children - Child components to wrap
  */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Get session from Auth.js
@@ -82,39 +73,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Determine loading state
   const isLoading = status === "loading" || !isReady;
 
+  // ✅ FIXED: Properly type session to get extended user properties
+  const sessionUser = (session as Session)?.user;
+
   // Transform session into user object
-  const user: User | null = session?.user
+  const user: User | null = sessionUser
     ? {
-        id: session.user.id!,
-        email: session.user.email!,
-        firstName: session.user.firstName!,
-        lastName: session.user.lastName!,
-        emailVerified: !!session.user.emailVerified,
-        kycStatus: session.user.kycStatus || "none",
-        mfaEnabled: session.user.mfaEnabled || false,
-        avatar: session.user.avatar,
-        phone: session.user.phone,
+        id: sessionUser.id,
+        email: sessionUser.email,
+        // ✅ FIXED: These properties now exist because of types/next-auth.d.ts
+        firstName: sessionUser.firstName,
+        lastName: sessionUser.lastName,
+        emailVerified: !!sessionUser.emailVerified,
+        kycStatus: sessionUser.kycStatus || "none",
+        mfaEnabled: sessionUser.mfaEnabled || false,
+        avatar: sessionUser.avatar,
+        phone: sessionUser.phone,
       }
     : null;
-
-  // Mark as ready after initial render
-  useEffect(() => {
-    if (status !== "loading") {
-      setIsReady(true);
-    }
-  }, [status]);
-
-  // Utility functions
-  const refetch = () => {
-    update();
-  };
 
   // Status checks
   const hasVerifiedEmail = user?.emailVerified || false;
   const hasKYC = user?.kycStatus === "verified";
   const hasMFA = user?.mfaEnabled || false;
 
-  // Context value
+  // Mark as ready after initial load
+  useEffect(() => {
+    if (status !== "loading") {
+      setIsReady(true);
+    }
+  }, [status]);
+
+  // Refetch function
+  const refetch = () => {
+    update();
+  };
+
   const value: AuthContextType = {
     user,
     isLoading,
@@ -133,7 +127,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 // =============================================================================
 
 /**
- * useAuth - Custom hook to access authentication context
+ * useAuth - Access authentication state anywhere in the app
+ *
+ * @throws Error if used outside AuthProvider
+ * @returns AuthContextType
  *
  * Usage:
  * ```tsx
@@ -142,109 +139,72 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
  * if (isLoading) return <Spinner />;
  * if (!isAuthenticated) return <LoginPrompt />;
  *
- * return <div>Welcome {user.firstName}!</div>;
+ * return <div>Hello {user.firstName}!</div>;
  * ```
- *
- * @returns AuthContextType - Authentication context
- * @throws Error if used outside AuthProvider
  */
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
-
+  
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
-
+  
   return context;
 }
 
 // =============================================================================
-// PROTECTED ROUTE HOC (Optional)
+// HELPER HOOKS
 // =============================================================================
 
 /**
- * withAuth - Higher-order component to protect routes
+ * useRequireAuth - Redirect to login if not authenticated
  *
  * Usage:
  * ```tsx
- * export default withAuth(DashboardPage);
+ * const user = useRequireAuth();
  * ```
- *
- * @param Component - Component to protect
- * @returns Protected component that redirects if not authenticated
  */
-export function withAuth<P extends object>(
-  Component: React.ComponentType<P>
-): React.FC<P> {
-  return function ProtectedRoute(props: P) {
-    const { isAuthenticated, isLoading } = useAuth();
-    const router = useRouter();
+export function useRequireAuth() {
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
 
-    useEffect(() => {
-      if (!isLoading && !isAuthenticated) {
-        router.push("/login");
-      }
-    }, [isAuthenticated, isLoading, router]);
-
-    if (isLoading) {
-      return (
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="spinner w-12 h-12" />
-        </div>
-      );
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push("/login");
     }
+  }, [user, isLoading, router]);
 
-    if (!isAuthenticated) {
-      return null; // Will redirect
-    }
-
-    return <Component {...props} />;
-  };
+  return user;
 }
 
-// =============================================================================
-// USAGE EXAMPLES
-// =============================================================================
-
-/*
- * BASIC USAGE:
- *
- * import { useAuth } from '@/components/providers/auth';
- *
- * function MyComponent() {
- *   const { user, isLoading, isAuthenticated } = useAuth();
- *
- *   if (isLoading) return <div>Loading...</div>;
- *   if (!isAuthenticated) return <div>Please log in</div>;
- *
- *   return <div>Hello {user.firstName}!</div>;
- * }
- *
- *
- * STATUS CHECKS:
- *
- * const { hasVerifiedEmail, hasKYC, hasMFA } = useAuth();
- *
- * if (!hasVerifiedEmail) {
- *   return <EmailVerificationBanner />;
- * }
- *
- * if (!hasKYC) {
- *   return <KYCPrompt />;
- * }
- *
- *
- * REFETCH SESSION:
- *
- * const { refetch } = useAuth();
- *
- * const handleProfileUpdate = async () => {
- *   await updateProfileAction(data);
- *   refetch(); // Refresh session with updated data
- * };
- *
- *
- * PROTECTED ROUTE:
- *
- * export default withAuth(DashboardPage);
+/**
+ * useRequireKYC - Redirect to KYC page if not verified
  */
+export function useRequireKYC() {
+  const { user, isLoading, hasKYC } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && user && !hasKYC) {
+      router.push("/kyc");
+    }
+  }, [user, isLoading, hasKYC, router]);
+
+  return user;
+}
+
+/**
+ * useRequireEmailVerified - Redirect if email not verified
+ */
+export function useRequireEmailVerified() {
+  const { user, isLoading, hasVerifiedEmail } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && user && !hasVerifiedEmail) {
+      router.push("/verify-email");
+    }
+  }, [user, isLoading, hasVerifiedEmail, router]);
+
+  return user;
+}

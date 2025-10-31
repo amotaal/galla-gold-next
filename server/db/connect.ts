@@ -20,7 +20,7 @@ interface MongooseCache {
 
 // MongoDB connection string from environment variables
 const MONGODB_URI = process.env.MONGODB_URI;
-const MONGODB_DB = process.env.MONGODB_DB || "gallagold";
+const MONGODB_DB = process.env.MONGODB_DB || "EGG";
 
 if (!MONGODB_URI) {
   throw new Error(

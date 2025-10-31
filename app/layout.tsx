@@ -53,7 +53,7 @@ export const metadata: Metadata = {
   },
   description:
     "Invest in physical gold with ease. Buy, sell, and store gold securely. Track your portfolio in real-time. Multi-currency support and physical delivery available.",
-  
+
   // Keywords for SEO
   keywords: [
     "gold investment",
@@ -65,7 +65,7 @@ export const metadata: Metadata = {
     "gold storage",
     "invest in gold",
   ],
-  
+
   // Authors
   authors: [
     {
@@ -73,13 +73,13 @@ export const metadata: Metadata = {
       url: "https://gallagold.com",
     },
   ],
-  
+
   // Creator
   creator: "GALLA.GOLD",
-  
+
   // Publisher
   publisher: "GALLA.GOLD",
-  
+
   // Robots
   robots: {
     index: true,
@@ -92,7 +92,7 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  
+
   // Open Graph metadata (for social sharing)
   openGraph: {
     type: "website",
@@ -111,7 +111,7 @@ export const metadata: Metadata = {
       },
     ],
   },
-  
+
   // Twitter Card metadata
   twitter: {
     card: "summary_large_image",
@@ -121,33 +121,33 @@ export const metadata: Metadata = {
     images: ["/twitter-image.jpg"],
     creator: "@gallagold",
   },
-  
+
   // Icons
   icons: {
     icon: "/favicon.ico",
     shortcut: "/favicon.ico",
     apple: "/apple-touch-icon.png",
   },
-  
+
   // Manifest
   manifest: "/manifest.json",
-  
+
   // Viewport (in Next.js 14+, this is set separately)
   // viewport: "width=device-width, initial-scale=1, maximum-scale=5",
-  
+
   // Theme color
   // themeColor: [
   //   { media: "(prefers-color-scheme: light)", color: "#FAFAFA" },
   //   { media: "(prefers-color-scheme: dark)", color: "#0D0D0D" },
   // ],
-  
+
   // Verification (add your verification codes here)
   verification: {
     google: "your-google-verification-code",
     // yandex: "your-yandex-verification-code",
     // bing: "your-bing-verification-code",
   },
-  
+
   // Category
   category: "finance",
 };
@@ -176,7 +176,7 @@ export const viewport = {
 
 /**
  * RootLayout - Main layout component that wraps the entire application
- * 
+ *
  * This layout component:
  * 1. Sets up HTML structure with proper lang attribute
  * 2. Applies custom fonts (Geist Sans and Geist Mono)
@@ -188,7 +188,7 @@ export const viewport = {
  *    - WalletProvider (Wallet data)
  *    - TooltipProvider (shadcn tooltips)
  * 4. Includes global UI components (Toasters)
- * 
+ *
  * Provider Order (important for dependencies):
  * 1. SessionProvider - Base authentication
  * 2. ThemeProvider - Theme management
@@ -196,7 +196,7 @@ export const viewport = {
  * 4. AuthProvider - Uses session from SessionProvider
  * 5. WalletProvider - Uses auth from AuthProvider
  * 6. TooltipProvider - UI utilities
- * 
+ *
  * @param children - Page content to render
  */
 export default function RootLayout({
@@ -223,7 +223,7 @@ export default function RootLayout({
                   <TooltipProvider>
                     {/* Main Application Content */}
                     {children}
-                    
+
                     {/* Toast Notifications */}
                     <Toaster />
                     <Sonner />
@@ -244,7 +244,7 @@ export default function RootLayout({
 
 /*
  * PROVIDER HIERARCHY:
- * 
+ *
  * SessionProvider (NextAuth)
  *   └─ ThemeProvider (next-themes)
  *       └─ I18nProvider (custom)
@@ -252,45 +252,45 @@ export default function RootLayout({
  *               └─ WalletProvider (custom, uses auth)
  *                   └─ TooltipProvider (shadcn)
  *                       └─ Page Content
- * 
+ *
  * This hierarchy ensures each provider has access to the providers it depends on.
- * 
- * 
+ *
+ *
  * ACCESSING PROVIDERS IN COMPONENTS:
- * 
+ *
  * // Authentication
  * import { useAuth } from '@/components/providers/auth';
  * const { user, isAuthenticated } = useAuth();
- * 
+ *
  * // Wallet
  * import { useWallet } from '@/components/providers/wallet';
  * const { balance, gold, transactions } = useWallet();
- * 
+ *
  * // Theme
  * import { useTheme } from 'next-themes';
  * const { theme, setTheme } = useTheme();
- * 
+ *
  * // i18n
  * import { useI18n } from '@/components/providers/i18n';
  * const { t, locale, setLocale } = useI18n();
- * 
- * 
+ *
+ *
  * METADATA:
- * 
+ *
  * To override metadata in specific pages:
- * 
+ *
  * // app/dashboard/page.tsx
  * export const metadata: Metadata = {
  *   title: "Dashboard",
  *   description: "Your gold portfolio dashboard",
  * };
- * 
- * 
+ *
+ *
  * FONTS:
- * 
+ *
  * Fonts are available as CSS variables:
  * - var(--font-geist-sans) - Sans-serif font
  * - var(--font-geist-mono) - Monospace font
- * 
+ *
  * Applied globally via Tailwind's fontFamily config.
  */
