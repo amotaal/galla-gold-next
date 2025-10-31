@@ -13,7 +13,12 @@ import {
   mfaVerifySchema,
   mfaBackupSchema,
 } from "@/server/lib/validation";
-import { generateToken, generateBackupCodes, hashPassword, verifyPassword } from "@/server/lib/crypto";
+import {
+  generateToken,
+  generateBackupCodes,
+  hashPassword,
+  verifyPassword,
+} from "@/server/lib/crypto";
 import { sendEmail } from "@/server/email/send";
 import * as speakeasy from "speakeasy";
 import * as QRCode from "qrcode";
@@ -36,7 +41,7 @@ type ActionResponse<T = void> = {
 /**
  * Generate MFA secret and QR code for user setup
  * @returns ActionResponse with secret and QR code
- * 
+ *
  * Process:
  * 1. Check if MFA is already enabled
  * 2. Generate TOTP secret
@@ -90,7 +95,8 @@ export async function setupMFAAction(): Promise<
 
     return {
       success: true,
-      message: "MFA setup initiated. Please scan the QR code with your authenticator app.",
+      message:
+        "MFA setup initiated. Please scan the QR code with your authenticator app.",
       data: {
         secret: secret.base32,
         qrCode: qrCodeDataURL,
@@ -115,7 +121,7 @@ export async function setupMFAAction(): Promise<
  * Verify MFA setup by confirming a TOTP code
  * @param formData - Form data with secret and verification code
  * @returns ActionResponse with confirmation
- * 
+ *
  * Process:
  * 1. Validate code against secret
  * 2. Save MFA configuration to database
@@ -228,7 +234,7 @@ export async function verifyMFASetupAction(
  * Verify MFA code during login or sensitive operation
  * @param formData - Form data with verification code
  * @returns ActionResponse with verification result
- * 
+ *
  * Used after initial password authentication
  */
 export async function verifyMFACodeAction(
@@ -269,11 +275,11 @@ export async function verifyMFACodeAction(
     if (!isValid) {
       // Increment failed attempts
       mfa.failedAttempts += 1;
-      mfa.failedAttempts = new Date();
+      mfa.failedAttempts += 1;
 
       // Lock MFA after 5 failed attempts
       if (mfa.failedAttempts >= 5) {
-        mfa.lockUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+        mfa.lockedUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
         await mfa.save();
 
         return {
@@ -286,13 +292,15 @@ export async function verifyMFACodeAction(
 
       return {
         success: false,
-        error: `Invalid verification code. ${5 - mfa.failedAttempts} attempts remaining.`,
+        error: `Invalid verification code. ${
+          5 - mfa.failedAttempts
+        } attempts remaining.`,
       };
     }
 
     // Successful verification - reset failed attempts
     mfa.failedAttempts = 0;
-    mfa.failedAttempts = undefined;
+    mfa.failedAttempts = 0;
     await mfa.save();
 
     return {
@@ -324,7 +332,7 @@ export async function verifyMFACodeAction(
  * Use backup code for MFA verification
  * @param formData - Form data with backup code
  * @returns ActionResponse with verification result
- * 
+ *
  * Backup codes are single-use and removed after successful use
  */
 export async function useBackupCodeAction(
@@ -361,7 +369,7 @@ export async function useBackupCodeAction(
     for (let i = 0; i < mfa.backupCodes.length; i++) {
       const isMatch = await verifyPassword(
         validated.backupCode,
-        mfa.backupCodes[i]
+        mfa.backupCodes[i].code
       );
 
       if (isMatch) {
@@ -387,7 +395,8 @@ export async function useBackupCodeAction(
     let warningMessage = "";
 
     if (remainingCodes === 0) {
-      warningMessage = " WARNING: You have no backup codes remaining. Please generate new ones.";
+      warningMessage =
+        " WARNING: You have no backup codes remaining. Please generate new ones.";
     } else if (remainingCodes <= 2) {
       warningMessage = ` WARNING: You only have ${remainingCodes} backup codes remaining.`;
     }
@@ -421,7 +430,7 @@ export async function useBackupCodeAction(
  * Generate new backup codes (requires MFA verification)
  * @param formData - Form data with current MFA code
  * @returns ActionResponse with new backup codes
- * 
+ *
  * Requires verification of current MFA code before generating new codes
  */
 export async function regenerateBackupCodesAction(
@@ -463,7 +472,7 @@ export async function regenerateBackupCodesAction(
     );
 
     // Replace old backup codes with new ones
-    mfa.backupCodes = hashedBackupCodes;
+    mfa.backupCodes = hashedBackupCodes.map((code) => ({ code, used: false }));
     await mfa.save();
 
     const user = await User.findById(session.user.id);
@@ -487,7 +496,8 @@ export async function regenerateBackupCodesAction(
 
     return {
       success: true,
-      message: "New backup codes generated successfully. Please save them in a secure location.",
+      message:
+        "New backup codes generated successfully. Please save them in a secure location.",
       data: {
         backupCodes: newBackupCodes,
       },
@@ -510,7 +520,7 @@ export async function regenerateBackupCodesAction(
  * Disable MFA for user account (requires password confirmation)
  * @param formData - Form data with password
  * @returns ActionResponse with confirmation
- * 
+ *
  * Requires password confirmation for security
  */
 export async function disableMFAAction(

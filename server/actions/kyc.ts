@@ -393,7 +393,7 @@ export async function approveKYCAction(
     }
 
     // Update KYC status
-    kyc.status = "approved";
+    kyc.status = "verified";
     kyc.reviewedAt = new Date();
     kyc.documents.forEach((doc) => {
       doc.status = "approved";

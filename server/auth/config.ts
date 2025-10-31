@@ -1,12 +1,13 @@
-// server/auth/config.ts
+// /server/auth/config.ts
 // ============================================================================
-// FIXED - Server-Side Auth Configuration (Alternative Location)
+// FIXED - Next-Auth v5 Configuration for GALLA.GOLD ALTERNATIVE LOCATION
 // ============================================================================
-// Purpose: Server auth configuration (same as root auth.config.ts)
-// Note: This is a duplicate - consider consolidating to avoid maintenance
-// CRITICAL FIX: Properly converts emailVerified between boolean and Date | null
+// Purpose: Main authentication configuration with Credentials provider
+// ✅ FIXED: Proper typing for credentials and authorized callback
+// ✅ FIXED: Converts boolean emailVerified → Date | null for Next-Auth
 
 import NextAuth from "next-auth";
+import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { connectDB } from "@/server/db/connect";
 import User from "@/server/models/User";
@@ -18,7 +19,7 @@ import type { JWT } from "next-auth/jwt";
 // NEXT-AUTH CONFIGURATION
 // =============================================================================
 
-export const authConfig = {
+export const authConfig: NextAuthConfig = {
   // ---------------------------------------------------------------------------
   // PROVIDERS
   // ---------------------------------------------------------------------------
@@ -29,14 +30,20 @@ export const authConfig = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      
+
       // -----------------------------------------------------------------------
       // AUTHORIZE FUNCTION
       // -----------------------------------------------------------------------
-      // ✅ FIXED: Converts boolean emailVerified → Date | null for Next-Auth
+      // ✅ FIXED: Properly typed credentials, converts emailVerified boolean → Date | null
       async authorize(credentials): Promise<AuthUser | null> {
         try {
-          if (!credentials?.email || !credentials?.password) {
+          // ✅ FIX: Type assertion for credentials
+          const { email, password } = credentials as {
+            email: string;
+            password: string;
+          };
+
+          if (!email || !password) {
             throw new Error("Missing credentials");
           }
 
@@ -44,8 +51,8 @@ export const authConfig = {
           await connectDB();
 
           // Find user with password field
-          const user = await User.findOne({ 
-            email: credentials.email.toLowerCase() 
+          const user = await User.findOne({
+            email: email.toLowerCase(), // ✅ Now properly typed
           }).select("+password");
 
           if (!user) {
@@ -58,10 +65,7 @@ export const authConfig = {
           }
 
           // Verify password
-          const isValid = await verifyPassword(
-            credentials.password as string,
-            user.password
-          );
+          const isValid = await verifyPassword(password, user.password);
 
           if (!isValid) {
             // Increment failed login attempts
@@ -94,7 +98,7 @@ export const authConfig = {
             hasMFA: user.mfaEnabled,
             kycStatus: user.kycStatus,
             locale: user.locale || "en",
-            emailVerified: user.emailVerified ? new Date() : null,  // ✅ CONVERSION
+            emailVerified: user.emailVerified ? new Date() : null, // ✅ CONVERSION
           };
         } catch (error: any) {
           console.error("Auth error:", error);
@@ -112,7 +116,12 @@ export const authConfig = {
     // JWT CALLBACK
     // -------------------------------------------------------------------------
     // ✅ FIXED: Preserves emailVerified as Date | null in token
-    async jwt({ token, user, trigger, session }: {
+    async jwt({
+      token,
+      user,
+      trigger,
+      session,
+    }: {
       token: JWT;
       user?: AuthUser;
       trigger?: "signIn" | "signUp" | "update";
@@ -129,7 +138,7 @@ export const authConfig = {
         token.hasMFA = user.hasMFA;
         token.kycStatus = user.kycStatus;
         token.locale = user.locale;
-        token.emailVerified = user.emailVerified;  // ✅ Already Date | null
+        token.emailVerified = user.emailVerified; // ✅ Already Date | null
       }
 
       // Handle session updates (e.g., profile changes)
@@ -147,23 +156,26 @@ export const authConfig = {
     // SESSION CALLBACK
     // -------------------------------------------------------------------------
     // ✅ FIXED: Passes emailVerified as Date | null to session
-    async session({ session, token }: {
+    async session({
+      session,
+      token,
+    }: {
       session: Session;
       token: JWT;
     }): Promise<Session> {
       if (session.user) {
         session.user = {
-          id: token.id,
-          email: token.email,
-          name: token.name,
-          firstName: token.firstName,
-          lastName: token.lastName,
-          role: token.role,
-          hasMFA: token.hasMFA,
-          mfaEnabled: token.hasMFA,  // Alias
-          kycStatus: token.kycStatus,
-          locale: token.locale,
-          emailVerified: token.emailVerified as Date | null,  // ✅ Keep as Date | null
+          id: token.id as string,
+          email: token.email as string,
+          name: token.name as string,
+          firstName: token.firstName as string,
+          lastName: token.lastName as string,
+          role: token.role as "user" | "admin",
+          hasMFA: token.hasMFA as boolean,
+          mfaEnabled: token.hasMFA as boolean, // Alias
+          kycStatus: token.kycStatus as any,
+          locale: token.locale as string,
+          emailVerified: token.emailVerified as Date | null, // ✅ Keep as Date | null
         };
       }
 
@@ -173,20 +185,38 @@ export const authConfig = {
     // -------------------------------------------------------------------------
     // AUTHORIZED CALLBACK (for middleware)
     // -------------------------------------------------------------------------
-    async authorized({ auth, request }) {
+    // ✅ FIXED: Properly typed parameters
+    async authorized({
+      auth,
+      request,
+    }: {
+      auth: Session | null;
+      request: Request & { nextUrl: URL };
+    }) {
       const { pathname } = request.nextUrl;
       const isLoggedIn = !!auth?.user;
 
-      // Public routes
-      const publicRoutes = ["/", "/login", "/signup", "/verify-email", "/reset-password"];
-      const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith("/api/auth");
+      // Public routes (accessible without auth)
+      const publicRoutes = [
+        "/",
+        "/login",
+        "/signup",
+        "/forgot-password",
+        "/reset-password",
+        "/verify-email",
+      ];
 
-      // Allow public routes
+      // Check if current route is public
+      const isPublicRoute = publicRoutes.some((route) =>
+        pathname.startsWith(route)
+      );
+
+      // Allow access to public routes
       if (isPublicRoute) {
         return true;
       }
 
-      // Protect all other routes
+      // Require authentication for all other routes
       return isLoggedIn;
     },
   },
@@ -196,32 +226,28 @@ export const authConfig = {
   // ---------------------------------------------------------------------------
   pages: {
     signIn: "/login",
-    signOut: "/logout",
-    error: "/auth/error",
-    verifyRequest: "/auth/verify",
-    newUser: "/dashboard",  // Redirect after signup
+    signOut: "/",
+    error: "/login",
   },
 
   // ---------------------------------------------------------------------------
-  // SESSION CONFIGURATION
+  // SESSION
   // ---------------------------------------------------------------------------
   session: {
-    strategy: "jwt" as const,
+    strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
-    updateAge: 24 * 60 * 60,    // Update every 24 hours
   },
 
   // ---------------------------------------------------------------------------
-  // JWT CONFIGURATION
+  // JWT
   // ---------------------------------------------------------------------------
   jwt: {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
 
   // ---------------------------------------------------------------------------
-  // SECURITY OPTIONS
+  // SECURITY
   // ---------------------------------------------------------------------------
-  trustHost: true,  // For deployment
   secret: process.env.NEXTAUTH_SECRET,
 
   // ---------------------------------------------------------------------------
@@ -231,21 +257,7 @@ export const authConfig = {
 };
 
 // =============================================================================
-// EXPORT HANDLERS
+// EXPORT NEXTAUTH INSTANCE
 // =============================================================================
 
 export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
-
-// =============================================================================
-// RECOMMENDATION
-// =============================================================================
-//
-// ⚠️ This file is a duplicate of /auth.config.ts
-//
-// Consider consolidating to one location:
-// - Use /auth.config.ts (root level) - RECOMMENDED
-// - Or use /server/auth/config.ts (if you prefer server folder organization)
-//
-// Having two identical files makes maintenance harder and increases risk of
-// inconsistencies between them.
-//

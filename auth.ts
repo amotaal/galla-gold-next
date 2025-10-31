@@ -1,6 +1,9 @@
-// /auth.ts
-// NextAuth.js Main Configuration and Exports
+// auth.ts
+// ============================================================================
+// NextAuth.js Main Configuration and Exports - FIXED
+// ============================================================================
 // Purpose: Export NextAuth handlers, signIn, signOut, and auth functions
+// ✅ FIXED: Removed conflicting type declarations (use types/next-auth.d.ts instead)
 
 import NextAuth from "next-auth";
 import { authConfig } from "./auth.config";
@@ -79,34 +82,8 @@ export async function signOutUser(redirectTo: string = "/") {
 }
 
 // =============================================================================
-// TYPE AUGMENTATION
+// TYPE DECLARATIONS
 // =============================================================================
-
-/**
- * Extend NextAuth types with custom user properties
- */
-declare module "next-auth" {
-  interface User {
-    id: string;
-    email: string;
-    name: string;
-    emailVerified: boolean;
-  }
-
-  interface Session {
-    user: {
-      id: string;
-      email: string;
-      name: string;
-      emailVerified: boolean;
-    };
-  }
-}
-
-declare module "next-auth/jwt" {
-  interface JWT {
-    id: string;
-    email: string;
-    emailVerified: boolean;
-  }
-}
+// ✅ FIXED: Removed conflicting type declarations from here
+// All type declarations are now in types/next-auth.d.ts
+// This prevents conflicts between auth.ts and types/next-auth.d.ts
