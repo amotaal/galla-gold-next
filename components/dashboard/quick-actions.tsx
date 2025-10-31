@@ -3,9 +3,7 @@
 
 'use client';
 
-import { useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import {
   Plus,
   Minus,
@@ -30,7 +28,7 @@ export function QuickActions() {
       bgColor: 'bg-green-500/10',
       hoverColor: 'hover:bg-green-500/20',
       ringColor: 'ring-green-500/20',
-      onClick: () => router.push('/buy-gold'),
+      onClick: () => router.push('/dashboard/buy'),
     },
     {
       icon: Minus,
@@ -40,7 +38,7 @@ export function QuickActions() {
       bgColor: 'bg-orange-500/10',
       hoverColor: 'hover:bg-orange-500/20',
       ringColor: 'ring-orange-500/20',
-      onClick: () => router.push('/sell-gold'),
+      onClick: () => router.push('/dashboard/sell'),
     },
     {
       icon: ArrowDownToLine,
@@ -50,7 +48,7 @@ export function QuickActions() {
       bgColor: 'bg-blue-500/10',
       hoverColor: 'hover:bg-blue-500/20',
       ringColor: 'ring-blue-500/20',
-      onClick: () => router.push('/deposit'),
+      onClick: () => router.push('/dashboard/deposit'),
     },
     {
       icon: Send,
@@ -60,7 +58,7 @@ export function QuickActions() {
       bgColor: 'bg-purple-500/10',
       hoverColor: 'hover:bg-purple-500/20',
       ringColor: 'ring-purple-500/20',
-      onClick: () => router.push('/withdraw'),
+      onClick: () => router.push('/dashboard/withdraw'),
     },
     {
       icon: Package,
@@ -70,7 +68,7 @@ export function QuickActions() {
       bgColor: 'bg-amber-500/10',
       hoverColor: 'hover:bg-amber-500/20',
       ringColor: 'ring-amber-500/20',
-      onClick: () => router.push('/delivery'),
+      onClick: () => router.push('/dashboard/deliver'),
     },
     {
       icon: Trophy,
@@ -80,7 +78,7 @@ export function QuickActions() {
       bgColor: 'bg-primary/10',
       hoverColor: 'hover:bg-primary/20',
       ringColor: 'ring-primary/20',
-      onClick: () => router.push('/achievements'),
+      onClick: () => router.push('/dashboard/achievements'),
     },
   ];
 
@@ -89,38 +87,23 @@ export function QuickActions() {
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-bold">Quick Actions</h3>
       </div>
-      
       <div className="space-y-2">
         {actions.map((action, index) => (
           <button
             key={index}
             onClick={action.onClick}
-            className={`
-              w-full flex items-center gap-3 p-3 rounded-xl
-              ${action.bgColor} ${action.hoverColor}
-              ring-1 ${action.ringColor}
-              transition-all duration-200
-              hover:scale-[1.02] active:scale-[0.98]
-              group
-            `}
+            className={`w-full flex items-center gap-3 p-3 rounded-lg ${action.bgColor} ${action.hoverColor} ring-1 ${action.ringColor} transition-all group`}
           >
-            {/* Icon */}
-            <div className={`p-2 rounded-lg ${action.bgColor} ring-1 ${action.ringColor}`}>
+            <div className={`p-2 rounded-lg bg-background/50`}>
               <action.icon className={`w-5 h-5 ${action.color}`} />
             </div>
-            
-            {/* Text */}
             <div className="flex-1 text-left">
-              <p className="text-sm font-semibold text-foreground">
-                {action.label}
-              </p>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-sm font-medium">{action.label}</div>
+              <div className="text-xs text-muted-foreground">
                 {action.description}
-              </p>
+              </div>
             </div>
-            
-            {/* Chevron */}
-            <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" />
+            <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
           </button>
         ))}
       </div>

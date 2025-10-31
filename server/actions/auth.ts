@@ -45,15 +45,13 @@ type ActionResponse<T = void> = {
  * Login with email and password
  * @param formData - Login form data {email, password, rememberMe}
  * @returns ActionResponse - Success or error message
- * 
+ *
  * Process:
  * 1. Validate input
  * 2. Attempt sign in with Auth.js
  * 3. Return success or error
  */
-export async function loginAction(
-  formData: FormData
-): Promise<ActionResponse> {
+export async function loginAction(formData: FormData): Promise<ActionResponse> {
   try {
     // Extract and validate form data
     const rawData = {
@@ -117,7 +115,7 @@ export async function loginAction(
  * Register new user account
  * @param formData - Signup form data
  * @returns ActionResponse - Success message or error
- * 
+ *
  * Process:
  * 1. Validate input
  * 2. Check if user already exists
@@ -162,11 +160,13 @@ export async function signupAction(
     const { token, expiresAt } = createExpiringToken(60 * 24); // 24 hours
 
     // Create user
+    // ✅ NEW (Includes fullName)
     const user = await User.create({
       email: validated.email,
       password: hashedPassword,
       firstName: validated.firstName,
       lastName: validated.lastName,
+      fullName: `${validated.firstName} ${validated.lastName}`, // ADD THIS LINE
       phone: validated.phone,
       emailVerificationToken: token,
       emailVerificationExpires: expiresAt,
@@ -225,7 +225,8 @@ export async function signupAction(
 
     return {
       success: true,
-      message: "Account created! Please check your email to verify your account.",
+      message:
+        "Account created! Please check your email to verify your account.",
     };
   } catch (error: any) {
     console.error("Signup error:", error);
@@ -261,7 +262,7 @@ export async function signupAction(
  * Verify user email with token
  * @param formData - Form data with verification token
  * @returns ActionResponse - Success or error message
- * 
+ *
  * Process:
  * 1. Validate token
  * 2. Find user with matching token
@@ -358,13 +359,13 @@ export async function verifyEmailAction(
  * Request password reset link
  * @param formData - Form data with email
  * @returns ActionResponse - Success message (always, for security)
- * 
+ *
  * Process:
  * 1. Validate email
  * 2. Find user (if exists)
  * 3. Generate reset token
  * 4. Send reset email
- * 
+ *
  * Note: Always returns success to prevent email enumeration attacks
  */
 export async function resetPasswordRequestAction(
@@ -409,7 +410,8 @@ export async function resetPasswordRequestAction(
     // Always return success (security best practice)
     return {
       success: true,
-      message: "If an account exists with this email, you will receive password reset instructions.",
+      message:
+        "If an account exists with this email, you will receive password reset instructions.",
     };
   } catch (error: any) {
     console.error("Reset request error:", error);
@@ -417,7 +419,8 @@ export async function resetPasswordRequestAction(
     // Still return success to prevent email enumeration
     return {
       success: true,
-      message: "If an account exists with this email, you will receive password reset instructions.",
+      message:
+        "If an account exists with this email, you will receive password reset instructions.",
     };
   }
 }
@@ -430,7 +433,7 @@ export async function resetPasswordRequestAction(
  * Reset password with token
  * @param formData - Form data with token and new password
  * @returns ActionResponse - Success or error message
- * 
+ *
  * Process:
  * 1. Validate input
  * 2. Find user with matching token
@@ -502,7 +505,8 @@ export async function resetPasswordAction(
 
     return {
       success: true,
-      message: "Password reset successfully! You can now log in with your new password.",
+      message:
+        "Password reset successfully! You can now log in with your new password.",
     };
   } catch (error: any) {
     console.error("Reset password error:", error);
@@ -529,7 +533,7 @@ export async function resetPasswordAction(
  * Request magic link for passwordless login
  * @param formData - Form data with email
  * @returns ActionResponse - Success message
- * 
+ *
  * Process:
  * 1. Validate email
  * 2. Find user
@@ -557,7 +561,8 @@ export async function magicLinkAction(
       // Don't reveal that user doesn't exist
       return {
         success: true,
-        message: "If an account exists with this email, you will receive a magic link.",
+        message:
+          "If an account exists with this email, you will receive a magic link.",
       };
     }
 
@@ -590,7 +595,8 @@ export async function magicLinkAction(
 
     return {
       success: true,
-      message: "Magic link sent! Check your email and click the link to log in.",
+      message:
+        "Magic link sent! Check your email and click the link to log in.",
     };
   } catch (error: any) {
     console.error("Magic link error:", error);
@@ -598,7 +604,8 @@ export async function magicLinkAction(
     // Always return success for security
     return {
       success: true,
-      message: "If an account exists with this email, you will receive a magic link.",
+      message:
+        "If an account exists with this email, you will receive a magic link.",
     };
   }
 }
@@ -652,7 +659,8 @@ export async function resendVerificationAction(
       // Don't reveal that user doesn't exist
       return {
         success: true,
-        message: "If an account exists with this email, verification email has been sent.",
+        message:
+          "If an account exists with this email, verification email has been sent.",
       };
     }
 
