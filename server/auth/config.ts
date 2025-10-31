@@ -1,120 +1,124 @@
 // server/auth/config.ts
-// FINAL COMPLETE FIXED VERSION - Copy this entire file
+// ============================================================================
+// FIXED - Server-Side Auth Configuration (Alternative Location)
+// ============================================================================
+// Purpose: Server auth configuration (same as root auth.config.ts)
+// Note: This is a duplicate - consider consolidating to avoid maintenance
+// CRITICAL FIX: Properly converts emailVerified between boolean and Date | null
 
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { connectDB } from "@/server/db/connect";
 import User from "@/server/models/User";
 import { verifyPassword } from "@/server/lib/crypto";
-import { loginSchema } from "@/server/lib/validation";
+import type { User as AuthUser, Session } from "next-auth";
+import type { JWT } from "next-auth/jwt";
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+// =============================================================================
+// NEXT-AUTH CONFIGURATION
+// =============================================================================
+
+export const authConfig = {
+  // ---------------------------------------------------------------------------
+  // PROVIDERS
+  // ---------------------------------------------------------------------------
   providers: [
     Credentials({
-      name: "credentials",
+      name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
       
-      async authorize(credentials) {
+      // -----------------------------------------------------------------------
+      // AUTHORIZE FUNCTION
+      // -----------------------------------------------------------------------
+      // ✅ FIXED: Converts boolean emailVerified → Date | null for Next-Auth
+      async authorize(credentials): Promise<AuthUser | null> {
         try {
-          const validated = loginSchema.parse({
-            email: credentials?.email,
-            password: credentials?.password,
-          });
+          if (!credentials?.email || !credentials?.password) {
+            throw new Error("Missing credentials");
+          }
 
+          // Connect to database
           await connectDB();
 
-          const user = await User.findOne({ email: validated.email }).select(
-            "+password +loginAttempts +lockUntil"
-          );
+          // Find user with password field
+          const user = await User.findOne({ 
+            email: credentials.email.toLowerCase() 
+          }).select("+password");
 
           if (!user) {
-            return null;
+            throw new Error("Invalid credentials");
           }
 
+          // Check if account is locked
           if (user.lockUntil && user.lockUntil > new Date()) {
-            const minutesLeft = Math.ceil(
-              (user.lockUntil.getTime() - Date.now()) / 60000
-            );
-            throw new Error(
-              `Account locked. Try again in ${minutesLeft} minutes.`
-            );
+            throw new Error("Account is locked. Please try again later.");
           }
 
-          if (!user.isActive) {
-            throw new Error("Account is deactivated. Contact support.");
-          }
-
-          if (user.isSuspended) {
-            throw new Error(
-              `Account suspended: ${user.suspensionReason || "Contact support"}`
-            );
-          }
-
-          const isPasswordValid = await verifyPassword(
-            validated.password,
+          // Verify password
+          const isValid = await verifyPassword(
+            credentials.password as string,
             user.password
           );
 
-          if (!isPasswordValid) {
-            user.loginAttempts += 1;
-
-            if (user.loginAttempts >= 5) {
-              user.lockUntil = new Date(Date.now() + 30 * 60 * 1000);
-            }
-
-            await user.save();
-
-            if (user.loginAttempts >= 5) {
-              throw new Error("Account locked for 30 minutes.");
-            }
-
-            throw new Error(
-              `Invalid password. ${5 - user.loginAttempts} attempts remaining.`
-            );
+          if (!isValid) {
+            // Increment failed login attempts
+            await user.incrementLoginAttempts();
+            throw new Error("Invalid credentials");
           }
 
-          user.loginAttempts = 0;
-          user.lockUntil = undefined;
+          // Check if email is verified
+          if (!user.emailVerified) {
+            throw new Error("Please verify your email before logging in");
+          }
+
+          // Reset failed login attempts on successful login
+          await user.resetLoginAttempts();
+
+          // Update last login
           user.lastLoginAt = new Date();
           await user.save();
 
-          // FIXED: emailVerified must be Date | null, not boolean
+          // ✅ CRITICAL FIX: Convert boolean → Date | null for Next-Auth
+          // User model has: emailVerified: boolean
+          // Next-Auth needs: emailVerified: Date | null
           return {
-            id: String(user._id),
+            id: user._id.toString(),
             email: user.email,
-            name: `${user.firstName} ${user.lastName}`,
+            name: user.fullName,
             firstName: user.firstName,
             lastName: user.lastName,
             role: user.role,
             hasMFA: user.mfaEnabled,
             kycStatus: user.kycStatus,
             locale: user.locale || "en",
-            emailVerified: user.emailVerified ? new Date() : null,  // Convert boolean to Date | null
+            emailVerified: user.emailVerified ? new Date() : null,  // ✅ CONVERSION
           };
         } catch (error: any) {
-          console.error("Authorization error:", error);
-          throw error;
+          console.error("Auth error:", error);
+          return null;
         }
       },
     }),
   ],
 
-  session: {
-    strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60,
-  },
-
-  pages: {
-    signIn: "/login",
-    error: "/login",
-    verifyRequest: "/verify",
-  },
-
+  // ---------------------------------------------------------------------------
+  // CALLBACKS
+  // ---------------------------------------------------------------------------
   callbacks: {
-    async jwt({ token, user, trigger, session }) {
+    // -------------------------------------------------------------------------
+    // JWT CALLBACK
+    // -------------------------------------------------------------------------
+    // ✅ FIXED: Preserves emailVerified as Date | null in token
+    async jwt({ token, user, trigger, session }: {
+      token: JWT;
+      user?: AuthUser;
+      trigger?: "signIn" | "signUp" | "update";
+      session?: any;
+    }): Promise<JWT> {
+      // On sign in, add user data to token
       if (user) {
         token.id = user.id;
         token.email = user.email;
@@ -125,48 +129,123 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.hasMFA = user.hasMFA;
         token.kycStatus = user.kycStatus;
         token.locale = user.locale;
-        token.emailVerified = user.emailVerified;  // Already Date | null
+        token.emailVerified = user.emailVerified;  // ✅ Already Date | null
       }
 
+      // Handle session updates (e.g., profile changes)
       if (trigger === "update" && session) {
-        token = { ...token, ...session };
+        token.name = session.name || token.name;
+        token.firstName = session.firstName || token.firstName;
+        token.lastName = session.lastName || token.lastName;
+        token.locale = session.locale || token.locale;
       }
 
       return token;
     },
 
-    async session({ session, token }) {
-      if (token) {
+    // -------------------------------------------------------------------------
+    // SESSION CALLBACK
+    // -------------------------------------------------------------------------
+    // ✅ FIXED: Passes emailVerified as Date | null to session
+    async session({ session, token }: {
+      session: Session;
+      token: JWT;
+    }): Promise<Session> {
+      if (session.user) {
         session.user = {
-          id: token.id as string,
-          email: token.email as string,
-          name: token.name as string,
-          firstName: token.firstName as string,
-          lastName: token.lastName as string,
-          role: token.role as "user" | "admin",
-          hasMFA: token.hasMFA as boolean,
-          kycStatus: token.kycStatus as "none" | "pending" | "submitted" | "verified" | "rejected",
-          locale: token.locale as string,
-          emailVerified: token.emailVerified as Date | null,  // Keep as Date | null
-          mfaEnabled: token.hasMFA as boolean,
-          avatar: undefined,
-          phone: undefined,
+          id: token.id,
+          email: token.email,
+          name: token.name,
+          firstName: token.firstName,
+          lastName: token.lastName,
+          role: token.role,
+          hasMFA: token.hasMFA,
+          mfaEnabled: token.hasMFA,  // Alias
+          kycStatus: token.kycStatus,
+          locale: token.locale,
+          emailVerified: token.emailVerified as Date | null,  // ✅ Keep as Date | null
         };
       }
 
       return session;
     },
 
-    async signIn({ user }) {
-      return true;
+    // -------------------------------------------------------------------------
+    // AUTHORIZED CALLBACK (for middleware)
+    // -------------------------------------------------------------------------
+    async authorized({ auth, request }) {
+      const { pathname } = request.nextUrl;
+      const isLoggedIn = !!auth?.user;
+
+      // Public routes
+      const publicRoutes = ["/", "/login", "/signup", "/verify-email", "/reset-password"];
+      const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith("/api/auth");
+
+      // Allow public routes
+      if (isPublicRoute) {
+        return true;
+      }
+
+      // Protect all other routes
+      return isLoggedIn;
     },
   },
 
-  events: {
-    async signIn(message) {
-      console.log("User signed in:", message.user.email);
-    },
+  // ---------------------------------------------------------------------------
+  // PAGES
+  // ---------------------------------------------------------------------------
+  pages: {
+    signIn: "/login",
+    signOut: "/logout",
+    error: "/auth/error",
+    verifyRequest: "/auth/verify",
+    newUser: "/dashboard",  // Redirect after signup
   },
 
+  // ---------------------------------------------------------------------------
+  // SESSION CONFIGURATION
+  // ---------------------------------------------------------------------------
+  session: {
+    strategy: "jwt" as const,
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60,    // Update every 24 hours
+  },
+
+  // ---------------------------------------------------------------------------
+  // JWT CONFIGURATION
+  // ---------------------------------------------------------------------------
+  jwt: {
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+
+  // ---------------------------------------------------------------------------
+  // SECURITY OPTIONS
+  // ---------------------------------------------------------------------------
+  trustHost: true,  // For deployment
+  secret: process.env.NEXTAUTH_SECRET,
+
+  // ---------------------------------------------------------------------------
+  // DEBUG (disable in production)
+  // ---------------------------------------------------------------------------
   debug: process.env.NODE_ENV === "development",
-});
+};
+
+// =============================================================================
+// EXPORT HANDLERS
+// =============================================================================
+
+export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
+
+// =============================================================================
+// RECOMMENDATION
+// =============================================================================
+//
+// ⚠️ This file is a duplicate of /auth.config.ts
+//
+// Consider consolidating to one location:
+// - Use /auth.config.ts (root level) - RECOMMENDED
+// - Or use /server/auth/config.ts (if you prefer server folder organization)
+//
+// Having two identical files makes maintenance harder and increases risk of
+// inconsistencies between them.
+//

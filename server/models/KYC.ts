@@ -35,14 +35,16 @@ export type KYCStatus =
  */
 export interface IDocument {
   type: DocumentType;
-  fileUrl: string; // URL to stored document
+  documentType: DocumentType;  // ✅ Add this (alias for backward compat)
+  fileUrl: string;
   fileName: string;
-  fileSize: number; // in bytes
+  fileSize: number;
   mimeType: string;
   uploadedAt: Date;
   verified: boolean;
   verifiedAt?: Date;
-  verifiedBy?: string; // Admin user ID
+  verifiedBy?: string;
+  status: 'pending' | 'approved' | 'rejected';  // ✅ Add this
   rejectionReason?: string;
 }
 

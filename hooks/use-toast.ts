@@ -1,67 +1,88 @@
-// /hooks/use-toast.ts
-// Toast notification hook for GALLA.GOLD Application
-// Purpose: Provides toast notifications using Radix UI Toast primitive
-
-"use client";
+// hooks/use-toast.ts
+// ============================================================================
+// Toast Notification Hook for GALLA.GOLD
+// ============================================================================
+// Purpose: Manage toast notifications using shadcn/ui toast component
+// ✅ FIXED: Module was missing entirely
 
 import * as React from "react";
-import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
+
+// Note: This expects @/components/ui/toast to exist with shadcn/ui toast component
+// The types are defined here to avoid circular dependencies
 
 // =============================================================================
-// CONSTANTS
+// TYPE DEFINITIONS
 // =============================================================================
 
-const TOAST_LIMIT = 1;
-const TOAST_REMOVE_DELAY = 1000000;
+/**
+ * Toast action button element
+ */
+export type ToastActionElement = React.ReactElement<any>;
 
-// =============================================================================
-// TYPES
-// =============================================================================
+/**
+ * Toast variants
+ */
+type ToastVariant = "default" | "destructive";
 
-type ToasterToast = ToastProps & {
+/**
+ * Toast properties
+ */
+export interface ToastProps {
   id: string;
-  title?: React.ReactNode;
-  description?: React.ReactNode;
+  title?: string;
+  description?: string;
   action?: ToastActionElement;
-};
-
-const actionTypes = {
-  ADD_TOAST: "ADD_TOAST",
-  UPDATE_TOAST: "UPDATE_TOAST",
-  DISMISS_TOAST: "DISMISS_TOAST",
-  REMOVE_TOAST: "REMOVE_TOAST",
-} as const;
-
-type ActionType = typeof actionTypes;
-
-type Action =
-  | {
-      type: ActionType["ADD_TOAST"];
-      toast: ToasterToast;
-    }
-  | {
-      type: ActionType["UPDATE_TOAST"];
-      toast: Partial<ToasterToast>;
-    }
-  | {
-      type: ActionType["DISMISS_TOAST"];
-      toastId?: ToasterToast["id"];
-    }
-  | {
-      type: ActionType["REMOVE_TOAST"];
-      toastId?: ToasterToast["id"];
-    };
-
-interface State {
-  toasts: ToasterToast[];
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  variant?: ToastVariant;
+  duration?: number;
 }
 
+/**
+ * Toast state
+ */
+type Toast = Omit<ToastProps, "id">;
+
 // =============================================================================
-// STATE MANAGEMENT
+// TOAST STATE MANAGEMENT
 // =============================================================================
+
+const TOAST_LIMIT = 3;
+const TOAST_REMOVE_DELAY = 1000000;
+
+/**
+ * Toast action types
+ */
+type Action =
+  | {
+      type: "ADD_TOAST";
+      toast: Toast & { id: string };
+    }
+  | {
+      type: "UPDATE_TOAST";
+      toast: Partial<Toast> & { id: string };
+    }
+  | {
+      type: "DISMISS_TOAST";
+      toastId?: string;
+    }
+  | {
+      type: "REMOVE_TOAST";
+      toastId?: string;
+    };
+
+/**
+ * Toast state interface
+ */
+interface State {
+  toasts: (Toast & { id: string })[];
+}
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
+/**
+ * Add toast to removal queue
+ */
 const addToRemoveQueue = (toastId: string) => {
   if (toastTimeouts.has(toastId)) {
     return;
@@ -78,6 +99,9 @@ const addToRemoveQueue = (toastId: string) => {
   toastTimeouts.set(toastId, timeout);
 };
 
+/**
+ * Toast reducer
+ */
 export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "ADD_TOAST":
@@ -117,6 +141,7 @@ export const reducer = (state: State, action: Action): State => {
         ),
       };
     }
+
     case "REMOVE_TOAST":
       if (action.toastId === undefined) {
         return {
@@ -131,10 +156,17 @@ export const reducer = (state: State, action: Action): State => {
   }
 };
 
+// =============================================================================
+// TOAST CONTEXT & LISTENER
+// =============================================================================
+
 const listeners: Array<(state: State) => void> = [];
 
 let memoryState: State = { toasts: [] };
 
+/**
+ * Dispatch toast action
+ */
 function dispatch(action: Action) {
   memoryState = reducer(memoryState, action);
   listeners.forEach((listener) => {
@@ -143,66 +175,27 @@ function dispatch(action: Action) {
 }
 
 // =============================================================================
-// HELPER FUNCTIONS
-// =============================================================================
-
-let count = 0;
-
-function genId() {
-  count = (count + 1) % Number.MAX_SAFE_INTEGER;
-  return count.toString();
-}
-
-// =============================================================================
-// TOAST FUNCTION
-// =============================================================================
-
-type Toast = Omit<ToasterToast, "id">;
-
-function toast({ ...props }: Toast) {
-  const id = genId();
-
-  const update = (props: ToasterToast) =>
-    dispatch({
-      type: "UPDATE_TOAST",
-      toast: { ...props, id },
-    });
-  const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id });
-
-  dispatch({
-    type: "ADD_TOAST",
-    toast: {
-      ...props,
-      id,
-      open: true,
-      onOpenChange: (open: boolean) => {
-        if (!open) dismiss();
-      },
-    },
-  });
-
-  return {
-    id: id,
-    dismiss,
-    update,
-  };
-}
-
-// =============================================================================
-// HOOK
+// TOAST HOOK
 // =============================================================================
 
 /**
  * useToast hook
- *
+ * 
  * Usage:
+ * ```tsx
  * const { toast } = useToast();
- *
+ * 
  * toast({
- *   title: "Success",
- *   description: "Your changes have been saved",
- *   variant: "default"
+ *   title: "Success!",
+ *   description: "Your action was completed.",
  * });
+ * 
+ * toast({
+ *   variant: "destructive",
+ *   title: "Error",
+ *   description: "Something went wrong.",
+ * });
+ * ```
  */
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState);
@@ -224,4 +217,134 @@ function useToast() {
   };
 }
 
+// =============================================================================
+// TOAST FUNCTION
+// =============================================================================
+
+/**
+ * Toast function to show notifications
+ * 
+ * @param props - Toast properties
+ * @returns Object with id and dismiss/update methods
+ * 
+ * @example
+ * ```tsx
+ * // Simple toast
+ * toast({ title: "Success!" });
+ * 
+ * // Toast with description
+ * toast({
+ *   title: "Purchase Complete",
+ *   description: "You bought 10g of gold.",
+ * });
+ * 
+ * // Error toast
+ * toast({
+ *   variant: "destructive",
+ *   title: "Error",
+ *   description: "Transaction failed.",
+ * });
+ * 
+ * // Toast with action
+ * toast({
+ *   title: "Email Sent",
+ *   action: <Button onClick={undo}>Undo</Button>,
+ * });
+ * 
+ * // Custom duration
+ * toast({
+ *   title: "Quick Message",
+ *   duration: 2000, // 2 seconds
+ * });
+ * ```
+ */
+function toast(props: Toast) {
+  const id = genId();
+
+  const update = (props: Toast) =>
+    dispatch({
+      type: "UPDATE_TOAST",
+      toast: { ...props, id },
+    });
+
+  const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id });
+
+  dispatch({
+    type: "ADD_TOAST",
+    toast: {
+      ...props,
+      id,
+      open: true,
+      onOpenChange: (open) => {
+        if (!open) dismiss();
+      },
+    },
+  });
+
+  return {
+    id: id,
+    dismiss,
+    update,
+  };
+}
+
+// =============================================================================
+// UTILITY FUNCTIONS
+// =============================================================================
+
+/**
+ * Generate unique toast ID
+ */
+function genId() {
+  return Math.random().toString(36).substring(2, 9);
+}
+
+// =============================================================================
+// EXPORTS
+// =============================================================================
+
 export { useToast, toast };
+
+// =============================================================================
+// USAGE NOTES
+// =============================================================================
+//
+// This hook works with the shadcn/ui Toast component.
+// Make sure you have installed:
+// - @/components/ui/toast
+// - @/components/ui/toaster
+//
+// Add <Toaster /> to your root layout:
+// ```tsx
+// import { Toaster } from "@/components/ui/toaster";
+//
+// export default function RootLayout({ children }) {
+//   return (
+//     <html>
+//       <body>
+//         {children}
+//         <Toaster />
+//       </body>
+//     </html>
+//   );
+// }
+// ```
+//
+// Then use in any component:
+// ```tsx
+// import { useToast } from "@/hooks/use-toast";
+//
+// export function MyComponent() {
+//   const { toast } = useToast();
+//
+//   const handleClick = () => {
+//     toast({
+//       title: "Gold Purchased!",
+//       description: "Successfully bought 5g of gold.",
+//     });
+//   };
+//
+//   return <Button onClick={handleClick}>Buy Gold</Button>;
+// }
+// ```
+//

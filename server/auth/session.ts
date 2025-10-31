@@ -1,274 +1,418 @@
-// /server/auth/session.ts
-// Session utilities for accessing authenticated user data
-// Provides helper functions for server components and server actions
+// server/auth/session.ts
+// ============================================================================
+// FIXED - Server-Side Session Utilities
+// ============================================================================
+// Purpose: Helper functions for session management and role-based access control
+// ✅ FIXED: All session.user property access errors
 
-import { auth } from "./config";
-import { connectDB } from "@/server/db/connect";
-import User from "@/server/models/User";
+import { auth } from "@/server/auth/config";
+import type { Session } from "next-auth";
+import type { UserRole, KYCStatus } from "@/types";
+
+// =============================================================================
+// SESSION RETRIEVAL
+// =============================================================================
 
 /**
- * Get current session
- * @returns Promise<Session | null> - Current session or null if not authenticated
- * 
- * Use in server components and server actions to get session data
- * 
- * Example:
- * ```ts
- * const session = await getSession();
- * if (!session) {
- *   return { error: "Not authenticated" };
- * }
- * ```
+ * Get current user session (server-side)
+ * @returns Session or null if not authenticated
  */
-export async function getSession() {
-  return await auth();
+export async function getSession(): Promise<Session | null> {
+  try {
+    return await auth();
+  } catch (error) {
+    console.error("Error getting session:", error);
+    return null;
+  }
+}
+
+/**
+ * Get current user session or throw error
+ * @throws Error if not authenticated
+ * @returns Session
+ */
+export async function requireSession(): Promise<Session> {
+  const session = await getSession();
+  
+  if (!session || !session.user) {
+    throw new Error("Unauthorized: Please log in");
+  }
+  
+  return session;
 }
 
 /**
  * Get current user ID
- * @returns Promise<string | null> - User ID or null if not authenticated
- * 
- * Shorthand for getting just the user ID
+ * @returns User ID or null
  */
-export async function getUserId(): Promise<string | null> {
-  const session = await auth();
+export async function getCurrentUserId(): Promise<string | null> {
+  const session = await getSession();
   return session?.user?.id || null;
 }
 
 /**
- * Get current user email
- * @returns Promise<string | null> - User email or null if not authenticated
+ * Get current user ID or throw error
+ * @throws Error if not authenticated
+ * @returns User ID
+ */
+export async function requireUserId(): Promise<string> {
+  const session = await requireSession();
+  return session.user.id;
+}
+
+// =============================================================================
+// ROLE-BASED ACCESS CONTROL
+// =============================================================================
+
+/**
+ * Check if current user has specific role
+ * ✅ FIXED: Access session.user.role correctly
+ * @param role - Required role
+ * @returns true if user has role
+ */
+export async function hasRole(role: UserRole): Promise<boolean> {
+  const session = await getSession();
+  if (!session?.user) return false;
+  
+  // ✅ FIX: session.user.role is defined in types/next-auth.d.ts
+  return session.user.role === role;
+}
+
+/**
+ * Require specific role or throw error
+ * ✅ FIXED: Access session.user.role correctly
+ * @param role - Required role
+ * @throws Error if user doesn't have role
+ */
+export async function requireRole(role: UserRole): Promise<void> {
+  const session = await requireSession();
+  
+  // ✅ FIX: session.user.role is defined in types/next-auth.d.ts
+  if (session.user.role !== role) {
+    throw new Error(`Forbidden: ${role} role required`);
+  }
+}
+
+/**
+ * Check if current user is admin
+ * ✅ FIXED: Access session.user.role correctly
+ * @returns true if user is admin
+ */
+export async function isAdmin(): Promise<boolean> {
+  return await hasRole("admin");
+}
+
+/**
+ * Require admin role or throw error
+ * @throws Error if user is not admin
+ */
+export async function requireAdmin(): Promise<void> {
+  await requireRole("admin");
+}
+
+// =============================================================================
+// KYC VERIFICATION CHECKS
+// =============================================================================
+
+/**
+ * Check if current user has completed KYC
+ * ✅ FIXED: Access session.user.kycStatus correctly
+ * @returns true if KYC is verified
+ */
+export async function isKYCVerified(): Promise<boolean> {
+  const session = await getSession();
+  if (!session?.user) return false;
+  
+  // ✅ FIX: session.user.kycStatus is defined in types/next-auth.d.ts
+  return session.user.kycStatus === "verified";
+}
+
+/**
+ * Require KYC verification or throw error
+ * ✅ FIXED: Access session.user.kycStatus correctly
+ * @throws Error if KYC not verified
+ */
+export async function requireKYC(): Promise<void> {
+  const session = await requireSession();
+  
+  // ✅ FIX: session.user.kycStatus is defined in types/next-auth.d.ts
+  if (session.user.kycStatus !== "verified") {
+    throw new Error("KYC verification required");
+  }
+}
+
+/**
+ * Get current user's KYC status
+ * ✅ FIXED: Access session.user.kycStatus correctly
+ * @returns KYC status or null
+ */
+export async function getKYCStatus(): Promise<KYCStatus | null> {
+  const session = await getSession();
+  
+  // ✅ FIX: session.user.kycStatus is defined in types/next-auth.d.ts
+  return session?.user?.kycStatus || null;
+}
+
+// =============================================================================
+// MFA CHECKS
+// =============================================================================
+
+/**
+ * Check if current user has MFA enabled
+ * ✅ FIXED: Access session.user.hasMFA correctly
+ * @returns true if MFA is enabled
+ */
+export async function hasMFA(): Promise<boolean> {
+  const session = await getSession();
+  if (!session?.user) return false;
+  
+  // ✅ FIX: session.user.hasMFA is defined in types/next-auth.d.ts
+  return session.user.hasMFA || false;
+}
+
+/**
+ * Require MFA to be enabled or throw error
+ * ✅ FIXED: Access session.user.hasMFA correctly
+ * @throws Error if MFA not enabled
+ */
+export async function requireMFA(): Promise<void> {
+  const session = await requireSession();
+  
+  // ✅ FIX: session.user.hasMFA is defined in types/next-auth.d.ts
+  if (!session.user.hasMFA) {
+    throw new Error("MFA verification required");
+  }
+}
+
+// =============================================================================
+// EMAIL VERIFICATION
+// =============================================================================
+
+/**
+ * Check if current user has verified email
+ * @returns true if email is verified
+ */
+export async function isEmailVerified(): Promise<boolean> {
+  const session = await getSession();
+  if (!session?.user) return false;
+  
+  // emailVerified is Date | null (truthy if Date, falsy if null)
+  return !!session.user.emailVerified;
+}
+
+/**
+ * Require email verification or throw error
+ * @throws Error if email not verified
+ */
+export async function requireEmailVerified(): Promise<void> {
+  const session = await requireSession();
+  
+  if (!session.user.emailVerified) {
+    throw new Error("Email verification required");
+  }
+}
+
+// =============================================================================
+// USER INFORMATION HELPERS
+// =============================================================================
+
+/**
+ * Get current user's email
+ * @returns Email address or null
  */
 export async function getUserEmail(): Promise<string | null> {
-  const session = await auth();
+  const session = await getSession();
   return session?.user?.email || null;
 }
 
 /**
- * Check if user is authenticated
- * @returns Promise<boolean> - True if user is authenticated
- * 
- * Use for quick auth checks
+ * Get current user's full name
+ * @returns Full name or null
  */
-export async function isAuthenticated(): Promise<boolean> {
-  const session = await auth();
-  return !!session?.user;
+export async function getUserName(): Promise<string | null> {
+  const session = await getSession();
+  return session?.user?.name || null;
 }
 
 /**
- * Require authentication
- * @throws Error if user is not authenticated
- * @returns Promise<Session> - Session object
- * 
- * Use at the start of protected server actions
- * Throws error if not authenticated (for early return)
- * 
- * Example:
- * ```ts
- * async function protectedAction() {
- *   const session = await requireAuth();
- *   // Continue with authenticated logic
- * }
- * ```
+ * Get current user's first name
+ * @returns First name or null
  */
-export async function requireAuth() {
-  const session = await auth();
-  
-  if (!session?.user) {
-    throw new Error("Authentication required");
-  }
-  
-  return session;
+export async function getUserFirstName(): Promise<string | null> {
+  const session = await getSession();
+  return session?.user?.firstName || null;
 }
 
 /**
- * Require specific role
- * @param role - Required role ("admin" or "user")
- * @throws Error if user doesn't have required role
- * @returns Promise<Session> - Session object
- * 
- * Use for role-based access control
- * 
- * Example:
- * ```ts
- * async function adminAction() {
- *   await requireRole("admin");
- *   // Continue with admin-only logic
- * }
- * ```
+ * Get current user's last name
+ * @returns Last name or null
  */
-export async function requireRole(role: "admin" | "user") {
-  const session = await requireAuth();
-  
-  if (session.user.role !== role) {
-    throw new Error(`${role} access required`);
-  }
-  
-  return session;
+export async function getUserLastName(): Promise<string | null> {
+  const session = await getSession();
+  return session?.user?.lastName || null;
 }
 
 /**
- * Require KYC verification
- * @throws Error if user's KYC is not verified
- * @returns Promise<Session> - Session object
- * 
- * Use for actions that require verified identity
- * 
- * Example:
- * ```ts
- * async function withdrawFunds() {
- *   await requireKYC();
- *   // Continue with withdrawal logic
- * }
- * ```
- */
-export async function requireKYC() {
-  const session = await requireAuth();
-  
-  if (session.user.kycStatus !== "verified") {
-    throw new Error("KYC verification required for this action");
-  }
-  
-  return session;
-}
-
-/**
- * Require MFA verification
- * @throws Error if user doesn't have MFA enabled
- * @returns Promise<Session> - Session object
- * 
- * Use for sensitive operations that require 2FA
- */
-export async function requireMFA() {
-  const session = await requireAuth();
-  
-  if (!session.user.hasMFA) {
-    throw new Error("Multi-factor authentication required");
-  }
-  
-  return session;
-}
-
-/**
- * Get full user document from database
- * @returns Promise<User | null> - Full user document or null
- * 
- * Use when you need complete user data beyond session
- * Fetches fresh data from database
- * 
- * Example:
- * ```ts
- * const user = await getCurrentUser();
- * if (!user) return { error: "User not found" };
- * console.log(user.wallet.balance.USD);
- * ```
- */
-export async function getCurrentUser() {
-  const session = await auth();
-  
-  if (!session?.user?.id) {
-    return null;
-  }
-  
-  await connectDB();
-  
-  const user = await User.findById(session.user.id);
-  return user;
-}
-
-/**
- * Get user with specific fields selected
- * @param fields - Fields to select (space-separated string)
- * @returns Promise<User | null> - User document with selected fields
- * 
- * Use when you only need specific fields (optimization)
- * 
- * Example:
- * ```ts
- * const user = await getUserWithFields("email firstName wallet.balance");
- * ```
- */
-export async function getUserWithFields(fields: string) {
-  const session = await auth();
-  
-  if (!session?.user?.id) {
-    return null;
-  }
-  
-  await connectDB();
-  
-  const user = await User.findById(session.user.id).select(fields);
-  return user;
-}
-
-/**
- * Check if current user owns a resource
- * @param resourceUserId - User ID associated with the resource
- * @returns Promise<boolean> - True if current user owns the resource
- * 
- * Use for authorization checks on user-specific resources
- * 
- * Example:
- * ```ts
- * if (!await isResourceOwner(transaction.userId)) {
- *   return { error: "Unauthorized" };
- * }
- * ```
- */
-export async function isResourceOwner(resourceUserId: string): Promise<boolean> {
-  const userId = await getUserId();
-  return userId === resourceUserId;
-}
-
-/**
- * Require resource ownership
- * @param resourceUserId - User ID associated with the resource
- * @throws Error if current user doesn't own the resource
- * 
- * Use at the start of actions that modify user-specific resources
- */
-export async function requireResourceOwnership(resourceUserId: string) {
-  const isOwner = await isResourceOwner(resourceUserId);
-  
-  if (!isOwner) {
-    throw new Error("Unauthorized - You don't own this resource");
-  }
-}
-
-/**
- * Get user locale preference
- * @returns Promise<string> - User's preferred locale (default: "en")
- * 
- * Use for determining which language to use for emails, notifications, etc.
+ * Get current user's locale
+ * ✅ FIXED: Access session.user.locale correctly
+ * @returns Locale string or "en" as default
  */
 export async function getUserLocale(): Promise<string> {
-  const session = await auth();
+  const session = await getSession();
+  
+  // ✅ FIX: session.user.locale is defined in types/next-auth.d.ts
   return session?.user?.locale || "en";
 }
 
 /**
- * Check if current session has admin privileges
- * @returns Promise<boolean> - True if user is admin
+ * Get current user's role
+ * ✅ FIXED: Access session.user.role correctly
+ * @returns User role or null
  */
-export async function isAdmin(): Promise<boolean> {
-  const session = await auth();
+export async function getUserRole(): Promise<UserRole | null> {
+  const session = await getSession();
+  
+  // ✅ FIX: session.user.role is defined in types/next-auth.d.ts
+  return session?.user?.role || null;
+}
+
+// =============================================================================
+// COMBINED CHECKS
+// =============================================================================
+
+/**
+ * Check if user is admin
+ * ✅ FIXED: Access session.user.role correctly
+ * @returns true if user is admin
+ */
+export async function checkIsAdmin(): Promise<boolean> {
+  const session = await getSession();
+  
+  // ✅ FIX: session.user.role is defined in types/next-auth.d.ts
   return session?.user?.role === "admin";
 }
 
 /**
- * Check if user's KYC is verified
- * @returns Promise<boolean> - True if KYC is verified
+ * Check if user has verified KYC
+ * ✅ FIXED: Access session.user.kycStatus correctly
+ * @returns true if KYC is verified
  */
-export async function isKYCVerified(): Promise<boolean> {
-  const session = await auth();
+export async function checkKYCVerified(): Promise<boolean> {
+  const session = await getSession();
+  
+  // ✅ FIX: session.user.kycStatus is defined in types/next-auth.d.ts
   return session?.user?.kycStatus === "verified";
 }
 
 /**
  * Check if user has MFA enabled
- * @returns Promise<boolean> - True if MFA is enabled
+ * ✅ FIXED: Access session.user.hasMFA correctly
+ * @returns true if MFA is enabled
  */
-export async function hasMFAEnabled(): Promise<boolean> {
-  const session = await auth();
+export async function checkMFAEnabled(): Promise<boolean> {
+  const session = await getSession();
+  
+  // ✅ FIX: session.user.hasMFA is defined in types/next-auth.d.ts
   return session?.user?.hasMFA || false;
 }
+
+// =============================================================================
+// UTILITY FUNCTIONS
+// =============================================================================
+
+/**
+ * Refresh session (trigger session update)
+ * Useful after profile updates
+ */
+export async function refreshSession(): Promise<void> {
+  // In Next-Auth v5, session is automatically updated
+  // This function is kept for API compatibility
+  return;
+}
+
+/**
+ * Check if request is authenticated
+ * @returns true if authenticated
+ */
+export async function isAuthenticated(): Promise<boolean> {
+  const session = await getSession();
+  return !!session?.user;
+}
+
+// =============================================================================
+// EXPORT ALL HELPERS
+// =============================================================================
+
+export default {
+  // Session
+  getSession,
+  requireSession,
+  getCurrentUserId,
+  requireUserId,
+  isAuthenticated,
+  
+  // Roles
+  hasRole,
+  requireRole,
+  isAdmin,
+  requireAdmin,
+  checkIsAdmin,
+  getUserRole,
+  
+  // KYC
+  isKYCVerified,
+  requireKYC,
+  getKYCStatus,
+  checkKYCVerified,
+  
+  // MFA
+  hasMFA,
+  requireMFA,
+  checkMFAEnabled,
+  
+  // Email
+  isEmailVerified,
+  requireEmailVerified,
+  
+  // User info
+  getUserEmail,
+  getUserName,
+  getUserFirstName,
+  getUserLastName,
+  getUserLocale,
+  
+  // Utility
+  refreshSession,
+};
+
+// =============================================================================
+// USAGE EXAMPLES
+// =============================================================================
+//
+// Server Actions:
+// ---------------
+// import { requireSession, requireKYC } from "@/server/auth/session";
+//
+// export async function buyGold() {
+//   const session = await requireSession();
+//   await requireKYC();
+//   
+//   // Your logic here
+//   console.log("User:", session.user.id);
+// }
+//
+// API Routes:
+// -----------
+// import { getSession, isAdmin } from "@/server/auth/session";
+//
+// export async function GET() {
+//   const session = await getSession();
+//   if (!session) {
+//     return new Response("Unauthorized", { status: 401 });
+//   }
+//   
+//   if (await isAdmin()) {
+//     // Admin-only logic
+//   }
+// }
+//

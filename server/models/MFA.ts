@@ -51,7 +51,7 @@ export interface IMFA extends Document {
   qrCodeUrl?: string;
   
   // Backup codes
-  backupCodes: IBackupCode[];
+  backupCodes: IBackupCode[];     // ✅ Fix: IBackupCode[], not string[]
   
   // Verification history
   verificationAttempts: IVerificationAttempt[];
@@ -67,10 +67,12 @@ export interface IMFA extends Document {
   requireForWithdrawals: boolean;
   
   // Failed attempts tracking
-  failedAttempts: number;
+  failedAttempts: number;         // ✅ Fix: number, not Date
   lockUntil?: Date;
   
   // Timestamps
+    verifiedAt?: Date;              // ✅ Add this property
+
   enabledAt?: Date;
   disabledAt?: Date;
   createdAt: Date;

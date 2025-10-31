@@ -43,12 +43,10 @@ type ActionResponse<T = void> = {
  * Get current gold price per gram in specified currency
  * @param currency - Target currency (default: USD)
  * @returns ActionResponse with price data
- * 
+ *
  * Returns current spot price, buy price (with fee), and sell price (with fee)
  */
-export async function getGoldPriceAction(
-  currency: string = "USD"
-): Promise<
+export async function getGoldPriceAction(currency: string = "USD"): Promise<
   ActionResponse<{
     spotPrice: number;
     buyPrice: number;
@@ -91,7 +89,7 @@ export async function getGoldPriceAction(
 /**
  * Get user's gold holdings
  * @returns ActionResponse with holdings data
- * 
+ *
  * Returns total grams, average purchase price, current value, and profit/loss
  */
 export async function getGoldHoldingsAction(): Promise<
@@ -161,7 +159,7 @@ export async function getGoldHoldingsAction(): Promise<
  * Buy gold with wallet balance
  * @param formData - Buy gold form data
  * @returns ActionResponse with transaction data
- * 
+ *
  * Process:
  * 1. Validate input
  * 2. Check sufficient balance
@@ -205,7 +203,9 @@ export async function buyGoldAction(
     if (currentBalance < validated.totalAmount) {
       return {
         success: false,
-        error: `Insufficient balance. Available: ${validated.currency} ${currentBalance.toFixed(2)}`,
+        error: `Insufficient balance. Available: ${
+          validated.currency
+        } ${currentBalance.toFixed(2)}`,
       };
     }
 
@@ -217,7 +217,10 @@ export async function buyGoldAction(
     );
 
     // Check daily limit
-    if (wallet.usedToday.goldPurchase + amountUSD > wallet.dailyLimits.goldPurchase) {
+    if (
+      wallet.usedToday.goldPurchase + amountUSD >
+      wallet.dailyLimits.goldPurchase
+    ) {
       return {
         success: false,
         error: `Daily gold purchase limit exceeded`,
@@ -298,7 +301,9 @@ export async function buyGoldAction(
       data: {
         firstName: user.firstName,
         type: "Gold Purchase",
-        amount: `${validated.grams.toFixed(6)} g (${validated.currency} ${validated.totalAmount.toFixed(2)})`,
+        amount: `${validated.grams.toFixed(6)} g (${
+          validated.currency
+        } ${validated.totalAmount.toFixed(2)})`,
         date: new Date().toLocaleDateString(),
         transactionId: transaction._id.toString(),
         status: "completed",
@@ -307,7 +312,9 @@ export async function buyGoldAction(
 
     return {
       success: true,
-      message: `Successfully purchased ${validated.grams.toFixed(6)} grams of gold`,
+      message: `Successfully purchased ${validated.grams.toFixed(
+        6
+      )} grams of gold`,
       data: {
         transactionId: transaction._id.toString(),
         grams: validated.grams,
@@ -338,7 +345,7 @@ export async function buyGoldAction(
  * Sell gold for wallet balance
  * @param formData - Sell gold form data
  * @returns ActionResponse with transaction data
- * 
+ *
  * Process:
  * 1. Validate input
  * 2. Check sufficient gold holdings
@@ -380,7 +387,9 @@ export async function sellGoldAction(
     if (wallet.gold.grams < validated.grams) {
       return {
         success: false,
-        error: `Insufficient gold. Available: ${wallet.gold.grams.toFixed(6)} grams`,
+        error: `Insufficient gold. Available: ${wallet.gold.grams.toFixed(
+          6
+        )} grams`,
       };
     }
 
@@ -406,7 +415,7 @@ export async function sellGoldAction(
     );
 
     const priceDifference = Math.abs(
-      proceedsBreakdown.total - validated.totalAmount
+      proceedsBreakdown.netProceeds - validated.totalAmount
     );
     const tolerance = validated.totalAmount * 0.02; // 2% tolerance
 
@@ -457,7 +466,9 @@ export async function sellGoldAction(
       data: {
         firstName: user.firstName,
         type: "Gold Sale",
-        amount: `${validated.grams.toFixed(6)} g (${validated.currency} ${validated.totalAmount.toFixed(2)})`,
+        amount: `${validated.grams.toFixed(6)} g (${
+          validated.currency
+        } ${validated.totalAmount.toFixed(2)})`,
         date: new Date().toLocaleDateString(),
         transactionId: transaction._id.toString(),
         status: "completed",
@@ -497,9 +508,9 @@ export async function sellGoldAction(
  * Request physical gold delivery
  * @param formData - Delivery request form data
  * @returns ActionResponse with delivery request data
- * 
+ *
  * Requires KYC verification for physical delivery
- * 
+ *
  * Process:
  * 1. Require KYC verification
  * 2. Validate input
@@ -546,7 +557,9 @@ export async function requestPhysicalDeliveryAction(
     if (wallet.gold.grams < validated.grams) {
       return {
         success: false,
-        error: `Insufficient gold. Available: ${wallet.gold.grams.toFixed(6)} grams`,
+        error: `Insufficient gold. Available: ${wallet.gold.grams.toFixed(
+          6
+        )} grams`,
       };
     }
 
@@ -559,16 +572,18 @@ export async function requestPhysicalDeliveryAction(
 
     // Check sufficient balance for delivery cost
     const balanceUSD = wallet.balance.USD || 0;
-    if (balanceUSD < deliveryCost.cost) {
+    if (balanceUSD < deliveryCost) {
       return {
         success: false,
-        error: `Insufficient USD balance for delivery. Required: $${deliveryCost.cost.toFixed(2)}`,
+        error: `Insufficient USD balance for delivery. Required: $${deliveryCost.toFixed(
+          2
+        )}`,
       };
     }
 
     // Deduct gold and delivery cost
     wallet.gold.grams -= validated.grams;
-    wallet.balance.USD -= deliveryCost.cost;
+    wallet.balance.USD -= deliveryCost;
 
     // If all gold used, reset average price
     if (wallet.gold.grams <= 0) {
@@ -594,14 +609,14 @@ export async function requestPhysicalDeliveryAction(
     const transaction = await Transaction.create({
       userId: session.user.id,
       type: "gold_delivery",
-      amount: deliveryCost.cost,
+      amount: deliveryCost,
       currency: "USD",
       status: "pending",
       metadata: {
         grams: validated.grams,
         deliveryAddress: validated.deliveryAddress,
         deliveryType: validated.deliveryType,
-        deliveryCost: deliveryCost.cost,
+        deliveryCost: deliveryCost,
         estimatedDelivery: estimatedDate,
       },
     });
@@ -623,7 +638,9 @@ export async function requestPhysicalDeliveryAction(
 
     return {
       success: true,
-      message: `Physical delivery of ${validated.grams.toFixed(6)} grams requested successfully`,
+      message: `Physical delivery of ${validated.grams.toFixed(
+        6
+      )} grams requested successfully`,
       data: {
         deliveryId: transaction._id.toString(),
         estimatedDate,
@@ -657,9 +674,7 @@ export async function requestPhysicalDeliveryAction(
  */
 export async function getGoldPriceHistoryAction(
   days: number = 30
-): Promise<
-  ActionResponse<{ prices: Array<{ date: Date; price: number }> }>
-> {
+): Promise<ActionResponse<{ prices: Array<{ date: Date; price: number }> }>> {
   try {
     await connectDB();
 

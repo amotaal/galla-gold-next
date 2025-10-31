@@ -3,7 +3,7 @@
 // Purpose: Record all financial transactions including deposits, withdrawals, and gold trades
 // Provides complete audit trail and transaction history for users
 
-import mongoose, { Schema, Document, Model, Types } from 'mongoose';
+import mongoose, { Schema, Document, Model, Types } from "mongoose";
 
 // =============================================================================
 // TYPE DEFINITIONS
@@ -13,59 +13,61 @@ import mongoose, { Schema, Document, Model, Types } from 'mongoose';
  * Transaction types supported by the platform
  */
 export type TransactionType =
-  | 'deposit'            // Add cash to wallet
-  | 'withdrawal'         // Withdraw cash from wallet
-  | 'buy_gold'           // Purchase gold with cash
-  | 'sell_gold'          // Sell gold for cash
-  | 'physical_delivery'; // Request physical gold delivery
+  | "deposit" // Add cash to wallet
+  | "withdrawal" // Withdraw cash from wallet
+  | "buy_gold" // Purchase gold with cash
+  | "sell_gold" // Sell gold for cash
+  | "physical_delivery"; // Request physical gold delivery
 
 /**
  * Transaction status states
  */
 export type TransactionStatus =
-  | 'pending'    // Initiated but not processed
-  | 'processing' // Being processed by payment provider
-  | 'completed'  // Successfully completed
-  | 'failed'     // Failed due to error
-  | 'cancelled'  // Cancelled by user or system
-  | 'refunded';  // Refunded to user
+  | "pending" // Initiated but not processed
+  | "processing" // Being processed by payment provider
+  | "completed" // Successfully completed
+  | "failed" // Failed due to error
+  | "cancelled" // Cancelled by user or system
+  | "refunded"; // Refunded to user
 
 /**
  * Payment methods for deposits/withdrawals
  */
 export type PaymentMethod =
-  | 'bank_transfer'
-  | 'credit_card'
-  | 'debit_card'
-  | 'wire_transfer'
-  | 'crypto';
+  | "bank_transfer"
+  | "credit_card"
+  | "debit_card"
+  | "wire_transfer"
+  | "crypto";
 
 /**
  * Transaction document interface
  */
 export interface ITransaction extends Document {
+  _id: Types.ObjectId; // ✅ Add this line at the top
+
   userId: Types.ObjectId; // Reference to User model
   walletId: Types.ObjectId; // Reference to Wallet model
-  
+
   // Transaction details
   type: TransactionType;
   status: TransactionStatus;
-  
+
   // Amount details
   amount: number; // Transaction amount
   currency: string; // Currency code (USD, EUR, etc.)
   fee: number; // Transaction fee
   netAmount: number; // Amount after fees
-  
+
   // Gold-specific fields (for gold trades)
   goldAmount?: number; // Amount of gold in grams
   goldPricePerGram?: number; // Gold price at time of transaction
-  
+
   // Payment details
   paymentMethod?: PaymentMethod;
   paymentProvider?: string; // Stripe, PayPal, etc.
   paymentReference?: string; // External payment reference ID
-  
+
   // Delivery details (for physical gold delivery)
   deliveryAddress?: {
     line1: string;
@@ -76,31 +78,31 @@ export interface ITransaction extends Document {
     postalCode: string;
   };
   trackingNumber?: string; // Shipping tracking number
-  
+
   // Status details
   statusHistory: {
     status: TransactionStatus;
     timestamp: Date;
     note?: string;
   }[];
-  
+
   // Error handling
   errorMessage?: string;
   errorCode?: string;
-  
+
   // Metadata
   description: string; // Human-readable description
   metadata?: Record<string, any>; // Additional data
   ipAddress?: string; // User's IP address
   userAgent?: string; // User's browser/device info
-  
+
   // Timestamps
   completedAt?: Date;
   failedAt?: Date;
   refundedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
-  
+
   // Instance methods
   markAsCompleted(note?: string): Promise<void>;
   markAsFailed(error: string, code?: string): Promise<void>;
@@ -113,8 +115,14 @@ export interface ITransaction extends Document {
  * Transaction model interface with static methods
  */
 export interface ITransactionModel extends Model<ITransaction> {
-  findByUserId(userId: string | Types.ObjectId, limit?: number): Promise<ITransaction[]>;
-  findByWalletId(walletId: string | Types.ObjectId, limit?: number): Promise<ITransaction[]>;
+  findByUserId(
+    userId: string | Types.ObjectId,
+    limit?: number
+  ): Promise<ITransaction[]>;
+  findByWalletId(
+    walletId: string | Types.ObjectId,
+    limit?: number
+  ): Promise<ITransaction[]>;
   findPendingTransactions(): Promise<ITransaction[]>;
   getUserStats(userId: string | Types.ObjectId): Promise<any>;
 }
@@ -130,7 +138,14 @@ const StatusHistorySchema = new Schema(
   {
     status: {
       type: String,
-      enum: ['pending', 'processing', 'completed', 'failed', 'cancelled', 'refunded'],
+      enum: [
+        "pending",
+        "processing",
+        "completed",
+        "failed",
+        "cancelled",
+        "refunded",
+      ],
       required: true,
     },
     timestamp: {
@@ -169,62 +184,75 @@ const TransactionSchema = new Schema<ITransaction, ITransactionModel>(
     // -------------------------------------------------------------------------
     userId: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
       index: true,
     },
-    
+
     walletId: {
       type: Schema.Types.ObjectId,
-      ref: 'Wallet',
+      ref: "Wallet",
       required: true,
       index: true,
     },
-    
+
     // -------------------------------------------------------------------------
     // TRANSACTION DETAILS
     // -------------------------------------------------------------------------
     type: {
       type: String,
-      enum: ['deposit', 'withdrawal', 'buy_gold', 'sell_gold', 'physical_delivery'],
+      enum: [
+        "deposit",
+        "withdrawal",
+        "buy_gold",
+        "sell_gold",
+        "physical_delivery",
+      ],
       required: true,
       index: true,
     },
-    
+
     status: {
       type: String,
-      enum: ['pending', 'processing', 'completed', 'failed', 'cancelled', 'refunded'],
-      default: 'pending',
+      enum: [
+        "pending",
+        "processing",
+        "completed",
+        "failed",
+        "cancelled",
+        "refunded",
+      ],
+      default: "pending",
       required: true,
       index: true,
     },
-    
+
     // -------------------------------------------------------------------------
     // AMOUNT DETAILS
     // -------------------------------------------------------------------------
     amount: {
       type: Number,
       required: true,
-      min: [0, 'Amount must be positive'],
+      min: [0, "Amount must be positive"],
     },
-    
+
     currency: {
       type: String,
-      enum: ['USD', 'EUR', 'GBP', 'EGP', 'AED', 'SAR'],
+      enum: ["USD", "EUR", "GBP", "EGP", "AED", "SAR"],
       required: true,
     },
-    
+
     fee: {
       type: Number,
       default: 0,
       min: 0,
     },
-    
+
     netAmount: {
       type: Number,
       required: true,
     },
-    
+
     // -------------------------------------------------------------------------
     // GOLD TRADING FIELDS
     // -------------------------------------------------------------------------
@@ -232,48 +260,56 @@ const TransactionSchema = new Schema<ITransaction, ITransactionModel>(
       type: Number,
       min: 0,
     },
-    
+
     goldPricePerGram: {
       type: Number,
       min: 0,
     },
-    
+
     // -------------------------------------------------------------------------
     // PAYMENT DETAILS
     // -------------------------------------------------------------------------
     paymentMethod: {
       type: String,
-      enum: ['bank_transfer', 'credit_card', 'debit_card', 'wire_transfer', 'crypto'],
+      enum: [
+        "bank_transfer",
+        "credit_card",
+        "debit_card",
+        "wire_transfer",
+        "crypto",
+      ],
     },
-    
+
     paymentProvider: String,
     paymentReference: String,
-    
+
     // -------------------------------------------------------------------------
     // DELIVERY DETAILS (for physical gold)
     // -------------------------------------------------------------------------
     deliveryAddress: DeliveryAddressSchema,
     trackingNumber: String,
-    
+
     // -------------------------------------------------------------------------
     // STATUS TRACKING
     // -------------------------------------------------------------------------
     statusHistory: {
       type: [StatusHistorySchema],
-      default: function(this: ITransaction) {
-        return [{
-          status: this.status || 'pending',
-          timestamp: new Date(),
-        }];
+      default: function (this: ITransaction) {
+        return [
+          {
+            status: this.status || "pending",
+            timestamp: new Date(),
+          },
+        ];
       },
     },
-    
+
     // -------------------------------------------------------------------------
     // ERROR HANDLING
     // -------------------------------------------------------------------------
     errorMessage: String,
     errorCode: String,
-    
+
     // -------------------------------------------------------------------------
     // METADATA
     // -------------------------------------------------------------------------
@@ -281,15 +317,15 @@ const TransactionSchema = new Schema<ITransaction, ITransactionModel>(
       type: String,
       required: true,
     },
-    
+
     metadata: {
       type: Schema.Types.Mixed,
       default: {},
     },
-    
+
     ipAddress: String,
     userAgent: String,
-    
+
     // -------------------------------------------------------------------------
     // STATUS TIMESTAMPS
     // -------------------------------------------------------------------------
@@ -318,8 +354,8 @@ TransactionSchema.index({ status: 1, createdAt: -1 });
 /**
  * Calculate net amount before saving
  */
-TransactionSchema.pre('save', function (next) {
-  if (this.isModified('amount') || this.isModified('fee')) {
+TransactionSchema.pre("save", function (next) {
+  if (this.isModified("amount") || this.isModified("fee")) {
     this.netAmount = this.amount - this.fee;
   }
   next();
@@ -333,10 +369,12 @@ TransactionSchema.pre('save', function (next) {
  * Mark transaction as completed
  * @param note - Optional completion note
  */
-TransactionSchema.methods.markAsCompleted = async function (note?: string): Promise<void> {
-  this.status = 'completed';
+TransactionSchema.methods.markAsCompleted = async function (
+  note?: string
+): Promise<void> {
+  this.status = "completed";
   this.completedAt = new Date();
-  await this.addStatusUpdate('completed', note);
+  await this.addStatusUpdate("completed", note);
   await this.save();
 };
 
@@ -349,11 +387,11 @@ TransactionSchema.methods.markAsFailed = async function (
   error: string,
   code?: string
 ): Promise<void> {
-  this.status = 'failed';
+  this.status = "failed";
   this.failedAt = new Date();
   this.errorMessage = error;
   this.errorCode = code;
-  await this.addStatusUpdate('failed', error);
+  await this.addStatusUpdate("failed", error);
   await this.save();
 };
 
@@ -361,9 +399,11 @@ TransactionSchema.methods.markAsFailed = async function (
  * Mark transaction as cancelled
  * @param reason - Cancellation reason
  */
-TransactionSchema.methods.markAsCancelled = async function (reason?: string): Promise<void> {
-  this.status = 'cancelled';
-  await this.addStatusUpdate('cancelled', reason);
+TransactionSchema.methods.markAsCancelled = async function (
+  reason?: string
+): Promise<void> {
+  this.status = "cancelled";
+  await this.addStatusUpdate("cancelled", reason);
   await this.save();
 };
 
@@ -371,10 +411,12 @@ TransactionSchema.methods.markAsCancelled = async function (reason?: string): Pr
  * Mark transaction as refunded
  * @param reason - Refund reason
  */
-TransactionSchema.methods.markAsRefunded = async function (reason?: string): Promise<void> {
-  this.status = 'refunded';
+TransactionSchema.methods.markAsRefunded = async function (
+  reason?: string
+): Promise<void> {
+  this.status = "refunded";
   this.refundedAt = new Date();
-  await this.addStatusUpdate('refunded', reason);
+  await this.addStatusUpdate("refunded", reason);
   await this.save();
 };
 
@@ -408,10 +450,7 @@ TransactionSchema.statics.findByUserId = function (
   userId: string | Types.ObjectId,
   limit: number = 50
 ) {
-  return this.find({ userId })
-    .sort({ createdAt: -1 })
-    .limit(limit)
-    .exec();
+  return this.find({ userId }).sort({ createdAt: -1 }).limit(limit).exec();
 };
 
 /**
@@ -424,10 +463,7 @@ TransactionSchema.statics.findByWalletId = function (
   walletId: string | Types.ObjectId,
   limit: number = 50
 ) {
-  return this.find({ walletId })
-    .sort({ createdAt: -1 })
-    .limit(limit)
-    .exec();
+  return this.find({ walletId }).sort({ createdAt: -1 }).limit(limit).exec();
 };
 
 /**
@@ -435,9 +471,7 @@ TransactionSchema.statics.findByWalletId = function (
  * @returns Promise<ITransaction[]>
  */
 TransactionSchema.statics.findPendingTransactions = function () {
-  return this.find({ status: 'pending' })
-    .sort({ createdAt: 1 })
-    .exec();
+  return this.find({ status: "pending" }).sort({ createdAt: 1 }).exec();
 };
 
 /**
@@ -452,14 +486,14 @@ TransactionSchema.statics.getUserStats = async function (
     { $match: { userId: new Types.ObjectId(userId as string) } },
     {
       $group: {
-        _id: '$type',
+        _id: "$type",
         count: { $sum: 1 },
-        totalAmount: { $sum: '$amount' },
-        totalFees: { $sum: '$fee' },
+        totalAmount: { $sum: "$amount" },
+        totalFees: { $sum: "$fee" },
       },
     },
   ]);
-  
+
   return stats;
 };
 
@@ -467,8 +501,12 @@ TransactionSchema.statics.getUserStats = async function (
 // MODEL EXPORT
 // =============================================================================
 
-const Transaction = (mongoose.models.Transaction as ITransactionModel) ||
-                    mongoose.model<ITransaction, ITransactionModel>('Transaction', TransactionSchema);
+const Transaction =
+  (mongoose.models.Transaction as ITransactionModel) ||
+  mongoose.model<ITransaction, ITransactionModel>(
+    "Transaction",
+    TransactionSchema
+  );
 
 export default Transaction;
 
@@ -478,7 +516,7 @@ export default Transaction;
 
 /*
  * CREATE DEPOSIT TRANSACTION:
- * 
+ *
  * const transaction = await Transaction.create({
  *   userId: user._id,
  *   walletId: wallet._id,
@@ -490,10 +528,10 @@ export default Transaction;
  *   paymentMethod: 'bank_transfer',
  *   description: 'Deposit via bank transfer',
  * });
- * 
- * 
+ *
+ *
  * CREATE GOLD PURCHASE:
- * 
+ *
  * const transaction = await Transaction.create({
  *   userId: user._id,
  *   walletId: wallet._id,
@@ -506,20 +544,20 @@ export default Transaction;
  *   goldPricePerGram: 65,
  *   description: 'Purchased 10g gold at $65/g',
  * });
- * 
- * 
+ *
+ *
  * UPDATE TRANSACTION STATUS:
- * 
+ *
  * await transaction.markAsCompleted('Payment processed successfully');
  * await transaction.markAsFailed('Insufficient funds', 'E001');
- * 
- * 
+ *
+ *
  * GET USER TRANSACTIONS:
- * 
+ *
  * const transactions = await Transaction.findByUserId(userId, 20);
- * 
- * 
+ *
+ *
  * GET USER STATISTICS:
- * 
+ *
  * const stats = await Transaction.getUserStats(userId);
  */

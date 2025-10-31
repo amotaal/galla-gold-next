@@ -1,13 +1,37 @@
-// /types/index.ts
-// UPDATED - Comprehensive TypeScript Types for GALLA.GOLD Application
-// Purpose: Central type definitions to eliminate TypeScript errors and provide type safety
+// types/index.ts
+// ============================================================================
+// COMPREHENSIVE TYPE DEFINITIONS FOR GALLA.GOLD APPLICATION
+// ============================================================================
+// Purpose: Central type definitions for the entire application
+// Eliminates TypeScript errors and provides complete type safety
 
 // =============================================================================
-// USER TYPES
+// USER & AUTHENTICATION TYPES
 // =============================================================================
 
 /**
- * User authentication and profile types
+ * User roles in the system
+ */
+export type UserRole = "user" | "admin";
+
+/**
+ * KYC (Know Your Customer) verification status
+ * ✅ FIXED: Added "none" for new users
+ */
+export type KYCStatus =
+  | "none" // User hasn't started KYC
+  | "pending" // KYC initiated but not submitted
+  | "submitted" // Documents submitted, awaiting review
+  | "verified" // KYC approved
+  | "rejected"; // KYC rejected
+
+/**
+ * Supported locales/languages
+ */
+export type Locale = "en" | "es" | "fr" | "ru" | "ar";
+
+/**
+ * Complete user profile interface
  */
 export interface User {
   id: string;
@@ -15,23 +39,46 @@ export interface User {
   firstName: string;
   lastName: string;
   fullName: string;
-  name: string; // Added for Next-Auth compatibility
+  name: string; // For Next-Auth compatibility
   phone?: string;
   avatar?: string;
-  emailVerified: boolean;
+  dateOfBirth?: Date;
+  address?: Address;
+
+  // Authentication
+  emailVerified: boolean; // In database: boolean
+  // Note: Next-Auth needs Date | null - conversion happens in auth config
+
+  // Security
   mfaEnabled: boolean;
-  hasMFA: boolean; // Alias for mfaEnabled
+  hasMFA: boolean; // Alias for compatibility
+
+  // Verification
   kycStatus: KYCStatus;
+  kycSubmittedAt?: Date;
+  kycVerifiedAt?: Date;
+
+  // Preferences
   preferredCurrency: Currency;
   preferredLanguage: Locale;
-  locale: string; // Added for Next-Auth compatibility
+  locale: string;
+  timezone: string;
+
+  // Role
   role: UserRole;
+
+  // Status
+  isActive: boolean;
+  isSuspended: boolean;
+
+  // Timestamps
   createdAt: Date;
+  updatedAt: Date;
   lastLoginAt?: Date;
 }
 
 /**
- * Session user type (minimal data stored in session)
+ * Session user (minimal data in session token)
  */
 export interface SessionUser {
   id: string;
@@ -39,30 +86,30 @@ export interface SessionUser {
   name: string;
   firstName: string;
   lastName: string;
-  emailVerified: boolean;
+  emailVerified: Date | null; // Next-Auth format
   role: UserRole;
   hasMFA: boolean;
   kycStatus: KYCStatus;
   locale: string;
+  avatar?: string;
+  phone?: string;
 }
 
 /**
- * User roles
+ * Address structure
  */
-export type UserRole = "user" | "admin";
-
-/**
- * KYC verification status - UPDATED with 'submitted'
- */
-export type KYCStatus = "none" | "pending" | "submitted" | "verified" | "rejected";
-
-/**
- * Supported locales
- */
-export type Locale = "en" | "es" | "fr" | "ru" | "ar";
+export interface Address {
+  street?: string;
+  line1?: string;
+  line2?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postalCode?: string;
+}
 
 // =============================================================================
-// WALLET TYPES
+// CURRENCY & FINANCIAL TYPES
 // =============================================================================
 
 /**
@@ -71,7 +118,8 @@ export type Locale = "en" | "es" | "fr" | "ru" | "ar";
 export type Currency = "USD" | "EUR" | "GBP" | "EGP" | "AED" | "SAR";
 
 /**
- * Multi-currency balance record - UPDATED with index signature
+ * Multi-currency balance record
+ * ✅ FIXED: Added index signature for dynamic access
  */
 export interface Balance {
   USD: number;
@@ -80,8 +128,22 @@ export interface Balance {
   EGP: number;
   AED: number;
   SAR: number;
-  [key: string]: number; // Allow dynamic access
+  [key: string]: number; // ✅ Allows: wallet.balance[currency]
 }
+
+/**
+ * Currency conversion rate
+ */
+export interface ExchangeRate {
+  from: Currency;
+  to: Currency;
+  rate: number;
+  lastUpdated: Date;
+}
+
+// =============================================================================
+// WALLET TYPES
+// =============================================================================
 
 /**
  * Gold holdings information
@@ -96,31 +158,14 @@ export interface GoldHoldings {
 }
 
 /**
- * Complete wallet state
- */
-export interface Wallet {
-  id: string;
-  userId: string;
-  balance: Balance;
-  gold: GoldHoldings;
-  totalValueUSD: number;
-  dailyLimits: DailyLimits;
-  usedToday: UsedLimits;
-  isActive: boolean;
-  isFrozen: boolean;
-  frozenReason?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-/**
- * Daily transaction limits (in USD)
+ * Daily transaction limits (in USD equivalent)
  */
 export interface DailyLimits {
   deposit: number;
   withdrawal: number;
   goldPurchase: number;
   goldSale: number;
+  conversion: number;
 }
 
 /**
@@ -131,7 +176,39 @@ export interface UsedLimits {
   withdrawal: number;
   goldPurchase: number;
   goldSale: number;
+  conversion: number;
   lastReset: Date;
+}
+
+/**
+ * Lifetime transaction usage tracking
+ */
+export interface LifetimeUsage {
+  totalDeposits: number;
+  totalWithdrawals: number;
+  totalGoldPurchases: number;
+  totalGoldSales: number;
+  totalConversions: number;
+}
+
+/**
+ * Complete wallet interface
+ */
+export interface Wallet {
+  id: string;
+  userId: string;
+  balance: Balance;
+  gold: GoldHoldings;
+  totalValueUSD: number;
+  dailyLimits: DailyLimits;
+  usedToday: UsedLimits;
+  lifetimeUsage: LifetimeUsage;
+  isActive: boolean;
+  isFrozen: boolean;
+  frozenReason?: string;
+  frozenAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // =============================================================================
@@ -139,84 +216,151 @@ export interface UsedLimits {
 // =============================================================================
 
 /**
- * Transaction types - UPDATED with gold_purchase and gold_sale
+ * Transaction types supported by the platform
+ * ✅ FIXED: Added "gold_purchase" and "gold_sale" to fix comparison errors
  */
 export type TransactionType =
-  | "deposit"
-  | "withdrawal"
-  | "gold_purchase"    // ADDED
-  | "gold_sale"        // ADDED
-  | "buy_gold"
-  | "sell_gold"
-  | "conversion"
-  | "delivery"
-  | "fee"
-  | "refund";
+  | "deposit" // Add funds to wallet
+  | "withdrawal" // Withdraw funds from wallet
+  | "buy_gold" // Purchase gold (alternative name)
+  | "sell_gold" // Sell gold (alternative name)
+  | "gold_purchase" // ✅ Purchase gold (used in actions)
+  | "gold_sale" // ✅ Sell gold (used in actions)
+  | "conversion" // Convert between currencies
+  | "delivery" // Physical gold delivery
+  | "physical_delivery" // Physical gold delivery (alternative)
+  | "fee" // Transaction fee
+  | "refund"; // Refund transaction
 
 /**
  * Transaction status
  */
 export type TransactionStatus =
-  | "pending"
-  | "processing"
-  | "completed"
-  | "failed"
-  | "cancelled"
-  | "refunded";
+  | "pending" // Initiated but not processed
+  | "processing" // Being processed
+  | "completed" // Successfully completed
+  | "failed" // Failed
+  | "cancelled" // Cancelled by user or system
+  | "refunded"; // Refunded to user
 
 /**
- * Transaction interface
+ * Payment methods for deposits/withdrawals
+ */
+export type PaymentMethod =
+  | "bank_transfer"
+  | "credit_card"
+  | "debit_card"
+  | "wire_transfer"
+  | "crypto";
+
+/**
+ * Complete transaction interface
  */
 export interface Transaction {
   id: string;
   userId: string;
+  walletId: string;
   type: TransactionType;
+  status: TransactionStatus;
+
+  // Amounts
   amount: number;
   currency: Currency;
-  status: TransactionStatus;
+  fee: number;
+  netAmount: number;
+
+  // Gold-specific (for gold trades)
+  goldAmount?: number;
+  goldGrams?: number; // Alias
+  goldPricePerGram?: number;
+
+  // Payment details
+  paymentMethod?: PaymentMethod;
+  paymentProvider?: string;
+  paymentReference?: string;
+
+  // Delivery details (for physical gold)
+  deliveryAddress?: Address;
+  trackingNumber?: string;
+
+  // Status tracking
+  statusHistory: TransactionStatusHistory[];
+
+  // Error handling
+  errorMessage?: string;
+  errorCode?: string;
+
+  // Metadata
   description: string;
   metadata?: Record<string, any>;
-  fee?: number;
-  
-  // Gold-specific fields
-  goldGrams?: number;
-  goldPricePerGram?: number;
-  
-  // Reference IDs
-  referenceId?: string;
-  externalId?: string;
-  
+  ipAddress?: string;
+  userAgent?: string;
+
   // Timestamps
   createdAt: Date;
   updatedAt: Date;
   completedAt?: Date;
   failedAt?: Date;
-  
-  // Error tracking
-  errorMessage?: string;
-  errorCode?: string;
+  refundedAt?: Date;
+}
+
+/**
+ * Transaction status history entry
+ */
+export interface TransactionStatusHistory {
+  status: TransactionStatus;
+  timestamp: Date;
+  note?: string;
+}
+
+/**
+ * Transaction summary for analytics
+ */
+export interface TransactionSummary {
+  totalTransactions: number;
+  totalDeposits: number;
+  totalWithdrawals: number;
+  totalGoldPurchases: number;
+  totalGoldSales: number;
+  totalFees: number;
+  totalVolume: number;
+  currency: Currency;
+  periodStart: Date;
+  periodEnd: Date;
 }
 
 // =============================================================================
-// GOLD TYPES
+// GOLD PRICE TYPES
 // =============================================================================
 
 /**
- * Gold price information
+ * Current gold price information
+ * ✅ FIXED: Added pricePerGram property
  */
 export interface GoldPrice {
+  currency: Currency;
   spotPrice: number;
   buyPrice: number;
   sellPrice: number;
-  pricePerGram: number; // Added for backward compatibility
-  currency: Currency;
+  pricePerGram: number; // ✅ Added for compatibility
+  spread: number;
+  spreadPercentage: number;
   lastUpdated: Date;
   change24h?: number;
   changePercentage24h?: number;
 }
 
 /**
- * Gold purchase calculation
+ * Gold price history entry
+ */
+export interface GoldPriceHistory {
+  timestamp: Date;
+  price: number;
+  currency: Currency;
+}
+
+/**
+ * Gold purchase cost calculation
  */
 export interface GoldPurchaseCalculation {
   grams: number;
@@ -229,7 +373,8 @@ export interface GoldPurchaseCalculation {
 }
 
 /**
- * Gold sale calculation
+ * Gold sale proceeds calculation
+ * ✅ FIXED: Added total property for compatibility
  */
 export interface GoldSaleCalculation {
   grams: number;
@@ -238,181 +383,228 @@ export interface GoldSaleCalculation {
   fee: number;
   feePercentage: number;
   netProceeds: number;
-  total?: number; // Added for backward compatibility
+  total: number; // ✅ Added (same as netProceeds)
   currency: Currency;
 }
 
+/**
+ * Physical gold delivery cost
+ * Note: This should be just a number, not an object with .cost property
+ */
+export type DeliveryCost = number; // ✅ Fixed: number, not { cost: number }
+
 // =============================================================================
-// DELIVERY TYPES
+// KYC (KNOW YOUR CUSTOMER) TYPES
 // =============================================================================
 
 /**
- * Delivery address
+ * KYC document types
  */
-export interface DeliveryAddress {
-  line1: string;
-  line2?: string;
+export type DocumentType =
+  | "passport"
+  | "national_id"
+  | "drivers_license"
+  | "proof_of_address"
+  | "selfie";
+
+/**
+ * Document verification status
+ */
+export type DocumentStatus = "pending" | "approved" | "rejected";
+
+/**
+ * KYC document information
+ * ✅ FIXED: Added documentType and status properties
+ */
+export interface KYCDocument {
+  type: DocumentType;
+  documentType: DocumentType; // ✅ Alias for backward compatibility
+  fileUrl: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  uploadedAt: Date;
+  verified: boolean;
+  verifiedAt?: Date;
+  verifiedBy?: string;
+  status: DocumentStatus; // ✅ Added status property
+  rejectionReason?: string;
+}
+
+/**
+ * Personal information for KYC
+ */
+export interface PersonalInfo {
+  fullName: string;
+  dateOfBirth: Date;
+  nationality: string;
+  addressLine1: string;
+  addressLine2?: string;
   city: string;
   state?: string;
   country: string;
   postalCode: string;
+  phoneNumber?: string;
 }
 
 /**
- * Delivery status
+ * Complete KYC record
  */
-export type DeliveryStatus =
-  | "pending"
-  | "processing"
-  | "shipped"
-  | "in_transit"
-  | "delivered"
-  | "failed";
-
-/**
- * Delivery cost calculation - UPDATED structure
- */
-export interface DeliveryCost {
-  cost: number;
-  currency: Currency;
-  estimatedDays: number;
-}
-
-/**
- * Delivery request
- */
-export interface DeliveryRequest {
+export interface KYC {
   id: string;
   userId: string;
-  goldGrams: number;
-  address: DeliveryAddress;
-  status: DeliveryStatus;
-  cost: number; // Also support flat number for backward compatibility
-  currency: Currency;
-  trackingNumber?: string;
-  estimatedDelivery?: Date;
-  deliveredAt?: Date;
+  status: KYCStatus;
+  personalInfo: PersonalInfo;
+  documents: KYCDocument[];
+
+  // Identity document details
+  idType: "passport" | "national_id" | "drivers_license";
+  idNumber: string;
+  idIssueDate?: Date;
+  idExpiryDate?: Date;
+  idIssuingCountry: string;
+
+  // Verification details
+  submittedAt?: Date;
+  reviewedAt?: Date;
+  verifiedAt?: Date;
+  rejectedAt?: Date;
+  expiresAt?: Date;
+
+  // Review information
+  reviewedBy?: string;
+  reviewNotes?: string;
+  rejectionReason?: string;
+
+  // Risk assessment
+  riskLevel?: "low" | "medium" | "high";
+  riskNotes?: string;
+
+  // Compliance
+  requiresManualReview: boolean;
+  flaggedForReview: boolean;
+  flagReason?: string;
+
+  // Timestamps
   createdAt: Date;
   updatedAt: Date;
 }
 
 // =============================================================================
-// KYC TYPES
+// MFA (MULTI-FACTOR AUTHENTICATION) TYPES
 // =============================================================================
 
 /**
- * KYC document type
- */
-export type KYCDocumentType =
-  | "passport"
-  | "drivers_license"
-  | "national_id"
-  | "proof_of_address"
-  | "selfie";
-
-/**
- * Document status - UPDATED
- */
-export type DocumentStatus = "pending" | "approved" | "rejected";
-
-/**
- * KYC document
- */
-export interface KYCDocument {
-  id: string;
-  type: KYCDocumentType;
-  documentType: string; // Added for backward compatibility
-  url: string;
-  status: DocumentStatus;
-  uploadedAt: Date;
-  verifiedAt?: Date;
-  rejectionReason?: string;
-}
-
-/**
- * KYC submission
- */
-export interface KYCSubmission {
-  userId: string;
-  status: KYCStatus;
-  documents: KYCDocument[];
-  submittedAt?: Date;
-  verifiedAt?: Date;
-  rejectedAt?: Date;
-  rejectionReason?: string;
-}
-
-// =============================================================================
-// MFA TYPES
-// =============================================================================
-
-/**
- * MFA method
+ * MFA methods supported
  */
 export type MFAMethod = "totp" | "sms" | "email";
 
 /**
- * MFA setup
+ * MFA backup code
+ * ✅ FIXED: Proper interface instead of just string
  */
-export interface MFASetup {
-  secret: string;
-  qrCodeUrl: string;
-  backupCodes: string[];
+export interface MFABackupCode {
+  code: string;
+  used: boolean;
+  usedAt?: Date;
+  usedIp?: string;
 }
 
 /**
- * MFA verification
+ * MFA verification attempt
  */
-export interface MFAVerification {
+export interface MFAVerificationAttempt {
   method: MFAMethod;
-  code: string;
-  timestamp: Date;
   success: boolean;
+  timestamp: Date;
   ipAddress?: string;
   userAgent?: string;
 }
 
-// =============================================================================
-// ACTION RESPONSE TYPE
-// =============================================================================
-
 /**
- * Standard API response type
+ * Complete MFA record
+ * ✅ FIXED: failedAttempts is number, backupCodes is array of objects
  */
-export interface ActionResponse<T = any> {
-  success: boolean;
-  message?: string;
-  data?: T;
-  error?: string;
-  errors?: Record<string, string>;
+export interface MFA {
+  id: string;
+  userId: string;
+  enabled: boolean;
+  secret: string;
+  backupCodes: MFABackupCode[]; // ✅ Fixed type
+  method: MFAMethod;
+  verified: boolean;
+  verifiedAt?: Date; // ✅ Added property
+
+  // Security
+  failedAttempts: number; // ✅ Fixed: number, not Date
+  lockedUntil?: Date;
+  lastVerifiedAt?: Date;
+
+  // History
+  verificationHistory: MFAVerificationAttempt[];
+
+  // Timestamps
+  enabledAt?: Date;
+  disabledAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // =============================================================================
-// PAGINATION TYPES
+// API RESPONSE TYPES
 // =============================================================================
 
 /**
- * Pagination parameters
+ * Standard API response structure
  */
-export interface PaginationParams {
-  page: number;
-  limit: number;
-  sortBy?: string;
-  sortOrder?: "asc" | "desc";
+export interface APIResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
+  timestamp?: Date;
+}
+
+/**
+ * Action response (for server actions)
+ */
+export interface ActionResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
 }
 
 /**
  * Paginated response
  */
-export interface PaginatedResponse<T> {
+export interface PaginatedResponse<T = any> {
   data: T[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    hasMore: boolean;
-  };
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+  hasMore: boolean;
+}
+
+// =============================================================================
+// FORM & VALIDATION TYPES
+// =============================================================================
+
+/**
+ * Form field error
+ */
+export interface FieldError {
+  field: string;
+  message: string;
+}
+
+/**
+ * Validation result
+ */
+export interface ValidationResult {
+  valid: boolean;
+  errors: FieldError[];
 }
 
 // =============================================================================
@@ -420,17 +612,12 @@ export interface PaginatedResponse<T> {
 // =============================================================================
 
 /**
- * Notification type
+ * Notification types
  */
-export type NotificationType =
-  | "transaction"
-  | "kyc"
-  | "security"
-  | "promotion"
-  | "system";
+export type NotificationType = "info" | "success" | "warning" | "error";
 
 /**
- * Notification
+ * Notification interface
  */
 export interface Notification {
   id: string;
@@ -438,168 +625,102 @@ export interface Notification {
   type: NotificationType;
   title: string;
   message: string;
-  metadata?: Record<string, any>;
-  createdAt: Date;
+  read: boolean;
   readAt?: Date;
+  actionUrl?: string;
+  actionLabel?: string;
+  createdAt: Date;
 }
 
 // =============================================================================
-// CHART TYPES
+// STATISTICS & ANALYTICS TYPES
 // =============================================================================
 
 /**
- * Chart data point
+ * User statistics
  */
-export interface ChartDataPoint {
-  timestamp: Date | string;
-  value: number;
-  label?: string;
+export interface UserStats {
+  totalTransactions: number;
+  totalDeposits: number;
+  totalWithdrawals: number;
+  totalGoldPurchases: number;
+  totalGoldSales: number;
+  totalFees: number;
+  goldHoldings: number;
+  portfolioValue: number;
+  profitLoss: number;
+  profitLossPercentage: number;
 }
 
 /**
- * Chart configuration
+ * Platform statistics (admin view)
  */
-export interface ChartConfig {
-  data: ChartDataPoint[];
-  xAxisLabel?: string;
-  yAxisLabel?: string;
-  showGrid?: boolean;
-  showTooltip?: boolean;
-  colors?: string[];
-}
-
-// =============================================================================
-// MODAL PROPS TYPES
-// =============================================================================
-
-/**
- * Base modal props
- */
-export interface BaseModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
-
-/**
- * Buy gold modal props
- */
-export interface BuyGoldModalProps extends BaseModalProps {
-  goldPrice: number;
-  maxAmount?: number;
-}
-
-/**
- * Sell gold modal props
- */
-export interface SellGoldModalProps extends BaseModalProps {
-  goldPrice: number;
-  goldBalance: number;
-}
-
-/**
- * Deposit modal props
- */
-export interface DepositModalProps extends BaseModalProps {
-  preferredCurrency?: Currency;
-}
-
-/**
- * Withdrawal modal props
- */
-export interface WithdrawalModalProps extends BaseModalProps {
-  cashBalance: number;
-  preferredCurrency?: Currency;
-}
-
-/**
- * Physical delivery modal props
- */
-export interface PhysicalDeliveryModalProps extends BaseModalProps {
-  goldBalance: number;
+export interface PlatformStats {
+  totalUsers: number;
+  activeUsers: number;
+  totalTransactions: number;
+  totalVolume: number;
+  totalGoldHoldings: number;
+  totalRevenue: number;
+  currency: Currency;
+  periodStart: Date;
+  periodEnd: Date;
 }
 
 // =============================================================================
-// VALIDATION TYPES
+// THEME & UI TYPES
 // =============================================================================
 
 /**
- * Form validation error
+ * Theme modes
  */
-export interface ValidationError {
-  field: string;
-  message: string;
-}
+export type Theme = "light" | "dark" | "system";
 
 /**
- * Form validation result
+ * Toast notification
  */
-export interface ValidationResult {
-  isValid: boolean;
-  errors: ValidationError[];
-}
-
-// =============================================================================
-// FILTER & SORT TYPES
-// =============================================================================
-
-/**
- * Transaction filter options
- */
-export interface TransactionFilters {
-  type?: TransactionType[];
-  status?: TransactionStatus[];
-  currency?: Currency[];
-  dateFrom?: Date;
-  dateTo?: Date;
-  minAmount?: number;
-  maxAmount?: number;
-}
-
-/**
- * Sort options
- */
-export interface SortOption {
-  field: string;
-  order: "asc" | "desc";
+export interface Toast {
+  id: string;
+  title?: string;
+  description?: string;
+  action?: React.ReactNode;
+  duration?: number;
+  variant?: "default" | "destructive";
 }
 
 // =============================================================================
-// COMPONENT PROPS TYPES
+// UTILITY TYPES
 // =============================================================================
 
 /**
- * Common component props
+ * Make all properties optional recursively
  */
-export interface ComponentProps {
-  className?: string;
-  children?: React.ReactNode;
-}
+export type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
 
 /**
- * Loading state props
+ * Make all properties required recursively
  */
-export interface LoadingProps {
-  isLoading: boolean;
-  loadingText?: string;
-}
+export type DeepRequired<T> = {
+  [P in keyof T]-?: T[P] extends object ? DeepRequired<T[P]> : T[P];
+};
+
+/**
+ * Extract keys of specific type
+ */
+export type KeysOfType<T, U> = {
+  [K in keyof T]: T[K] extends U ? K : never;
+}[keyof T];
 
 // =============================================================================
-// HELPER TYPE UTILITIES
+// RE-EXPORTS
 // =============================================================================
 
-/**
- * Make all properties optional
- */
-export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
-
-/**
- * Make all properties required
- */
-export type RequiredBy<T, K extends keyof T> = Omit<T, K> & Required<Pick<T, K>>;
-
-/**
- * Exclude null and undefined from a type
- */
-export type NonNullableFields<T> = {
-  [P in keyof T]: NonNullable<T[P]>;
+export type {
+  User as IUser,
+  Wallet as IWallet,
+  Transaction as ITransaction,
+  KYC as IKYC,
+  MFA as IMFA,
 };

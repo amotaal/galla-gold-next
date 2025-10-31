@@ -1,11 +1,13 @@
 // /server/models/User.ts
 // FIXED User Model with all required fields
 
-import mongoose, { Schema, Document, Model } from "mongoose";
+import mongoose, { Schema, Document, Model, Types } from "mongoose";
 import bcrypt from "bcryptjs";
 import { KYCStatus } from "@/types/index";
 
 export interface IUser extends Document {
+  _id: Types.ObjectId; // ✅ Add this line at the top
+
   email: string;
   password: string;
   passwordResetToken?: string;
