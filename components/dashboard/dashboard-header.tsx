@@ -1,29 +1,30 @@
-// components/dashboard/dashboard-header.tsx
-// Purpose: Header with GALLA.GOLD branding, live gold price, quick actions, and user menu
+// /components/dashboard/dashboard-header.tsx
+// Dashboard Header - GOLD STYLED VERSION
+// Purpose: Header with vibrant gold logo and proper styling
+// UPDATE: Gold logo, theme toggle, matches design sample
 
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { signOut } from 'next-auth/react';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
-import {
-  Bell,
-  User,
-  Settings,
-  LogOut,
-  TrendingUp,
-  Sparkles,
-} from 'lucide-react';
-import Image from 'next/image';
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Bell, User, Settings, LogOut, TrendingUp, Circle } from "lucide-react";
+import { signOut } from "next-auth/react";
+import { useToast } from "@/hooks/use-toast";
+
+// ============================================================================
+// TYPE DEFINITIONS
+// ============================================================================
 
 interface DashboardHeaderProps {
   user: {
@@ -35,59 +36,94 @@ interface DashboardHeaderProps {
   goldPrice: number;
 }
 
+// ============================================================================
+// DASHBOARD HEADER COMPONENT
+// ============================================================================
+
+/**
+ * DashboardHeader - Top navigation with gold styling
+ *
+ * Features:
+ * - GOLD LOGO with gradient and glow
+ * - Live gold price ticker
+ * - Theme toggle
+ * - Notifications
+ * - User dropdown menu
+ * - Matches design sample aesthetic
+ */
 export function DashboardHeader({ user, goldPrice }: DashboardHeaderProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
-    await signOut({ callbackUrl: '/' });
+    try {
+      await signOut({ redirect: false });
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+      });
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast({
+        title: "Logout Failed",
+        description: "An error occurred. Please try again.",
+        variant: "destructive",
+      });
+      setIsLoggingOut(false);
+    }
   };
 
-  const handleProfile = () => {
-    router.push('/profile');
-  };
-
-  const handleSettings = () => {
-    router.push('/settings');
-  };
+  const handleProfile = () => router.push("/dashboard/profile");
+  const handleSettings = () => router.push("/dashboard/settings");
 
   return (
-    <header className="border-b border-border bg-card/50 backdrop-blur-md flex-shrink-0 sticky top-0 z-50">
-      <div className="flex items-center justify-between px-6 py-3">
-        {/* Left Section - Branding */}
-        <div className="flex items-center gap-4">
-          {/* Logo & Brand */}
-          <div className="flex items-center gap-2">
-            <div className="relative w-8 h-8">
-              {/* Gold bars animated icon */}
-              <div className="absolute inset-0 bg-gradient-to-br from-primary via-yellow-500 to-primary rounded animate-pulse-slow" />
-              <div className="absolute inset-0.5 bg-background rounded" />
-              <div className="absolute inset-1 bg-gradient-to-br from-primary via-yellow-500 to-primary rounded" />
+    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md">
+      <div className="flex h-16 items-center justify-between px-4 lg:px-6">
+        {/* Left Section - GOLD LOGO */}
+        <div className="flex items-center gap-3">
+          {/* GOLD COIN LOGO - Matching design sample */}
+          <div className="relative">
+            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-[#FFD700] via-[#FFC107] to-[#FFB800] shadow-gold-glow">
+              <span className="text-2xl">🪙</span>
             </div>
-            <h1 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary via-yellow-400 to-primary">
+            {/* Glow effect */}
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#FFD700] via-[#FFC107] to-[#FFB800] opacity-30 blur-md -z-10" />
+          </div>
+
+          {/* BRAND NAME with gold gradient text */}
+          <div className="hidden sm:block">
+            <h1 className="text-xl font-bold bg-gradient-to-r from-[#FFD700] via-[#FFC107] to-[#FFB800] bg-clip-text text-transparent">
               GALLA.GOLD
             </h1>
           </div>
-          
-          {/* Divider */}
-          <div className="h-6 w-px bg-border hidden md:block" />
-          
-          {/* Live Gold Price Ticker */}
-          <Badge 
-            className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 transition-colors px-3 py-1.5 hidden md:flex items-center gap-2"
-          >
-            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            <span className="font-mono text-sm">
-              XAU/USD ${goldPrice.toFixed(2)}
-            </span>
-            <Sparkles className="w-3 h-3" />
-            <span className="text-xs">Live</span>
-          </Badge>
         </div>
 
-        {/* Right Section - Actions & User */}
+        {/* Center Section - GOLD PRICE BADGE */}
         <div className="flex items-center gap-2">
+          <Badge
+            variant="outline"
+            className="bg-gradient-to-r from-[#FFD700]/10 via-[#FFC107]/10 to-[#FFB800]/10 text-primary border-primary/20 px-3 py-1.5 text-sm font-semibold shadow-gold-glow"
+          >
+            <TrendingUp className="w-3 h-3 mr-1.5" />
+            XAU/USD ${goldPrice.toFixed(2)}
+          </Badge>
+          {/* Live indicator */}
+          <div className="flex items-center gap-1.5">
+            <Circle className="w-2 h-2 animate-pulse fill-green-500 text-green-500" />
+            <span className="text-xs text-muted-foreground hidden sm:inline">
+              Live
+            </span>
+          </div>
+        </div>
+
+        {/* Right Section - Actions */}
+        <div className="flex items-center gap-2">
+          {/* Theme Toggle */}
+          <ThemeToggle />
+
           {/* Notifications */}
           <Button
             variant="ghost"
@@ -95,8 +131,8 @@ export function DashboardHeader({ user, goldPrice }: DashboardHeaderProps) {
             className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors relative"
           >
             <Bell className="w-4 h-4" />
-            {/* Notification Badge */}
-            <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full animate-pulse" />
+            {/* Notification badge with gold accent */}
+            <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full animate-pulse shadow-gold-glow" />
           </Button>
 
           {/* User Menu */}
@@ -105,7 +141,7 @@ export function DashboardHeader({ user, goldPrice }: DashboardHeaderProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-full overflow-hidden border-2 border-transparent hover:border-primary/50 transition-colors"
+                className="h-9 w-9 rounded-full overflow-hidden border-2 border-transparent hover:border-primary/50 hover:shadow-gold-glow transition-all"
               >
                 {user.avatar ? (
                   <Image
@@ -118,7 +154,8 @@ export function DashboardHeader({ user, goldPrice }: DashboardHeaderProps) {
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
                     <span className="text-sm font-bold text-primary">
-                      {user.firstName[0]}{user.lastName[0]}
+                      {user.firstName[0]}
+                      {user.lastName[0]}
                     </span>
                   </div>
                 )}
@@ -126,7 +163,7 @@ export function DashboardHeader({ user, goldPrice }: DashboardHeaderProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="w-56 bg-card/95 backdrop-blur-md border-border"
+              className="w-56 glass-card border-border"
             >
               {/* User Info */}
               <div className="px-3 py-2">
@@ -137,9 +174,9 @@ export function DashboardHeader({ user, goldPrice }: DashboardHeaderProps) {
                   {user.email}
                 </p>
               </div>
-              
+
               <DropdownMenuSeparator className="bg-border" />
-              
+
               {/* Menu Items */}
               <DropdownMenuItem
                 onClick={handleProfile}
@@ -148,7 +185,7 @@ export function DashboardHeader({ user, goldPrice }: DashboardHeaderProps) {
                 <User className="w-4 h-4 mr-2" />
                 Profile
               </DropdownMenuItem>
-              
+
               <DropdownMenuItem
                 onClick={handleSettings}
                 className="cursor-pointer text-foreground hover:text-foreground hover:bg-secondary/50 focus:bg-secondary/50 focus:text-foreground"
@@ -156,16 +193,16 @@ export function DashboardHeader({ user, goldPrice }: DashboardHeaderProps) {
                 <Settings className="w-4 h-4 mr-2" />
                 Settings
               </DropdownMenuItem>
-              
+
               <DropdownMenuSeparator className="bg-border" />
-              
+
               <DropdownMenuItem
                 onClick={handleLogout}
                 disabled={isLoggingOut}
                 className="cursor-pointer text-red-400 hover:text-red-300 hover:bg-red-500/10 focus:bg-red-500/10 focus:text-red-300"
               >
                 <LogOut className="w-4 h-4 mr-2" />
-                {isLoggingOut ? 'Logging out...' : 'Logout'}
+                {isLoggingOut ? "Logging out..." : "Logout"}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -174,3 +211,45 @@ export function DashboardHeader({ user, goldPrice }: DashboardHeaderProps) {
     </header>
   );
 }
+
+// =============================================================================
+// NOTES FOR DEVELOPERS
+// =============================================================================
+
+/*
+ * GOLD LOGO STYLING:
+ *
+ * Logo Container:
+ * - bg-gradient-to-br from-[#FFD700] via-[#FFC107] to-[#FFB800]
+ * - shadow-gold-glow class for glow effect
+ * - Blur effect underneath for additional glow
+ *
+ * Brand Name:
+ * - bg-gradient-to-r from-[#FFD700] via-[#FFC107] to-[#FFB800]
+ * - bg-clip-text text-transparent for gradient text
+ *
+ * Gold Price Badge:
+ * - Gold gradient background
+ * - Primary color text
+ * - Gold border
+ * - Glow effect
+ *
+ * Notification Badge:
+ * - bg-primary (gold)
+ * - Pulse animation
+ * - Glow effect
+ *
+ * User Avatar:
+ * - Hover: border-primary/50
+ * - Hover: shadow-gold-glow
+ * - Gold gradient background for initials
+ *
+ *
+ * DESIGN PRINCIPLES:
+ *
+ * - Gold is the primary visual accent
+ * - Glowing effects on interactive elements
+ * - Glass morphism on dropdown
+ * - Smooth transitions
+ * - Matches design sample aesthetic
+ */

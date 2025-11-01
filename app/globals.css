@@ -1,16 +1,18 @@
-/* app/globals.css */
-/* Tailwind CSS 4 Configuration for GALLA.GOLD */
-/* Dark theme optimized for gold investment platform */
+/* /app/globals.css */
+/* Tailwind CSS 4 Configuration for GALLA.GOLD - ENHANCED GOLD VERSION */
+/* Purpose: Vibrant gold theme matching design sample with glass effects */
+/* UPDATE: More vibrant gold, better glows, enhanced visual hierarchy */
 
 @import "tailwindcss";
 
 /* ============================================================================
-   THEME CONFIGURATION (Tailwind CSS 4 syntax)
+   THEME CONFIGURATION - Enhanced Gold Colors
    ============================================================================ */
 
 @layer base {
   /* Light Mode Variables */
   :root {
+    /* Backgrounds */
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
@@ -18,10 +20,12 @@
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
     
-    /* Gold primary color (#FFB800) */
-    --primary: 38 92% 50%;
+    /* GOLD PRIMARY - Vibrant and luxurious */
+    /* #FFD700 - True gold color */
+    --primary: 48 100% 50%;
     --primary-foreground: 0 0% 0%;
     
+    /* Secondary colors */
     --secondary: 240 4.8% 95.9%;
     --secondary-foreground: 240 5.9% 10%;
     --muted: 240 4.8% 95.9%;
@@ -29,64 +33,73 @@
     --accent: 240 4.8% 95.9%;
     --accent-foreground: 240 5.9% 10%;
     
+    /* Status colors */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --success: 142 76% 36%;
     --success-foreground: 0 0% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 0%;
     
+    /* Borders and inputs */
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
-    --ring: 38 92% 50%;
+    --ring: 48 100% 50%;
     --radius: 0.5rem;
     
     /* Chart colors */
-    --chart-1: 38 92% 50%;
+    --chart-1: 48 100% 50%;
     --chart-2: 142 76% 36%;
     --chart-3: 221 83% 53%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 82% 52%;
   }
 
-  /* Dark Mode Variables (GALLA.GOLD uses dark mode by default) */
+  /* Dark Mode Variables - ENHANCED GOLD */
   .dark {
-    /* Dark background - very dark gray/black (#0a0a0a) */
-    --background: 0 0% 4%;
+    /* Dark backgrounds - Rich black like design sample */
+    --background: 0 0% 3%;
     --foreground: 0 0% 98%;
     
-    /* Card with slight transparency for glass effect */
-    --card: 0 0% 10%;
+    /* Cards - Subtle transparency for glass effect */
+    --card: 0 0% 8%;
     --card-foreground: 0 0% 98%;
     
-    --popover: 0 0% 10%;
+    --popover: 0 0% 8%;
     --popover-foreground: 0 0% 98%;
     
-    /* Gold primary color - brighter in dark mode */
-    --primary: 38 92% 50%;
+    /* GOLD PRIMARY - Extra vibrant for dark backgrounds */
+    /* #FFC107 - Amber gold that pops on dark */
+    --primary: 45 100% 51%;
     --primary-foreground: 0 0% 0%;
     
-    /* Secondary colors - dark gray */
-    --secondary: 240 3.7% 15.9%;
+    /* Secondary - Warm dark grays */
+    --secondary: 30 3% 15%;
     --secondary-foreground: 0 0% 98%;
     
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted: 30 3% 15%;
+    --muted-foreground: 0 0% 70%;
     
-    --accent: 240 3.7% 15.9%;
+    --accent: 30 3% 20%;
     --accent-foreground: 0 0% 98%;
     
-    --destructive: 0 62.8% 50%;
+    /* Status colors - Optimized for dark */
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
     
     --success: 142 71% 45%;
     --success-foreground: 0 0% 98%;
     
-    /* Borders - subtle in dark mode */
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 38 92% 50%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 0%;
     
-    /* Chart colors (adjusted for dark mode) */
-    --chart-1: 38 92% 50%;
+    /* Borders - Subtle with warmth */
+    --border: 30 3% 20%;
+    --input: 30 3% 20%;
+    --ring: 45 100% 51%;
+    
+    /* Chart colors */
+    --chart-1: 45 100% 51%;
     --chart-2: 142 71% 45%;
     --chart-3: 221 83% 53%;
     --chart-4: 280 65% 60%;
@@ -102,6 +115,11 @@
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   
   /* Remove default margins */
@@ -111,57 +129,85 @@
 }
 
 /* ============================================================================
-   UTILITY CLASSES
+   UTILITY CLASSES - Enhanced Gold Theme
    ============================================================================ */
 
 @layer utilities {
-  /* Gold gradient for buttons and accents */
+  /* Gold gradient backgrounds - More vibrant */
   .gold-gradient {
-    background: linear-gradient(135deg, #FFB800 0%, #FFA500 100%);
+    background: linear-gradient(135deg, #FFD700 0%, #FFC107 50%, #FF9800 100%);
   }
   
+  .gold-gradient-subtle {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 152, 0, 0.15) 100%);
+  }
+  
+  /* Gold text gradient - Vibrant shine effect */
   .gold-text {
-    background: linear-gradient(135deg, #FFB800 0%, #FFA500 100%);
+    background: linear-gradient(135deg, #FFD700 0%, #FFC107 50%, #FF9800 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  /* Glass morphism effect for cards */
+  /* Glass morphism effects - Like design sample */
   .glass-card {
-    background-color: hsl(var(--card) / 0.4);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid hsl(var(--border) / 0.5);
+    background-color: hsl(var(--card) / 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid hsl(var(--border) / 0.7);
   }
 
   .glass-card-strong {
-    background-color: hsl(var(--card) / 0.6);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid hsl(var(--border) / 0.7);
+    background-color: hsl(var(--card) / 0.8);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid hsl(var(--border) / 0.9);
   }
   
-  /* Interactive glass effect with hover */
+  /* Interactive glass effect */
   .interactive-glass {
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .interactive-glass:hover {
-    background-color: hsl(var(--card) / 0.5);
-    border-color: hsl(var(--primary) / 0.3);
+    background-color: hsl(var(--card) / 0.7);
+    border-color: hsl(var(--primary) / 0.5);
+    transform: translateY(-2px);
   }
 
-  /* Gold glow effect for buttons - Tailwind v4 compatible */
+  /* Gold glow effects - Enhanced visibility */
   .shadow-gold-glow {
-    box-shadow: 0 0 20px rgba(255, 184, 0, 0.3);
+    box-shadow: 
+      0 0 20px rgba(255, 215, 0, 0.3),
+      0 0 40px rgba(255, 193, 7, 0.2),
+      0 0 60px rgba(255, 152, 0, 0.1);
+  }
+  
+  .shadow-gold-glow-strong {
+    box-shadow: 
+      0 0 30px rgba(255, 215, 0, 0.5),
+      0 0 60px rgba(255, 193, 7, 0.3),
+      0 0 90px rgba(255, 152, 0, 0.2);
   }
   
   .shadow-gold-glow:hover {
-    box-shadow: 0 0 30px rgba(255, 184, 0, 0.5);
+    box-shadow: 
+      0 0 30px rgba(255, 215, 0, 0.4),
+      0 0 60px rgba(255, 193, 7, 0.3),
+      0 0 90px rgba(255, 152, 0, 0.2);
   }
 
-  /* Scrollbar styling for dark theme */
+  /* Gold border effects */
+  .border-gold {
+    border-color: hsl(var(--primary));
+  }
+  
+  .border-gold-subtle {
+    border-color: hsl(var(--primary) / 0.3);
+  }
+
+  /* Scrollbar styling - Gold accents */
   .custom-scrollbar::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -172,37 +218,108 @@
   }
   
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted));
+    background: hsl(var(--primary) / 0.3);
     border-radius: 4px;
+    transition: background 0.2s;
   }
   
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground));
+    background: hsl(var(--primary) / 0.5);
+  }
+
+  /* Animation utilities */
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite;
+  }
+
+  @keyframes glow {
+    0%, 100% {
+      opacity: 1;
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+    }
+    50% {
+      opacity: 0.9;
+      box-shadow: 0 0 40px rgba(255, 215, 0, 0.5);
+    }
+  }
+
+  /* Pulse animation for live indicators */
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* Fade in animation */
+  .fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Shimmer effect for loading states */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--card)) 0%,
+      hsl(var(--primary) / 0.1) 50%,
+      hsl(var(--card)) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
   }
 }
 
 /* ============================================================================
-   COMPONENT OVERRIDES - Tailwind v4 Compatible (No @apply)
+   COMPONENT OVERRIDES - Premium Dark Theme
    ============================================================================ */
 
 @layer components {
-  /* Button variations - Pure CSS, no @apply */
+  /* Gold button - Enhanced visibility */
   .btn-gold {
-    background: linear-gradient(to right, #FFB800, #FFA500);
+    background: linear-gradient(135deg, #FFD700 0%, #FFC107 50%, #FF9800 100%);
     color: black;
     font-weight: 600;
-    box-shadow: 0 0 20px rgba(255, 184, 0, 0.3);
-    transition: all 0.3s ease;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 
+      0 0 20px rgba(255, 215, 0, 0.3),
+      0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .btn-gold:hover {
-    box-shadow: 0 0 30px rgba(255, 184, 0, 0.5);
+    box-shadow: 
+      0 0 30px rgba(255, 215, 0, 0.5),
+      0 0 60px rgba(255, 193, 7, 0.3),
+      0 6px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+  }
+
+  .btn-gold:active {
+    transform: translateY(0);
   }
   
-  /* Input styling for auth forms - Pure CSS */
+  /* Input styling - Gold accents */
   .input-auth {
     width: 100%;
-    padding: 0.625rem 1rem;
+    padding: 0.75rem 1rem;
     background-color: white;
     border: 1px solid rgb(209 213 219);
     border-radius: 0.5rem;
@@ -211,8 +328,8 @@
   }
   
   .dark .input-auth {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
     color: white;
   }
   
@@ -226,20 +343,95 @@
   
   .input-auth:focus {
     outline: none;
-    box-shadow: 0 0 0 2px hsl(var(--primary));
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.3);
+    border-color: hsl(var(--primary));
   }
   
-  /* Card styling - Pure CSS */
+  /* Card styling with gold accents */
   .card-auth {
     background-color: white;
     border: 1px solid rgb(229 231 235);
     backdrop-filter: blur(12px);
     border-radius: 1rem;
     box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+    transition: all 0.3s;
   }
   
   .dark .card-auth {
     background-color: rgba(255, 255, 255, 0.05);
     border-color: rgba(255, 255, 255, 0.1);
   }
+
+  .card-auth:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 30px 60px -15px rgb(0 0 0 / 0.3);
+  }
+
+  .dark .card-auth:hover {
+    border-color: hsl(var(--primary) / 0.3);
+    box-shadow: 
+      0 30px 60px -15px rgb(0 0 0 / 0.4),
+      0 0 20px hsl(var(--primary) / 0.2);
+  }
 }
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 640px) {
+  /* Reduce glow effects on mobile for performance */
+  .shadow-gold-glow {
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.25);
+  }
+  
+  .shadow-gold-glow:hover {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.35);
+  }
+}
+
+/* ============================================================================
+   ACCESSIBILITY
+   ============================================================================ */
+
+/* Focus visible for keyboard navigation - Gold ring */
+*:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================================
+   NOTES
+   ============================================================================ */
+
+/*
+ * COLOR PALETTE (ENHANCED):
+ * 
+ * Primary Gold: #FFD700 (hsl(48 100% 50%)) - True gold
+ * Amber Gold: #FFC107 (hsl(45 100% 51%)) - Warmer gold
+ * Orange Gold: #FF9800 (hsl(36 100% 50%)) - Deep gold
+ * 
+ * These create a vibrant gradient that matches the design sample
+ * 
+ * Background Dark: hsl(0 0% 3%) - Pure black
+ * Card Dark: hsl(0 0% 8%) - Dark gray
+ * Border Dark: hsl(30 3% 20%) - Warm dark border
+ * 
+ * DESIGN PRINCIPLES:
+ * - High contrast for readability
+ * - Vibrant gold that stands out
+ * - Glass morphism for modern feel
+ * - Subtle animations for premium experience
+ */

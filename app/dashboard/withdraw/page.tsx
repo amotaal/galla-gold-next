@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { withdrawAction } from "@/server/actions/wallet";
+import { withdrawalAction } from "@/server/actions/wallet";
 import {
   ArrowLeft,
   Send,
@@ -26,7 +26,7 @@ import { Badge } from "@/components/ui/badge";
 
 /**
  * Withdraw Page
- * 
+ *
  * Allows users to withdraw funds to their bank account
  * Features:
  * - Balance display
@@ -45,7 +45,9 @@ export default function WithdrawPage() {
   const [amount, setAmount] = useState("");
   const [bankAccount, setBankAccount] = useState("");
   const [routingNumber, setRoutingNumber] = useState("");
-  const [accountHolder, setAccountHolder] = useState(user?.firstName + " " + user?.lastName || "");
+  const [accountHolder, setAccountHolder] = useState(
+    user?.firstName + " " + user?.lastName || ""
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
 
@@ -125,7 +127,7 @@ export default function WithdrawPage() {
       formData.append("routingNumber", routingNumber);
       formData.append("accountHolder", accountHolder);
 
-      const result = await withdrawAction(formData);
+      const result = await withdrawalAction(formData);
 
       if (result.success) {
         toast({
@@ -301,7 +303,8 @@ export default function WithdrawPage() {
                 <div className="flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
                   <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-destructive">
-                    Insufficient balance. Available: ${availableBalance.toFixed(2)}
+                    Insufficient balance. Available: $
+                    {availableBalance.toFixed(2)}
                   </div>
                 </div>
               )}
@@ -310,7 +313,8 @@ export default function WithdrawPage() {
                 <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
                   <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-amber-500">
-                    Daily limit exceeded. Remaining: ${remainingLimit.toFixed(2)}
+                    Daily limit exceeded. Remaining: $
+                    {remainingLimit.toFixed(2)}
                   </div>
                 </div>
               )}
@@ -356,7 +360,9 @@ export default function WithdrawPage() {
               </h3>
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Withdrawal Amount</span>
+                  <span className="text-muted-foreground">
+                    Withdrawal Amount
+                  </span>
                   <span className="font-medium">${amountNum.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
@@ -379,7 +385,9 @@ export default function WithdrawPage() {
               <h3 className="text-lg font-bold mb-4">Limits & Processing</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Minimum Withdrawal</span>
+                  <span className="text-muted-foreground">
+                    Minimum Withdrawal
+                  </span>
                   <span className="font-medium">$10.00</span>
                 </div>
                 <div className="flex justify-between">
@@ -437,7 +445,9 @@ export default function WithdrawPage() {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Fee</span>
-                <span className="font-medium">-${withdrawalFee.toFixed(2)}</span>
+                <span className="font-medium">
+                  -${withdrawalFee.toFixed(2)}
+                </span>
               </div>
               <div className="flex justify-between text-sm border-t border-border pt-2">
                 <span className="text-muted-foreground">You receive</span>

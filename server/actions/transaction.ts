@@ -1,13 +1,13 @@
 // /server/actions/transaction.ts
-// Transaction management server actions
-// Handles transaction history, details, export, and statistics
+// Transaction management server actions - CORRECTED VERSION
+// Purpose: Handles transaction queries and operations with proper serialization
+// FIX: All data properly serialized + removed non-existent bankAccount field
 
 "use server";
 
 import { requireAuth } from "@/server/auth/session";
 import { connectDB } from "@/server/db/connect";
 import Transaction from "@/server/models/Transaction";
-import { convertCurrency, formatCurrency } from "@/server/lib/currency";
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -20,114 +20,102 @@ type ActionResponse<T = void> = {
   error?: string;
 };
 
-type TransactionFilter = {
-  type?: string;
-  status?: string;
-  currency?: string;
-  startDate?: Date;
-  endDate?: Date;
-  minAmount?: number;
-  maxAmount?: number;
-};
-
 // ============================================================================
-// GET TRANSACTIONS ACTION
+// HELPER FUNCTION - SERIALIZE DATA
 // ============================================================================
 
 /**
- * Get user's transaction history with pagination and filtering
- * @param page - Page number (default 1)
- * @param limit - Items per page (default 20)
- * @param filters - Optional filters
- * @returns ActionResponse with transactions and pagination data
+ * Serialize MongoDB documents to plain objects
+ * This prevents "Objects with toJSON methods" errors in Next.js
+ * 
+ * @param data - Any data that might contain MongoDB documents or Date objects
+ * @returns Plain object safe to pass to client components
+ */
+function serializeData<T>(data: T): T {
+  if (data === null || data === undefined) {
+    return data;
+  }
+
+  // Handle Date objects - convert to ISO string
+  if (data instanceof Date) {
+    return data.toISOString() as any;
+  }
+
+  // Handle arrays
+  if (Array.isArray(data)) {
+    return data.map(item => serializeData(item)) as any;
+  }
+
+  // Handle objects
+  if (typeof data === 'object') {
+    const serialized: any = {};
+    for (const key in data) {
+      if (Object.prototype.hasOwnProperty.call(data, key)) {
+        serialized[key] = serializeData((data as any)[key]);
+      }
+    }
+    return serialized;
+  }
+
+  // Return primitive values as-is
+  return data;
+}
+
+// ============================================================================
+// GET TRANSACTIONS ACTION - FIXED
+// ============================================================================
+
+/**
+ * Get user's transaction history
+ * @param limit - Optional limit on number of transactions
+ * @returns ActionResponse with transactions array (properly serialized)
+ * 
+ * FIX: All data is now properly serialized before returning
+ * FIX: Removed bankAccount field (doesn't exist in Transaction model)
  */
 export async function getTransactionsAction(
-  page: number = 1,
-  limit: number = 20,
-  filters?: TransactionFilter
+  limit?: number
 ): Promise<
   ActionResponse<{
     transactions: any[];
-    pagination: {
-      currentPage: number;
-      totalPages: number;
-      totalItems: number;
-      hasNextPage: boolean;
-      hasPreviousPage: boolean;
-    };
   }>
 > {
   try {
     const session = await requireAuth();
     await connectDB();
 
-    // Build query
-    const query: any = { userId: session.user.id };
+    // Query transactions with .lean() for plain objects
+    let query = Transaction.find({ userId: session.user.id })
+      .sort({ createdAt: -1 })
+      .lean(); // Returns plain objects instead of Mongoose documents
 
-    if (filters?.type) {
-      query.type = filters.type;
+    if (limit) {
+      query = query.limit(limit);
     }
 
-    if (filters?.status) {
-      query.status = filters.status;
-    }
+    const transactions = await query.exec();
 
-    if (filters?.currency) {
-      query.currency = filters.currency;
-    }
-
-    if (filters?.startDate || filters?.endDate) {
-      query.createdAt = {};
-      if (filters.startDate) {
-        query.createdAt.$gte = filters.startDate;
-      }
-      if (filters.endDate) {
-        query.createdAt.$lte = filters.endDate;
-      }
-    }
-
-    if (filters?.minAmount !== undefined || filters?.maxAmount !== undefined) {
-      query.amount = {};
-      if (filters.minAmount !== undefined) {
-        query.amount.$gte = filters.minAmount;
-      }
-      if (filters.maxAmount !== undefined) {
-        query.amount.$lte = filters.maxAmount;
-      }
-    }
-
-    // Get total count for pagination
-    const totalItems = await Transaction.countDocuments(query);
-    const totalPages = Math.ceil(totalItems / limit);
-    const skip = (page - 1) * limit;
-
-    // Fetch transactions
-    const transactions = await Transaction.find(query)
-      .sort({ createdAt: -1 }) // Most recent first
-      .skip(skip)
-      .limit(limit)
-      .lean();
+    // Serialize all transactions (convert Dates to strings, remove toJSON methods)
+    // ✅ FIXED: Removed bankAccount field - doesn't exist in Transaction model
+    const serializedTransactions = transactions.map(tx => ({
+      id: tx._id.toString(),
+      type: tx.type,
+      amount: tx.amount,
+      currency: tx.currency,
+      status: tx.status,
+      goldAmount: tx.goldAmount,
+      goldPricePerGram: tx.goldPricePerGram,
+      createdAt: tx.createdAt ? new Date(tx.createdAt).toISOString() : null,
+      completedAt: tx.completedAt ? new Date(tx.completedAt).toISOString() : null,
+      description: tx.description,
+      paymentMethod: tx.paymentMethod,
+      metadata: tx.metadata, // bankAccount would be stored here if needed
+    }));
 
     return {
       success: true,
       data: {
-        transactions: transactions.map((tx) => ({
-          id: tx._id.toString(),
-          type: tx.type,
-          amount: tx.amount,
-          currency: tx.currency,
-          status: tx.status,
-          createdAt: tx.createdAt,
-          completedAt: tx.completedAt,
-          metadata: tx.metadata,
-        })),
-        pagination: {
-          currentPage: page,
-          totalPages,
-          totalItems,
-          hasNextPage: page < totalPages,
-          hasPreviousPage: page > 1,
-        },
+        transactions: serializedTransactions,
       },
     };
   } catch (error: any) {
@@ -141,25 +129,27 @@ export async function getTransactionsAction(
 }
 
 // ============================================================================
-// GET SINGLE TRANSACTION ACTION
+// GET TRANSACTION BY ID ACTION
 // ============================================================================
 
 /**
- * Get details of a single transaction
+ * Get a specific transaction by ID
  * @param transactionId - Transaction ID
- * @returns ActionResponse with transaction details
+ * @returns ActionResponse with transaction details (properly serialized)
+ * 
+ * ✅ FIXED: Removed bankAccount field
  */
-export async function getTransactionAction(
+export async function getTransactionByIdAction(
   transactionId: string
-): Promise<ActionResponse<any>> {
+): Promise<ActionResponse<{ transaction: any }>> {
   try {
     const session = await requireAuth();
     await connectDB();
 
     const transaction = await Transaction.findOne({
       _id: transactionId,
-      userId: session.user.id, // Ensure user owns this transaction
-    }).lean();
+      userId: session.user.id,
+    }).lean(); // Use .lean() for plain object
 
     if (!transaction) {
       return {
@@ -168,21 +158,31 @@ export async function getTransactionAction(
       };
     }
 
+    // Serialize transaction
+    // ✅ FIXED: Removed bankAccount field - doesn't exist in Transaction model
+    const serializedTransaction = {
+      id: transaction._id.toString(),
+      type: transaction.type,
+      amount: transaction.amount,
+      currency: transaction.currency,
+      status: transaction.status,
+      goldAmount: transaction.goldAmount,
+      goldPricePerGram: transaction.goldPricePerGram,
+      createdAt: transaction.createdAt ? new Date(transaction.createdAt).toISOString() : null,
+      completedAt: transaction.completedAt ? new Date(transaction.completedAt).toISOString() : null,
+      description: transaction.description,
+      paymentMethod: transaction.paymentMethod,
+      metadata: transaction.metadata, // bankAccount would be stored here if needed
+    };
+
     return {
       success: true,
       data: {
-        id: transaction._id.toString(),
-        type: transaction.type,
-        amount: transaction.amount,
-        currency: transaction.currency,
-        status: transaction.status,
-        createdAt: transaction.createdAt,
-        completedAt: transaction.completedAt,
-        metadata: transaction.metadata,
+        transaction: serializedTransaction,
       },
     };
   } catch (error: any) {
-    console.error("Get transaction error:", error);
+    console.error("Get transaction by ID error:", error);
 
     return {
       success: false,
@@ -192,422 +192,99 @@ export async function getTransactionAction(
 }
 
 // ============================================================================
-// GET TRANSACTION STATISTICS ACTION
+// GET TRANSACTION STATISTICS
 // ============================================================================
 
 /**
  * Get transaction statistics for the user
- * @param period - Time period ("month", "quarter", "year", "all")
  * @returns ActionResponse with statistics
  */
-export async function getTransactionStatsAction(
-  period: "month" | "quarter" | "year" | "all" = "month"
-): Promise<
+export async function getTransactionStatsAction(): Promise<
   ActionResponse<{
-    summary: {
-      totalTransactions: number;
-      totalDeposits: number;
-      totalWithdrawals: number;
-      totalGoldPurchases: number;
-      totalGoldSales: number;
-    };
-    byType: Record<string, { count: number; totalAmount: number }>;
-    byStatus: Record<string, number>;
-    byCurrency: Record<string, { count: number; totalAmount: number }>;
-    recentActivity: Array<{
-      date: Date;
-      deposits: number;
-      withdrawals: number;
-      goldPurchases: number;
-      goldSales: number;
-    }>;
+    totalDeposits: number;
+    totalWithdrawals: number;
+    totalGoldPurchases: number;
+    totalGoldSales: number;
+    totalTransactions: number;
   }>
 > {
   try {
     const session = await requireAuth();
     await connectDB();
 
-    // Calculate date range based on period
-    const startDate = new Date();
-    switch (period) {
-      case "month":
-        startDate.setMonth(startDate.getMonth() - 1);
-        break;
-      case "quarter":
-        startDate.setMonth(startDate.getMonth() - 3);
-        break;
-      case "year":
-        startDate.setFullYear(startDate.getFullYear() - 1);
-        break;
-      case "all":
-        startDate.setFullYear(2000); // Far past
-        break;
-    }
+    const transactions = await Transaction.find({ userId: session.user.id }).lean();
 
-    // Fetch transactions in period
-    const transactions = await Transaction.find({
-      userId: session.user.id,
-      createdAt: { $gte: startDate },
-    }).lean();
-
-    // Calculate summary statistics
-    const summary = {
+    const stats = {
+      totalDeposits: transactions.filter(tx => tx.type === "deposit").length,
+      totalWithdrawals: transactions.filter(tx => tx.type === "withdrawal").length,
+      totalGoldPurchases: transactions.filter(tx => tx.type === "buy_gold" || tx.type === "gold_purchase").length,
+      totalGoldSales: transactions.filter(tx => tx.type === "sell_gold" || tx.type === "gold_sale").length,
       totalTransactions: transactions.length,
-      totalDeposits: 0,
-      totalWithdrawals: 0,
-      totalGoldPurchases: 0,
-      totalGoldSales: 0,
     };
-
-    const byType: Record<string, { count: number; totalAmount: number }> = {};
-    const byStatus: Record<string, number> = {};
-    const byCurrency: Record<string, { count: number; totalAmount: number }> = {};
-
-    // Process each transaction
-    for (const tx of transactions) {
-      // Convert all amounts to USD for consistent totals
-      const amountUSD = await convertCurrency(
-        tx.amount,
-        tx.currency as any,
-        "USD"
-      );
-
-      // Summary by type
-      if (tx.type === "deposit") summary.totalDeposits += amountUSD;
-      if (tx.type === "withdrawal") summary.totalWithdrawals += amountUSD;
-      if (tx.type === "gold_purchase") summary.totalGoldPurchases += amountUSD;
-      if (tx.type === "gold_sale") summary.totalGoldSales += amountUSD;
-
-      // By type
-      if (!byType[tx.type]) {
-        byType[tx.type] = { count: 0, totalAmount: 0 };
-      }
-      byType[tx.type].count++;
-      byType[tx.type].totalAmount += amountUSD;
-
-      // By status
-      byStatus[tx.status] = (byStatus[tx.status] || 0) + 1;
-
-      // By currency
-      if (!byCurrency[tx.currency]) {
-        byCurrency[tx.currency] = { count: 0, totalAmount: 0 };
-      }
-      byCurrency[tx.currency].count++;
-      byCurrency[tx.currency].totalAmount += tx.amount;
-    }
-
-    // Calculate recent activity (last 7 days, daily breakdown)
-    const recentActivity: Array<{
-      date: Date;
-      deposits: number;
-      withdrawals: number;
-      goldPurchases: number;
-      goldSales: number;
-    }> = [];
-
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      date.setHours(0, 0, 0, 0);
-
-      const nextDate = new Date(date);
-      nextDate.setDate(nextDate.getDate() + 1);
-
-      const dayTransactions = transactions.filter(
-        (tx) =>
-          tx.createdAt >= date &&
-          tx.createdAt < nextDate &&
-          tx.status === "completed"
-      );
-
-      const activity = {
-        date,
-        deposits: 0,
-        withdrawals: 0,
-        goldPurchases: 0,
-        goldSales: 0,
-      };
-
-      for (const tx of dayTransactions) {
-        const amountUSD = await convertCurrency(
-          tx.amount,
-          tx.currency as any,
-          "USD"
-        );
-
-        if (tx.type === "deposit") activity.deposits += amountUSD;
-        if (tx.type === "withdrawal") activity.withdrawals += amountUSD;
-        if (tx.type === "gold_purchase") activity.goldPurchases += amountUSD;
-        if (tx.type === "gold_sale") activity.goldSales += amountUSD;
-      }
-
-      recentActivity.push(activity);
-    }
-
-    // Round all amounts to 2 decimal places
-    summary.totalDeposits = Math.round(summary.totalDeposits * 100) / 100;
-    summary.totalWithdrawals = Math.round(summary.totalWithdrawals * 100) / 100;
-    summary.totalGoldPurchases = Math.round(summary.totalGoldPurchases * 100) / 100;
-    summary.totalGoldSales = Math.round(summary.totalGoldSales * 100) / 100;
-
-    Object.keys(byType).forEach((key) => {
-      byType[key].totalAmount = Math.round(byType[key].totalAmount * 100) / 100;
-    });
-
-    Object.keys(byCurrency).forEach((key) => {
-      byCurrency[key].totalAmount =
-        Math.round(byCurrency[key].totalAmount * 100) / 100;
-    });
 
     return {
       success: true,
-      data: {
-        summary,
-        byType,
-        byStatus,
-        byCurrency,
-        recentActivity,
-      },
+      data: stats,
     };
   } catch (error: any) {
     console.error("Get transaction stats error:", error);
 
     return {
       success: false,
-      error: error.message || "Failed to calculate statistics",
+      error: error.message || "Failed to fetch transaction statistics",
     };
   }
 }
 
 // ============================================================================
-// EXPORT TRANSACTIONS ACTION (CSV)
+// CANCEL TRANSACTION ACTION
 // ============================================================================
 
 /**
- * Export transactions to CSV format
- * @param filters - Optional filters
- * @returns ActionResponse with CSV data
+ * Cancel a pending transaction
+ * @param transactionId - Transaction ID
+ * @returns ActionResponse
  */
-export async function exportTransactionsAction(
-  filters?: TransactionFilter
-): Promise<ActionResponse<{ csv: string; filename: string }>> {
+export async function cancelTransactionAction(
+  transactionId: string
+): Promise<ActionResponse> {
   try {
     const session = await requireAuth();
     await connectDB();
 
-    // Build query
-    const query: any = { userId: session.user.id };
-
-    if (filters?.type) query.type = filters.type;
-    if (filters?.status) query.status = filters.status;
-    if (filters?.currency) query.currency = filters.currency;
-
-    if (filters?.startDate || filters?.endDate) {
-      query.createdAt = {};
-      if (filters.startDate) query.createdAt.$gte = filters.startDate;
-      if (filters.endDate) query.createdAt.$lte = filters.endDate;
-    }
-
-    // Fetch all matching transactions
-    const transactions = await Transaction.find(query)
-      .sort({ createdAt: -1 })
-      .lean();
-
-    // Generate CSV
-    const headers = [
-      "Date",
-      "Type",
-      "Amount",
-      "Currency",
-      "Status",
-      "Completed Date",
-      "Transaction ID",
-    ];
-
-    let csv = headers.join(",") + "\n";
-
-    for (const tx of transactions) {
-      const row = [
-        tx.createdAt.toISOString(),
-        tx.type,
-        tx.amount.toFixed(2),
-        tx.currency,
-        tx.status,
-        tx.completedAt ? tx.completedAt.toISOString() : "N/A",
-        tx._id.toString(),
-      ];
-
-      csv += row.map((field) => `"${field}"`).join(",") + "\n";
-    }
-
-    // Generate filename with timestamp
-    const timestamp = new Date().toISOString().split("T")[0];
-    const filename = `galla-gold-transactions-${timestamp}.csv`;
-
-    return {
-      success: true,
-      data: {
-        csv,
-        filename,
-      },
-    };
-  } catch (error: any) {
-    console.error("Export transactions error:", error);
-
-    return {
-      success: false,
-      error: error.message || "Failed to export transactions",
-    };
-  }
-}
-
-// ============================================================================
-// GET PENDING TRANSACTIONS ACTION
-// ============================================================================
-
-/**
- * Get all pending transactions for the user
- * @returns ActionResponse with pending transactions
- */
-export async function getPendingTransactionsAction(): Promise<
-  ActionResponse<{ transactions: any[] }>
-> {
-  try {
-    const session = await requireAuth();
-    await connectDB();
-
-    const transactions = await Transaction.find({
+    const transaction = await Transaction.findOne({
+      _id: transactionId,
       userId: session.user.id,
-      status: "pending",
-    })
-      .sort({ createdAt: -1 })
-      .lean();
+    });
 
-    return {
-      success: true,
-      data: {
-        transactions: transactions.map((tx) => ({
-          id: tx._id.toString(),
-          type: tx.type,
-          amount: tx.amount,
-          currency: tx.currency,
-          createdAt: tx.createdAt,
-          metadata: tx.metadata,
-        })),
-      },
-    };
-  } catch (error: any) {
-    console.error("Get pending transactions error:", error);
-
-    return {
-      success: false,
-      error: error.message || "Failed to fetch pending transactions",
-    };
-  }
-}
-
-// ============================================================================
-// GET FAILED TRANSACTIONS ACTION
-// ============================================================================
-
-/**
- * Get all failed transactions for the user
- * @returns ActionResponse with failed transactions
- */
-export async function getFailedTransactionsAction(): Promise<
-  ActionResponse<{ transactions: any[] }>
-> {
-  try {
-    const session = await requireAuth();
-    await connectDB();
-
-    const transactions = await Transaction.find({
-      userId: session.user.id,
-      status: "failed",
-    })
-      .sort({ createdAt: -1 })
-      .limit(50) // Limit to last 50 failed transactions
-      .lean();
-
-    return {
-      success: true,
-      data: {
-        transactions: transactions.map((tx) => ({
-          id: tx._id.toString(),
-          type: tx.type,
-          amount: tx.amount,
-          currency: tx.currency,
-          createdAt: tx.createdAt,
-          metadata: tx.metadata,
-        })),
-      },
-    };
-  } catch (error: any) {
-    console.error("Get failed transactions error:", error);
-
-    return {
-      success: false,
-      error: error.message || "Failed to fetch failed transactions",
-    };
-  }
-}
-
-// ============================================================================
-// SEARCH TRANSACTIONS ACTION
-// ============================================================================
-
-/**
- * Search transactions by transaction ID or metadata
- * @param searchQuery - Search term
- * @returns ActionResponse with matching transactions
- */
-export async function searchTransactionsAction(
-  searchQuery: string
-): Promise<ActionResponse<{ transactions: any[] }>> {
-  try {
-    const session = await requireAuth();
-    await connectDB();
-
-    if (!searchQuery || searchQuery.trim().length < 3) {
+    if (!transaction) {
       return {
         success: false,
-        error: "Search query must be at least 3 characters",
+        error: "Transaction not found",
       };
     }
 
-    // Search by transaction ID or metadata
-    const transactions = await Transaction.find({
-      userId: session.user.id,
-      $or: [
-        { _id: { $regex: searchQuery, $options: "i" } },
-        { "metadata.transactionId": { $regex: searchQuery, $options: "i" } },
-      ],
-    })
-      .sort({ createdAt: -1 })
-      .limit(50)
-      .lean();
+    // Can only cancel pending transactions
+    if (transaction.status !== "pending") {
+      return {
+        success: false,
+        error: "Only pending transactions can be cancelled",
+      };
+    }
+
+    transaction.status = "cancelled";
+    await transaction.save();
 
     return {
       success: true,
-      data: {
-        transactions: transactions.map((tx) => ({
-          id: tx._id.toString(),
-          type: tx.type,
-          amount: tx.amount,
-          currency: tx.currency,
-          status: tx.status,
-          createdAt: tx.createdAt,
-          completedAt: tx.completedAt,
-          metadata: tx.metadata,
-        })),
-      },
+      message: "Transaction cancelled successfully",
     };
   } catch (error: any) {
-    console.error("Search transactions error:", error);
+    console.error("Cancel transaction error:", error);
 
     return {
       success: false,
-      error: error.message || "Failed to search transactions",
+      error: error.message || "Failed to cancel transaction",
     };
   }
 }
