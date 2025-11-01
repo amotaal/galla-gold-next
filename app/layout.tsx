@@ -69,16 +69,16 @@ export const metadata: Metadata = {
   // Authors
   authors: [
     {
-      name: "GALLA.GOLD",
-      url: "https://gallagold.com",
+      name: "Ahmed Motaal",
+      url: "https://amotaal.com",
     },
   ],
 
   // Creator
-  creator: "GALLA.GOLD",
+  creator: "Ahmed Motaal",
 
   // Publisher
-  publisher: "GALLA.GOLD",
+  publisher: "Ahmed Motaal",
 
   // Robots
   robots: {
@@ -97,7 +97,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://gallagold.com",
+    url: "https://galla.gold",
     siteName: "GALLA.GOLD",
     title: "GALLA.GOLD - Invest in Physical Gold",
     description:
@@ -130,7 +130,7 @@ export const metadata: Metadata = {
   },
 
   // Manifest
-  manifest: "/manifest.json",
+  //manifest: "/manifest.json",
 
   // Viewport (in Next.js 14+, this is set separately)
   // viewport: "width=device-width, initial-scale=1, maximum-scale=5",

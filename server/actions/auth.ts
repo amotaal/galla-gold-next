@@ -165,7 +165,7 @@ export async function signupAction(
       template: "verify",
       data: {
         firstName: user.firstName,
-        verifyUrl: `${process.env.NEXT_PUBLIC_APP_URL}/verify?token=${token}`,
+        verificationUrl: `${process.env.NEXT_PUBLIC_APP_URL}/verify?token=${token}`, // ✅ CORRECT
       },
     });
 

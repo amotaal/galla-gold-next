@@ -16,8 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/providers/auth";
-import { PasswordToggleButton } from "@/components/password-toggle";
-import { Mail, Lock, Loader2, ArrowLeft } from "lucide-react";
+import { Mail, Lock, Loader2, ArrowLeft, EyeOff, Eye } from "lucide-react";
 
 /**
  * LoginPage - Authentication page with email/password login
@@ -227,10 +226,18 @@ export default function LoginPage() {
                   autoComplete="current-password"
                   required
                 />
-                <PasswordToggleButton
-                  show={showPassword}
-                  onToggle={() => setShowPassword(!showPassword)}
-                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
               </div>
             </div>
 

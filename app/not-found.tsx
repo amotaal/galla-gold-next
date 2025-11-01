@@ -2,6 +2,8 @@
 // 404 Not Found Page for GALLA.GOLD
 // Purpose: Display a professional 404 error page with gold-themed styling
 
+"use client";
+
 import Link from "next/link";
 import { AlertCircle, Home, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";

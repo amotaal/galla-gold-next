@@ -66,19 +66,36 @@ export const authConfig: NextAuthConfig = {
             throw new Error("Account is locked. Please try again later.");
           }
 
+          // Verify password (by comparing both passwords not to be confused with verify email)
           // Verify password
-          const isValid = await verifyPassword(password, user.password);
+          console.log("🔐 [AUTH DEBUG] Attempting password verification...");
+          console.log("🔐 [AUTH DEBUG] Email:", email);
+          console.log(
+            "🔐 [AUTH DEBUG] Password received (length):",
+            password?.length
+          );
+          console.log(
+            "🔐 [AUTH DEBUG] Hash from DB:",
+            user.password?.substring(0, 20) + "..."
+          );
+
+          const isValid = await user.comparePassword(password);
+
+          console.log("🔐 [AUTH DEBUG] Password verification result:", isValid);
 
           if (!isValid) {
             // Increment failed login attempts
             await user.incrementLoginAttempts();
+            console.log("❌ [AUTH DEBUG] Password verification FAILED");
             throw new Error("Invalid credentials");
           }
+
+          console.log("✅ [AUTH DEBUG] Password verification SUCCESS");
 
           // ✅ FIXED: Removed email verification check to allow login
           // Users will be redirected to verify-email page after login if not verified
           // This prevents the deadlock where users can't login to verify their email
-          
+
           // NOTE: If you want to enforce email verification before login in production,
           // uncomment the following code:
           /*

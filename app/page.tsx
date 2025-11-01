@@ -2,6 +2,8 @@
 // Landing Page for GALLA.GOLD
 // Purpose: Main homepage with hero section, features, and call-to-action
 
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
