@@ -1,7 +1,7 @@
 // server/models/Wallet.ts
-// Fixed Wallet model - REMOVED duplicate userId index
+// Wallet Model - FIXED: Removed duplicate userId index
 // Purpose: Wallet Model with multi-currency support and gold holdings
-// ✅ FIXED: Removed `index: true` from userId field to prevent duplicate index warning
+// ✅ FIXED: unique: true already creates index, removed manual Schema.index({ userId: 1 })
 
 import mongoose, { Schema, Document, Model, Types } from "mongoose";
 import type { Balance } from "@/types/index";
@@ -69,9 +69,7 @@ const WalletSchema = new Schema<IWallet, IWalletModel>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      unique: true,
-      // ✅ REMOVED: index: true (causes duplicate index warning)
-      // Index is defined below with WalletSchema.index()
+      unique: true, // ✅ This creates an index automatically
     },
 
     balance: {
@@ -108,9 +106,9 @@ const WalletSchema = new Schema<IWallet, IWalletModel>(
 
     lifetimeLimits: {
       deposit: { type: Number, default: 1000000 },
-      withdrawal: { type: Number, default: 500000 },
-      goldPurchase: { type: Number, default: 5000000 },
-      goldSale: { type: Number, default: 5000000 },
+      withdrawal: { type: Number, default: 1000000 },
+      goldPurchase: { type: Number, default: 10000000 },
+      goldSale: { type: Number, default: 10000000 },
     },
 
     lastReset: { type: Date, default: Date.now },
@@ -124,25 +122,19 @@ const WalletSchema = new Schema<IWallet, IWalletModel>(
 );
 
 // ============================================================================
-// INDEXES - Define ONLY here (not in field definitions)
+// INDEXES - Only for fields WITHOUT unique constraint
 // ============================================================================
-WalletSchema.index({ userId: 1 }); // ✅ userId index defined once
+// ❌ REMOVED: WalletSchema.index({ userId: 1 }); - Already indexed via unique: true
 WalletSchema.index({ isActive: 1, isFrozen: 1 });
 
 // ============================================================================
 // INSTANCE METHODS
 // ============================================================================
 
-/**
- * Get balance for a specific currency
- */
 WalletSchema.methods.getBalance = function (currency: string): number {
   return this.balance[currency as keyof Balance] || 0;
 };
 
-/**
- * Set balance for a specific currency
- */
 WalletSchema.methods.setBalance = async function (
   currency: string,
   amount: number
@@ -151,21 +143,14 @@ WalletSchema.methods.setBalance = async function (
   await this.save();
 };
 
-/**
- * Add to balance for a specific currency
- */
 WalletSchema.methods.addToBalance = async function (
   currency: string,
   amount: number
 ): Promise<void> {
-  this.balance[currency as keyof Balance] =
-    (this.balance[currency as keyof Balance] || 0) + amount;
+  this.balance[currency as keyof Balance] += amount;
   await this.save();
 };
 
-/**
- * Subtract from balance for a specific currency
- */
 WalletSchema.methods.subtractFromBalance = async function (
   currency: string,
   amount: number
@@ -174,9 +159,6 @@ WalletSchema.methods.subtractFromBalance = async function (
   await this.save();
 };
 
-/**
- * Check if wallet has sufficient balance
- */
 WalletSchema.methods.hasBalance = function (
   currency: string,
   amount: number
@@ -184,9 +166,6 @@ WalletSchema.methods.hasBalance = function (
   return this.getBalance(currency) >= amount;
 };
 
-/**
- * Reset daily limits (should be called daily via cron job)
- */
 WalletSchema.methods.resetDailyLimits = async function (): Promise<void> {
   this.usedToday = {
     deposit: 0,
@@ -198,27 +177,20 @@ WalletSchema.methods.resetDailyLimits = async function (): Promise<void> {
   await this.save();
 };
 
-/**
- * Check if transaction is within daily limit
- */
 WalletSchema.methods.checkDailyLimit = function (
   type: string,
   amount: number
 ): boolean {
-  const used = this.usedToday[type as keyof typeof this.usedToday] || 0;
-  const limit = this.dailyLimits[type as keyof typeof this.dailyLimits] || 0;
+  const limit = this.dailyLimits[type as keyof typeof this.dailyLimits];
+  const used = this.usedToday[type as keyof typeof this.usedToday];
   return used + amount <= limit;
 };
 
-/**
- * Update daily total for a transaction type
- */
 WalletSchema.methods.updateDailyTotal = async function (
   type: string,
   amount: number
 ): Promise<void> {
-  this.usedToday[type as keyof typeof this.usedToday] =
-    (this.usedToday[type as keyof typeof this.usedToday] || 0) + amount;
+  this.usedToday[type as keyof typeof this.usedToday] += amount;
   await this.save();
 };
 
@@ -226,20 +198,31 @@ WalletSchema.methods.updateDailyTotal = async function (
 // STATIC METHODS
 // ============================================================================
 
-/**
- * Find wallet by user ID
- */
-WalletSchema.statics.findByUserId = function (userId: string | Types.ObjectId) {
+WalletSchema.statics.findByUserId = function (
+  userId: string | Types.ObjectId
+) {
   return this.findOne({ userId });
 };
 
-/**
- * Create wallet for user with default values
- */
-WalletSchema.statics.createForUser = function (
+WalletSchema.statics.createForUser = async function (
   userId: string | Types.ObjectId
 ) {
-  return this.create({ userId });
+  return this.create({
+    userId,
+    balance: {
+      USD: 0,
+      EUR: 0,
+      GBP: 0,
+      EGP: 0,
+      AED: 0,
+      SAR: 0,
+    },
+    gold: {
+      grams: 0,
+      averagePurchasePrice: 0,
+      lastUpdated: new Date(),
+    },
+  });
 };
 
 // ============================================================================

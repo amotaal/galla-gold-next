@@ -1,6 +1,4 @@
-// components/ui/button.tsx
-// Fixed Button component with "use client" directive
-// This is a Client Component and can receive event handlers
+"use client";
 
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";

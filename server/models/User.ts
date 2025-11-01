@@ -1,7 +1,7 @@
 // server/models/User.ts
-// Fixed User model - REMOVED duplicate email index and password field index
+// User Model - FIXED: Removed duplicate email index
 // Purpose: User model with authentication, KYC, and MFA functionality
-// ✅ FIXED: Removed `index: true` from email field to prevent duplicate index warning
+// ✅ FIXED: unique: true already creates index, removed manual Schema.index({ email: 1 })
 
 import mongoose, { Schema, Document, Model, Types } from "mongoose";
 import bcrypt from "bcryptjs";
@@ -84,15 +84,14 @@ const UserSchema = new Schema<IUser, IUserModel>(
     email: {
       type: String,
       required: true,
-      unique: true, // ✅ Keep unique constraint
+      unique: true, // ✅ This creates an index automatically
       lowercase: true,
       trim: true,
-      // ✅ REMOVED: index: true (causes duplicate index warning)
     },
     password: {
       type: String,
       required: true,
-      select: false, // Don't include password in queries by default
+      select: false,
     },
     passwordResetToken: String,
     passwordResetExpires: Date,
@@ -159,9 +158,9 @@ const UserSchema = new Schema<IUser, IUserModel>(
 );
 
 // ============================================================================
-// INDEXES - Define ONLY here (not in field definitions)
+// INDEXES - Only for fields WITHOUT unique constraint
 // ============================================================================
-UserSchema.index({ email: 1 }); // ✅ Email index defined once
+// ❌ REMOVED: UserSchema.index({ email: 1 }); - Already indexed via unique: true
 UserSchema.index({ kycStatus: 1 });
 UserSchema.index({ isActive: 1, isSuspended: 1 });
 UserSchema.index({ emailVerificationToken: 1 });
@@ -171,11 +170,10 @@ UserSchema.index({ passwordResetToken: 1 });
 // PRE-SAVE HOOK - Hash password before saving
 // ============================================================================
 UserSchema.pre("save", async function (next) {
-  // Only hash the password if it has been modified (or is new)
   if (!this.isModified("password")) return next();
 
   try {
-    const salt = await bcrypt.genSalt(12); // 12 rounds for security
+    const salt = await bcrypt.genSalt(12);
     this.password = await bcrypt.hash(this.password, salt);
     next();
   } catch (error: any) {
@@ -187,9 +185,6 @@ UserSchema.pre("save", async function (next) {
 // INSTANCE METHODS
 // ============================================================================
 
-/**
- * Compare password with hashed password
- */
 UserSchema.methods.comparePassword = async function (
   candidatePassword: string
 ): Promise<boolean> {
@@ -200,9 +195,6 @@ UserSchema.methods.comparePassword = async function (
   }
 };
 
-/**
- * Generate password reset token
- */
 UserSchema.methods.generatePasswordResetToken = function (): string {
   const token =
     Math.random().toString(36).substring(2, 15) +
@@ -212,9 +204,6 @@ UserSchema.methods.generatePasswordResetToken = function (): string {
   return token;
 };
 
-/**
- * Generate email verification token
- */
 UserSchema.methods.generateEmailVerificationToken = function (): string {
   const token =
     Math.random().toString(36).substring(2, 15) +
@@ -224,18 +213,11 @@ UserSchema.methods.generateEmailVerificationToken = function (): string {
   return token;
 };
 
-/**
- * Check if account is locked
- */
 UserSchema.methods.isLocked = function (): boolean {
   return !!(this.lockUntil && this.lockUntil > new Date());
 };
 
-/**
- * Increment failed login attempts
- */
 UserSchema.methods.incrementLoginAttempts = async function (): Promise<void> {
-  // If lock has expired, reset attempts
   if (this.lockUntil && this.lockUntil < new Date()) {
     await this.updateOne({
       $set: { loginAttempts: 1 },
@@ -244,7 +226,6 @@ UserSchema.methods.incrementLoginAttempts = async function (): Promise<void> {
   } else {
     const updates: any = { $inc: { loginAttempts: 1 } };
 
-    // Lock account after 5 failed attempts
     if (this.loginAttempts + 1 >= 5 && !this.isLocked()) {
       updates.$set = { lockUntil: new Date(Date.now() + 2 * 60 * 60 * 1000) }; // 2 hours
     }
@@ -253,9 +234,6 @@ UserSchema.methods.incrementLoginAttempts = async function (): Promise<void> {
   }
 };
 
-/**
- * Reset failed login attempts
- */
 UserSchema.methods.resetLoginAttempts = async function (): Promise<void> {
   await this.updateOne({
     $set: { loginAttempts: 0 },
@@ -267,16 +245,10 @@ UserSchema.methods.resetLoginAttempts = async function (): Promise<void> {
 // STATIC METHODS
 // ============================================================================
 
-/**
- * Find user by email
- */
 UserSchema.statics.findByEmail = function (email: string) {
   return this.findOne({ email: email.toLowerCase() });
 };
 
-/**
- * Find user by verification token
- */
 UserSchema.statics.findByVerificationToken = function (token: string) {
   return this.findOne({
     emailVerificationToken: token,
@@ -284,9 +256,6 @@ UserSchema.statics.findByVerificationToken = function (token: string) {
   });
 };
 
-/**
- * Find user by password reset token
- */
 UserSchema.statics.findByResetToken = function (token: string) {
   return this.findOne({
     passwordResetToken: token,

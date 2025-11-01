@@ -164,12 +164,11 @@ export default function LoginPage() {
             {/* Logo */}
             <div className="flex justify-center mb-6">
               <Image
-                src="/logo.png"
+                src="/gold-bars.gif"
                 alt="GALLA.GOLD"
-                width={120}
+                width={40}
                 height={40}
-                className="h-10 w-auto"
-                priority
+                unoptimized // Important for GIFs
               />
             </div>
 

@@ -1,7 +1,7 @@
 // app/signup/page.tsx
 // Signup Page for GALLA.GOLD - FIXED
 // Purpose: User registration with email/password credentials
-// ✅ FIX: Extracted password toggle buttons to separate component
+// ✅ FIXED: Added confirmPassword and acceptTerms to FormData
 
 "use client";
 
@@ -27,20 +27,6 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-/**
- * SignupPage - User registration page
- *
- * Features:
- * - First name, last name, email, password fields
- * - Password confirmation
- * - Password visibility toggle
- * - Terms acceptance checkbox
- * - Form validation
- * - Loading states
- * - Error handling
- * - Success message with verification prompt
- * - Auto-redirect if already authenticated
- */
 export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -77,7 +63,7 @@ export default function SignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
+    // Client-side validation
     if (!firstName || !lastName || !email || !password || !confirmPassword) {
       toast({
         title: "Missing Information",
@@ -126,12 +112,14 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      // Create form data
+      // ✅ FIXED: Include ALL required fields in FormData
       const formData = new FormData();
       formData.append("firstName", firstName);
       formData.append("lastName", lastName);
       formData.append("email", email);
       formData.append("password", password);
+      formData.append("confirmPassword", confirmPassword); // ✅ FIXED: Added
+      formData.append("acceptTerms", acceptTerms.toString()); // ✅ FIXED: Added
 
       // Call signup action
       const result = await signupAction(formData);
@@ -168,94 +156,69 @@ export default function SignupPage() {
     }
   };
 
-  // Show loading state while checking authentication
+  // Show loading while checking auth
   if (isAuthLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  // Don't show signup page if already authenticated
-  if (isAuthenticated) {
-    return null;
-  }
-
-  // Show success message
+  // Success screen
   if (showSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-muted/20">
-        <Card className="w-full max-w-md bg-card/80 backdrop-blur-md border-border shadow-2xl">
-          <div className="p-8 text-center">
-            <div className="mb-6 flex justify-center">
-              <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center ring-4 ring-primary/10">
-                <CheckCircle2 className="w-10 h-10 text-primary" />
-              </div>
-            </div>
-
-            <h2 className="text-2xl font-bold mb-4">Account Created!</h2>
-            <p className="text-muted-foreground mb-2">
-              We've sent a verification email to:
-            </p>
-            <p className="font-medium text-primary mb-6">{email}</p>
-            <p className="text-sm text-muted-foreground">
-              Please check your inbox and click the verification link to activate
-              your account.
-            </p>
-
-            <div className="mt-8">
-              <Link href="/login">
-                <Button className="w-full">Go to Login</Button>
-              </Link>
+      <div className="min-h-screen flex items-center justify-center bg-background p-6">
+        <Card className="w-full max-w-md p-8 text-center space-y-6 border-border bg-card shadow-lg">
+          <div className="flex justify-center">
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+              <CheckCircle2 className="w-8 h-8 text-primary" />
             </div>
           </div>
+          <div>
+            <h2 className="text-2xl font-bold mb-2">Account Created!</h2>
+            <p className="text-muted-foreground">
+              We've sent a verification email to <strong>{email}</strong>.
+              Please check your inbox and click the verification link to
+              activate your account.
+            </p>
+          </div>
+          <Button onClick={() => router.push("/login")} className="w-full">
+            Go to Login
+          </Button>
         </Card>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-muted/20">
-      {/* Decorative background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-      </div>
+    <div
+      className={`min-h-screen flex items-center justify-center bg-background p-6 transition-opacity duration-500 ${
+        mounted ? "opacity-100" : "opacity-0"
+      }`}
+    >
+      <Card className="w-full max-w-md border-border bg-card shadow-lg">
+        {/* Header */}
+        <div className="p-8 pb-6">
+          <Link
+            href="/"
+            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Home
+          </Link>
 
-      {/* Signup Card */}
-      <Card
-        className={`w-full max-w-md relative bg-card/80 backdrop-blur-md border-border shadow-2xl transition-all duration-700 ${
-          mounted ? "opacity-100 scale-100" : "opacity-0 scale-95"
-        }`}
-      >
-        <div className="p-8">
-          {/* Header */}
-          <div className="text-center mb-8">
-            {/* Logo */}
-            <div className="flex justify-center mb-6">
-              <Image
-                src="/logo.png"
-                alt="GALLA.GOLD"
-                width={120}
-                height={40}
-                className="h-10 w-auto"
-                priority
-              />
-            </div>
-
-            {/* Title */}
-            <h1 className="text-2xl font-bold mb-2">Create Your Account</h1>
-            <p className="text-muted-foreground text-sm">
-              Start investing in gold today
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2">Create Account</h1>
+            <p className="text-muted-foreground">
+              Start your gold investment journey today
             </p>
           </div>
 
           {/* Signup Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Name Fields - Side by Side */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Name Fields */}
             <div className="grid grid-cols-2 gap-4">
-              {/* First Name */}
               <div className="space-y-2">
                 <Label htmlFor="firstName" className="text-sm font-medium">
                   First Name
@@ -270,13 +233,11 @@ export default function SignupPage() {
                     onChange={(e) => setFirstName(e.target.value)}
                     className="pl-10"
                     autoComplete="given-name"
-                    autoFocus
                     required
                   />
                 </div>
               </div>
 
-              {/* Last Name */}
               <div className="space-y-2">
                 <Label htmlFor="lastName" className="text-sm font-medium">
                   Last Name
@@ -419,23 +380,13 @@ export default function SignupPage() {
 
           {/* Login Link */}
           <div className="text-center">
-            <Link href="/login">
-              <Button variant="outline" className="w-full" size="lg">
-                Sign In
-              </Button>
+            <Link
+              href="/login"
+              className="text-sm text-primary hover:underline font-medium"
+            >
+              Sign in to your account
             </Link>
           </div>
-        </div>
-
-        {/* Back to Home */}
-        <div className="border-t border-border p-4">
-          <Link
-            href="/"
-            className="flex items-center justify-center text-sm text-muted-foreground hover:text-foreground transition-colors group"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-            Back to home
-          </Link>
         </div>
       </Card>
     </div>

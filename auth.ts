@@ -6,7 +6,7 @@
 // ✅ FIXED: Removed conflicting type declarations (use types/next-auth.d.ts instead)
 
 import NextAuth from "next-auth";
-import { authConfig } from "./auth.config";
+import { authConfig } from "@/server/auth/config";
 
 // =============================================================================
 // NEXTAUTH INSTANCE
@@ -30,9 +30,9 @@ export const {
 /**
  * Get current session on the server
  * Use this in Server Components and Server Actions
- * 
+ *
  * @returns Session object or null
- * 
+ *
  * @example
  * const session = await auth();
  * if (!session) return redirect('/login');
@@ -41,10 +41,10 @@ export { auth as getServerSession };
 
 /**
  * Sign in with credentials
- * 
+ *
  * @param credentials - Email and password
  * @returns User object or null
- * 
+ *
  * @example
  * await signInWithCredentials({ email: 'user@example.com', password: 'password' });
  */
@@ -67,9 +67,9 @@ export async function signInWithCredentials(credentials: {
 
 /**
  * Sign out current user
- * 
+ *
  * @param redirectTo - Where to redirect after sign out
- * 
+ *
  * @example
  * await signOutUser('/');
  */
