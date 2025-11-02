@@ -241,7 +241,7 @@ export default function DepositPage() {
                   <TabsContent value="bank_transfer" className="mt-0">
                     <Card className="bg-blue-500/10 border-blue-500/20 p-4">
                       <div className="flex items-start gap-2">
-                        <AlertCircle className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                        <AlertCircle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
                         <div className="text-sm text-muted-foreground">
                           <p className="font-semibold text-foreground mb-1">
                             Bank Transfer Instructions
@@ -258,7 +258,7 @@ export default function DepositPage() {
                   <TabsContent value="credit_card" className="mt-0">
                     <Card className="bg-green-500/10 border-green-500/20 p-4">
                       <div className="flex items-start gap-2">
-                        <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
                         <div className="text-sm text-muted-foreground">
                           <p className="font-semibold text-foreground mb-1">
                             Instant Processing
@@ -276,7 +276,7 @@ export default function DepositPage() {
                   <Button
                     onClick={handleDeposit}
                     disabled={!amount || parseFloat(amount) < 10 || isSubmitting}
-                    className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white"
+                    className="w-full bg-linear-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white"
                     size="lg"
                   >
                     {isSubmitting ? (
@@ -298,7 +298,7 @@ export default function DepositPage() {
             {/* Right Column - Info */}
             <div className="space-y-6">
               {/* Current Balance */}
-              <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-blue-500/20 p-6">
+              <Card className="bg-linear-to-br from-blue-500/10 to-blue-600/10 border-blue-500/20 p-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">
                     Current Balance
@@ -392,7 +392,7 @@ export default function DepositPage() {
 
             <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 mb-6">
               <div className="flex items-start gap-2">
-                <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                 <div className="text-sm">
                   <p className="font-semibold mb-1">Important:</p>
                   <ul className="space-y-1 text-muted-foreground">
@@ -414,7 +414,7 @@ export default function DepositPage() {
               </Button>
               <Button
                 onClick={() => router.push("/dashboard")}
-                className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600"
+                className="flex-1 bg-linear-to-r from-blue-500 to-blue-600"
               >
                 <CheckCircle2 className="w-4 h-4 mr-2" />
                 Done

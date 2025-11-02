@@ -210,7 +210,7 @@ export default function WithdrawPage() {
           <Card className="bg-card/60 backdrop-blur-md border-border p-6">
             <div className="space-y-6">
               {/* Available Balance */}
-              <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 rounded-lg p-4 border border-purple-500/20">
+              <div className="bg-linear-to-br from-purple-500/10 to-purple-600/10 rounded-lg p-4 border border-purple-500/20">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">
                     Available Balance
@@ -301,7 +301,7 @@ export default function WithdrawPage() {
               {/* Warnings */}
               {amountNum > availableBalance && (
                 <div className="flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-                  <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                  <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
                   <div className="text-sm text-destructive">
                     Insufficient balance. Available: $
                     {availableBalance.toFixed(2)}
@@ -311,7 +311,7 @@ export default function WithdrawPage() {
 
               {amountNum > remainingLimit && (
                 <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-                  <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                   <div className="text-sm text-amber-500">
                     Daily limit exceeded. Remaining: $
                     {remainingLimit.toFixed(2)}
@@ -332,7 +332,7 @@ export default function WithdrawPage() {
                   !accountHolder ||
                   isSubmitting
                 }
-                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white"
+                className="w-full bg-linear-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white"
                 size="lg"
               >
                 {isSubmitting ? (
@@ -473,7 +473,7 @@ export default function WithdrawPage() {
               <Button
                 onClick={handleWithdraw}
                 disabled={isSubmitting}
-                className="flex-1 bg-gradient-to-r from-purple-500 to-purple-600"
+                className="flex-1 bg-linear-to-r from-purple-500 to-purple-600"
               >
                 {isSubmitting ? (
                   <>

@@ -185,7 +185,7 @@ export default function SellPage() {
           <Card className="bg-card/60 backdrop-blur-md border-border p-6">
             <div className="space-y-6">
               {/* Available Balance */}
-              <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/10 rounded-lg p-4 border border-orange-500/20">
+              <div className="bg-linear-to-br from-orange-500/10 to-orange-600/10 rounded-lg p-4 border border-orange-500/20">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">
                     Available Gold
@@ -248,7 +248,7 @@ export default function SellPage() {
               {/* Warning */}
               {gramsNum > availableGold && (
                 <div className="flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-                  <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                  <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
                   <div className="text-sm text-destructive">
                     Insufficient gold balance. You have {availableGold.toFixed(6)} grams available.
                   </div>
@@ -264,7 +264,7 @@ export default function SellPage() {
                   gramsNum > availableGold ||
                   isSubmitting
                 }
-                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white"
+                className="w-full bg-linear-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white"
                 size="lg"
               >
                 {isSubmitting ? (
@@ -378,7 +378,7 @@ export default function SellPage() {
               <Button
                 onClick={handleSell}
                 disabled={isSubmitting}
-                className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600"
+                className="flex-1 bg-linear-to-r from-orange-500 to-orange-600"
               >
                 {isSubmitting ? (
                   <>

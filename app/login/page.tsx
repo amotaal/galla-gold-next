@@ -17,6 +17,7 @@ import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/providers/auth";
 import { Mail, Lock, Loader2, ArrowLeft, EyeOff, Eye } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 /**
  * LoginPage - Authentication page with email/password login
@@ -144,13 +145,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-muted/20">
-      {/* Decorative background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-      </div>
-
+    <div className="min-h-screen flex items-center justify-center p-4 bg-linear-to-br from-background via-background to-muted/20">
       {/* Login Card */}
       <Card
         className={`w-full max-w-md relative bg-card/80 backdrop-blur-md border-border shadow-2xl transition-all duration-700 ${
@@ -159,21 +154,14 @@ export default function LoginPage() {
       >
         <div className="p-8">
           {/* Header */}
-          <div className="text-center mb-8">
+          <div className="flex flex-col items-center text-center  my-2">
             {/* Logo */}
-            <div className="flex justify-center mb-6">
-              <Image
-                src="/gold-bars.gif"
-                alt="GALLA.GOLD"
-                width={40}
-                height={40}
-                unoptimized // Important for GIFs
-              />
-            </div>
+
+            <Logo />
 
             {/* Title */}
-            <h1 className="text-2xl font-bold mb-2">Welcome Back</h1>
-            <p className="text-muted-foreground text-sm">
+            <h1 className="text-2xl text-foreground font-bold my-2">Welcome Back</h1>
+            <p className="text-muted-foreground text-sm my-2">
               Sign in to your account to continue
             </p>
           </div>
@@ -244,17 +232,17 @@ export default function LoginPage() {
             {/* Submit Button */}
             <Button
               type="submit"
-              className="w-full"
+              className="w-full text-3xl font-bold gold-shine bg-clip-text cursor-pointer"
               size="lg"
               disabled={isLoading}
             >
               {isLoading ? (
                 <>
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Signing in...
+                  LOGGING IN...
                 </>
               ) : (
-                "Sign In"
+                "LOGIN"
               )}
             </Button>
           </form>

@@ -43,7 +43,7 @@ export default function ProfilePage() {
         </Button>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary via-yellow-400 to-primary">
+          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-linear-to-r from-primary via-yellow-400 to-primary">
             Account Settings
           </h1>
           <p className="text-muted-foreground mt-1">
@@ -88,7 +88,7 @@ export default function ProfilePage() {
             <div className="grid lg:grid-cols-3 gap-6">
               <Card className="lg:col-span-1 bg-card/60 backdrop-blur-md border-border p-6">
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center text-4xl font-bold text-primary mb-4">
+                  <div className="w-32 h-32 rounded-full bg-linear-to-br from-primary/20 to-primary/10 flex items-center justify-center text-4xl font-bold text-primary mb-4">
                     {user.firstName[0]}
                     {user.lastName[0]}
                   </div>

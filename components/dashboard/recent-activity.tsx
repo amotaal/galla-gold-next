@@ -162,7 +162,7 @@ export function RecentActivity({ transactions, isLoading }: RecentActivityProps)
                 onClick={() => router.push(`/transactions/${tx.id}`)}
               >
                 {/* Icon */}
-                <div className={`w-10 h-10 rounded-lg ${display.bgColor} ring-1 ring-border flex items-center justify-center flex-shrink-0`}>
+                <div className={`w-10 h-10 rounded-lg ${display.bgColor} ring-1 ring-border flex items-center justify-center shrink-0`}>
                   <Icon className={`w-5 h-5 ${display.color}`} />
                 </div>
 
@@ -185,7 +185,7 @@ export function RecentActivity({ transactions, isLoading }: RecentActivityProps)
                 </div>
 
                 {/* Amount */}
-                <div className="text-right flex-shrink-0">
+                <div className="text-right shrink-0">
                   <p className="text-sm font-bold">
                     {display.sign}${Math.abs(tx.amount).toFixed(2)}
                   </p>

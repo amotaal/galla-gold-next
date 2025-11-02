@@ -21,6 +21,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Bell, User, Settings, LogOut, TrendingUp, Circle } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useToast } from "@/hooks/use-toast";
+import { Logo } from "../logo";
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -83,29 +84,13 @@ export function DashboardHeader({ user, goldPrice }: DashboardHeaderProps) {
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md">
       <div className="flex h-16 items-center justify-between px-4 lg:px-6">
         {/* Left Section - GOLD LOGO */}
-        <div className="flex items-center gap-3">
-          {/* GOLD COIN LOGO - Matching design sample */}
-          <div className="relative">
-            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-[#FFD700] via-[#FFC107] to-[#FFB800] shadow-gold-glow">
-              <span className="text-2xl">🪙</span>
-            </div>
-            {/* Glow effect */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#FFD700] via-[#FFC107] to-[#FFB800] opacity-30 blur-md -z-10" />
-          </div>
-
-          {/* BRAND NAME with gold gradient text */}
-          <div className="hidden sm:block">
-            <h1 className="text-xl font-bold bg-gradient-to-r from-[#FFD700] via-[#FFC107] to-[#FFB800] bg-clip-text text-transparent">
-              GALLA.GOLD
-            </h1>
-          </div>
-        </div>
+        <Logo />
 
         {/* Center Section - GOLD PRICE BADGE */}
         <div className="flex items-center gap-2">
           <Badge
             variant="outline"
-            className="bg-gradient-to-r from-[#FFD700]/10 via-[#FFC107]/10 to-[#FFB800]/10 text-primary border-primary/20 px-3 py-1.5 text-sm font-semibold shadow-gold-glow"
+            className="bg-linear-to-r from-[#FFD700]/10 via-[#FFC107]/10 to-[#FFB800]/10 text-primary border-primary/20 px-3 py-1.5 text-sm font-semibold shadow-gold-glow"
           >
             <TrendingUp className="w-3 h-3 mr-1.5" />
             XAU/USD ${goldPrice.toFixed(2)}
@@ -152,7 +137,7 @@ export function DashboardHeader({ user, goldPrice }: DashboardHeaderProps) {
                     className="rounded-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                  <div className="w-full h-full bg-linear-to-br from-primary/20 to-primary/10 flex items-center justify-center">
                     <span className="text-sm font-bold text-primary">
                       {user.firstName[0]}
                       {user.lastName[0]}
@@ -220,12 +205,12 @@ export function DashboardHeader({ user, goldPrice }: DashboardHeaderProps) {
  * GOLD LOGO STYLING:
  *
  * Logo Container:
- * - bg-gradient-to-br from-[#FFD700] via-[#FFC107] to-[#FFB800]
+ * - bg-linear-to-br from-[#FFD700] via-[#FFC107] to-[#FFB800]
  * - shadow-gold-glow class for glow effect
  * - Blur effect underneath for additional glow
  *
  * Brand Name:
- * - bg-gradient-to-r from-[#FFD700] via-[#FFC107] to-[#FFB800]
+ * - bg-linear-to-r from-[#FFD700] via-[#FFC107] to-[#FFB800]
  * - bg-clip-text text-transparent for gradient text
  *
  * Gold Price Badge:

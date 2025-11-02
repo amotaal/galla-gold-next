@@ -235,7 +235,7 @@ export default function DeliverPage() {
         <div className="max-w-7xl mx-auto p-6">
           <Card className="bg-amber-500/10 border-amber-500/20 p-6">
             <div className="flex items-start gap-4">
-              <ShieldAlert className="w-8 h-8 text-amber-500 flex-shrink-0" />
+              <ShieldAlert className="w-8 h-8 text-amber-500 shrink-0" />
               <div>
                 <h3 className="text-lg font-bold mb-2">Identity Verification Required</h3>
                 <p className="text-muted-foreground mb-4">
@@ -260,7 +260,7 @@ export default function DeliverPage() {
           <Card className={`bg-card/60 backdrop-blur-md border-border p-6 ${!isKYCVerified ? 'opacity-50 pointer-events-none' : ''}`}>
             <div className="space-y-6">
               {/* Available Gold */}
-              <div className="bg-gradient-to-br from-amber-500/10 to-amber-600/10 rounded-lg p-4 border border-amber-500/20">
+              <div className="bg-linear-to-br from-amber-500/10 to-amber-600/10 rounded-lg p-4 border border-amber-500/20">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">
                     Available Gold
@@ -405,7 +405,7 @@ export default function DeliverPage() {
                   !postalCode ||
                   isSubmitting
                 }
-                className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white"
+                className="w-full bg-linear-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white"
                 size="lg"
               >
                 {isSubmitting ? (
@@ -530,7 +530,7 @@ export default function DeliverPage() {
               <Button
                 onClick={handleDelivery}
                 disabled={isSubmitting}
-                className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600"
+                className="flex-1 bg-linear-to-r from-amber-500 to-amber-600"
               >
                 {isSubmitting ? (
                   <>

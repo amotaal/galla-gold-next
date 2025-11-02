@@ -1,412 +1,475 @@
-// app/page.tsx
-// Landing Page for GALLA.GOLD
-// Purpose: Main homepage with hero section, features, and call-to-action
-
-"use client";
+// /app/page.tsx
+// Premium Landing Page - Award-Winning Gold-Centric Design
+// Purpose: Showcase GALLA.GOLD as a cutting-edge fintech solution
 
 import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
-  ArrowRight,
   Shield,
   TrendingUp,
   Globe,
   Lock,
   Zap,
+  Package,
+  CheckCircle,
+  ArrowRight,
+  Star,
+  Users,
   Award,
+  BarChart3,
+  Sparkles,
+  ChevronRight,
 } from "lucide-react";
+import { Logo } from "@/components/logo";
 
-/**
- * HomePage - Landing page with hero and key features
- *
- * This is a server component that renders the main landing page.
- * It includes:
- * - Hero section with main CTA
- * - Key features grid
- * - Social proof
- * - Final CTA
- *
- * Later, this will be expanded with more sections from the Vite app.
- */
-export default function HomePage() {
+export default function LandingPage() {
   return (
-    <div className="dark min-h-screen bg-background">
-      {/* Navigation Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-card/50 backdrop-blur-lg border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-3 group">
-              <div className="relative w-10 h-10">
-                <Image
-                  src="/gold-bars.gif"
-                  alt="GALLA.GOLD"
-                  width={40}
-                  height={40}
-                  className="object-contain"
-                  unoptimized
-                />
-              </div>
-              <h1 className="text-3xl font-extrabold text-gold-gradient group-hover:scale-105 transition-transform">
-                GALLA.GOLD
-              </h1>
+    <div className="min-h-screen bg-linear-to-b from-black via-[#0a0a0a] to-black">
+      {/* Navigation */}
+      <nav className="fixed top-0 w-full z-50 border-b border-primary/10 bg-black/80 backdrop-blur-xl">
+        <div className="container mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
+          <Logo />
+
+          <div className="hidden lg:flex items-center gap-8">
+            <Link
+              href="#features"
+              className="text-sm font-medium text-gray-400 hover:text-primary transition-colors"
+            >
+              Features
             </Link>
+            <Link
+              href="#how-it-works"
+              className="text-sm font-medium text-gray-400 hover:text-primary transition-colors"
+            >
+              How It Works
+            </Link>
+            <Link
+              href="#security"
+              className="text-sm font-medium text-gray-400 hover:text-primary transition-colors"
+            >
+              Security
+            </Link>
+            <Link
+              href="#pricing"
+              className="text-sm font-medium text-gray-400 hover:text-primary transition-colors"
+            >
+              Pricing
+            </Link>
+          </div>
 
-            {/* Navigation */}
-            <nav className="hidden md:flex items-center gap-8">
-              <Link
-                href="#features"
-                className="text-muted-foreground hover:text-foreground transition-colors"
+          <div className="flex items-center gap-3">
+            <Link href="/auth/login">
+              <Button
+                variant="ghost"
+                className="text-gray-400 hover:text-primary hover:bg-primary/10"
               >
-                Features
-              </Link>
-              <Link
-                href="#pricing"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Pricing
-              </Link>
-              <Link
-                href="#about"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                About
-              </Link>
-            </nav>
-
-            {/* Auth Buttons */}
-            <div className="flex items-center gap-4">
-              <Link href="/login">
-                <Button variant="ghost" className="hover:bg-secondary">
-                  Log In
-                </Button>
-              </Link>
-              <Link href="/signup">
-                <Button className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-gold-glow">
-                  Get Started
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </Link>
-            </div>
+                Log In
+              </Button>
+            </Link>
+            <Link href="/auth/signup">
+              <Button className="bg-linear-to-r from-[#FFD700] via-[#FFC107] to-[#FFD700] hover:from-[#FFC107] hover:to-[#FFD700] text-black font-bold shadow-gold-glow-strong bg-size-[200%_100%] animate-[gold-shine_3s_ease-in-out_infinite]">
+                Get Started
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </Link>
           </div>
         </div>
-      </header>
+      </nav>
 
-      {/* Main Content */}
-      <main className="pt-20">
-        {/* Hero Section */}
-        <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
-          {/* Background Gradient */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-primary/10" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
+      {/* Hero Section */}
+      <section className="relative pt-32 pb-20 px-4 sm:px-6 overflow-hidden">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
+          <div
+            className="absolute top-40 right-20 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse"
+            style={{ animationDelay: "1s" }}
+          ></div>
+          <div
+            className="absolute bottom-20 left-1/3 w-64 h-64 bg-primary/15 rounded-full blur-3xl animate-pulse"
+            style={{ animationDelay: "2s" }}
+          ></div>
+        </div>
 
-          {/* Content */}
-          <div className="relative z-10 max-w-6xl mx-auto px-6 text-center space-y-8 animate-fade-in-up">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-primary text-sm font-medium">
-              <Zap className="w-4 h-4" />
-              <span>Trusted by 100,000+ investors worldwide</span>
+        <div className="container mx-auto max-w-7xl relative">
+          {/* Trust badge */}
+          <div className="flex justify-center mb-8">
+            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-linear-to-r from-primary/20 via-primary/10 to-primary/20 border border-primary/30 shadow-gold-glow">
+              <Shield className="w-5 h-5 text-primary" />
+              <span className="text-sm font-semibold bg-linear-to-r from-primary to-yellow-400 bg-clip-text text-transparent">
+                Trusted by 100,000+ investors worldwide
+              </span>
             </div>
+          </div>
 
-            {/* Heading */}
-            <h1 className="text-5xl md:text-7xl font-extrabold leading-tight">
-              Invest in{" "}
-              <span className="text-gold-gradient">Physical Gold</span>
+          <div className="text-center max-w-5xl mx-auto mb-16">
+            <h1 className="text-6xl sm:text-7xl lg:text-8xl font-black mb-8 leading-tight">
+              <span className="text-white">Invest in</span>
               <br />
-              With Confidence
+              <span className="relative inline-block">
+                <span className="absolute inset-0 bg-linear-to-r from-primary via-yellow-400 to-primary blur-2xl opacity-50"></span>
+                <span className="relative bg-linear-to-r from-[#FFD700] via-[#FFC107] to-[#FFD700] bg-clip-text text-transparent animate-[gold-shine_3s_ease-in-out_infinite] bg-size-[200%_100%]">
+                  Physical Gold
+                </span>
+              </span>
             </h1>
 
-            {/* Subheading */}
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
-              Buy, sell, and store gold securely. Track your portfolio in
-              real-time. Multi-currency support and physical delivery available.
+            <p className="text-xl sm:text-2xl text-gray-400 mb-12 max-w-3xl mx-auto leading-relaxed">
+              The future of wealth preservation. Buy, sell, and store gold
+              securely.
+              <span className="text-primary font-semibold">
+                {" "}
+                Start with just $10.
+              </span>
             </p>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
-              <Link href="/signup">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
+              <Link href="/auth/signup">
                 <Button
                   size="lg"
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-gold-glow hover:shadow-xl transition-all duration-300 text-lg px-8 py-6 group"
+                  className="h-16 px-12 text-lg font-bold bg-linear-to-r from-[#FFD700] via-[#FFC107] to-[#FFD700] hover:from-[#FFC107] hover:to-[#FFD700] text-black shadow-gold-glow-strong bg-size-[200%_100%] animate-[gold-shine_3s_ease-in-out_infinite]"
                 >
-                  Start Investing Today
-                  <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  <Sparkles className="w-5 h-5 mr-2" />
+                  Start Investing Now
+                  <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
-              <Link href="#features">
+              <Link href="#how-it-works">
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-primary/30 hover:bg-primary/10 text-lg px-8 py-6"
+                  className="h-16 px-12 text-lg font-semibold border-2 border-primary/30 text-primary hover:bg-primary/10 hover:border-primary"
                 >
                   Learn More
+                  <ChevronRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
             </div>
 
-            {/* Trust Indicators */}
-            <div className="flex flex-wrap gap-8 justify-center items-center pt-8 text-sm text-muted-foreground">
+            {/* Trust indicators */}
+            <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-gray-500">
               <div className="flex items-center gap-2">
-                <Shield className="w-5 h-5 text-primary" />
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                <Shield className="w-4 h-4 text-primary" />
                 <span>Bank-Level Security</span>
               </div>
               <div className="flex items-center gap-2">
-                <Lock className="w-5 h-5 text-primary" />
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                <Lock className="w-4 h-4 text-primary" />
                 <span>Insured Storage</span>
               </div>
               <div className="flex items-center gap-2">
-                <Award className="w-5 h-5 text-primary" />
-                <span>Regulated Platform</span>
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                <Globe className="w-4 h-4 text-primary" />
+                <span>150+ Countries</span>
               </div>
             </div>
           </div>
-        </section>
 
-        {/* Features Section */}
-        <section id="features" className="py-24 bg-card/30">
-          <div className="max-w-7xl mx-auto px-6">
-            {/* Section Header */}
-            <div className="text-center space-y-4 mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold">
-                Why Choose{" "}
-                <span className="text-gold-gradient">GALLA.GOLD</span>
-              </h2>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                The modern way to invest in physical gold with complete
-                transparency and security
-              </p>
-            </div>
-
-            {/* Features Grid */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {/* Feature 1 */}
-              <div className="glass-card p-8 rounded-xl hover-lift space-y-4">
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-primary" />
+          {/* Dashboard preview mockup */}
+          <div className="relative max-w-6xl mx-auto">
+            <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-transparent z-10"></div>
+            <div className="relative rounded-2xl overflow-hidden border-2 border-primary/30 shadow-gold-glow-strong bg-linear-to-br from-primary/10 to-transparent backdrop-blur-xl">
+              <div className="p-8">
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  <div className="h-24 rounded-xl bg-linear-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center">
+                    <TrendingUp className="w-8 h-8 text-primary" />
+                  </div>
+                  <div className="h-24 rounded-xl bg-linear-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center">
+                    <BarChart3 className="w-8 h-8 text-primary" />
+                  </div>
+                  <div className="h-24 rounded-xl bg-linear-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center">
+                    <Award className="w-8 h-8 text-primary" />
+                  </div>
                 </div>
-                <h3 className="text-xl font-bold">Real-Time Trading</h3>
-                <p className="text-muted-foreground">
-                  Buy and sell gold instantly at live market prices with no
-                  hidden fees
-                </p>
-              </div>
-
-              {/* Feature 2 */}
-              <div className="glass-card p-8 rounded-xl hover-lift space-y-4">
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <Shield className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="text-xl font-bold">Secure Storage</h3>
-                <p className="text-muted-foreground">
-                  Your gold is stored in insured vaults with 24/7 monitoring and
-                  full insurance
-                </p>
-              </div>
-
-              {/* Feature 3 */}
-              <div className="glass-card p-8 rounded-xl hover-lift space-y-4">
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <Globe className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="text-xl font-bold">Multi-Currency</h3>
-                <p className="text-muted-foreground">
-                  Trade in USD, EUR, GBP, EGP, SAR with competitive exchange
-                  rates
-                </p>
-              </div>
-
-              {/* Feature 4 */}
-              <div className="glass-card p-8 rounded-xl hover-lift space-y-4">
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <Lock className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="text-xl font-bold">Bank-Grade Security</h3>
-                <p className="text-muted-foreground">
-                  Two-factor authentication, encryption, and KYC verification
-                  for your safety
-                </p>
-              </div>
-
-              {/* Feature 5 */}
-              <div className="glass-card p-8 rounded-xl hover-lift space-y-4">
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <Zap className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="text-xl font-bold">Instant Access</h3>
-                <p className="text-muted-foreground">
-                  Start investing with just $10. No minimum balance or monthly
-                  fees
-                </p>
-              </div>
-
-              {/* Feature 6 */}
-              <div className="glass-card p-8 rounded-xl hover-lift space-y-4">
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <Award className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="text-xl font-bold">Physical Delivery</h3>
-                <p className="text-muted-foreground">
-                  Request physical delivery of your gold bars and coins anytime,
-                  anywhere
-                </p>
+                <div className="h-48 rounded-xl bg-linear-to-br from-primary/10 to-transparent border border-primary/20"></div>
               </div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Final CTA Section */}
-        <section className="py-24 bg-gradient-to-br from-primary/10 via-background to-primary/5">
-          <div className="max-w-4xl mx-auto px-6 text-center space-y-8">
-            <h2 className="text-4xl md:text-6xl font-bold">
-              Ready to Start{" "}
-              <span className="text-gold-gradient">Building Wealth?</span>
+      {/* Stats Section */}
+      <section className="py-20 px-4 sm:px-6 border-y border-primary/10 bg-linear-to-r from-transparent via-primary/5 to-transparent">
+        <div className="container mx-auto max-w-6xl">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              { value: "$2.5B+", label: "Assets Under Management" },
+              { value: "100K+", label: "Active Investors" },
+              { value: "150+", label: "Countries Served" },
+              { value: "99.9%", label: "Platform Uptime" },
+            ].map((stat, i) => (
+              <div key={i} className="text-center">
+                <div className="text-5xl font-black bg-linear-to-r from-primary via-yellow-400 to-primary bg-clip-text text-transparent mb-3">
+                  {stat.value}
+                </div>
+                <div className="text-sm text-gray-400 font-medium">
+                  {stat.label}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section
+        id="features"
+        className="py-32 px-4 sm:px-6 relative overflow-hidden"
+      >
+        <div className="absolute inset-0 bg-gradient-radial from-primary/5 via-transparent to-transparent"></div>
+
+        <div className="container mx-auto max-w-7xl relative">
+          <div className="text-center mb-20">
+            <h2 className="text-5xl sm:text-6xl font-black mb-6">
+              <span className="text-white">Why Choose </span>
+              <span className="bg-linear-to-r from-primary via-yellow-400 to-primary bg-clip-text text-transparent">
+                GALLA.GOLD
+              </span>
             </h2>
-            <p className="text-xl text-muted-foreground">
-              Join 100,000+ investors who trust GALLA.GOLD for their precious
-              metals portfolio
+            <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+              The modern way to invest in physical gold with complete
+              transparency and security
             </p>
-            <Link href="/signup">
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              {
+                icon: TrendingUp,
+                title: "Real-Time Trading",
+                description:
+                  "Buy and sell gold instantly at live market prices with no hidden fees",
+                gradient: "from-green-500/20 to-emerald-500/5",
+              },
+              {
+                icon: Shield,
+                title: "Secure Storage",
+                description:
+                  "Your gold is stored in insured vaults with 24/7 monitoring and full insurance",
+                gradient: "from-blue-500/20 to-cyan-500/5",
+              },
+              {
+                icon: Globe,
+                title: "Multi-Currency",
+                description:
+                  "Trade in USD, EUR, GBP, EGP, SAR with competitive exchange rates",
+                gradient: "from-purple-500/20 to-pink-500/5",
+              },
+              {
+                icon: Lock,
+                title: "Bank-Grade Security",
+                description:
+                  "Two-factor authentication, encryption, and KYC verification for your safety",
+                gradient: "from-red-500/20 to-orange-500/5",
+              },
+              {
+                icon: Zap,
+                title: "Instant Access",
+                description:
+                  "Start investing with just $10. No minimum balance or monthly fees",
+                gradient: "from-yellow-500/20 to-amber-500/5",
+              },
+              {
+                icon: Package,
+                title: "Physical Delivery",
+                description:
+                  "Request physical delivery of your gold bars and coins anytime, anywhere",
+                gradient: "from-primary/20 to-yellow-500/5",
+              },
+            ].map((feature, i) => (
+              <Card
+                key={i}
+                className={`group p-8 bg-linear-to-br ${feature.gradient} border-primary/20 hover:border-primary/50 transition-all duration-300 hover:scale-105 hover:shadow-gold-glow cursor-pointer`}
+              >
+                <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-primary/30 to-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <feature.icon className="w-8 h-8 text-primary" />
+                </div>
+                <h3 className="text-2xl font-bold mb-3 text-white">
+                  {feature.title}
+                </h3>
+                <p className="text-gray-400 leading-relaxed">
+                  {feature.description}
+                </p>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section
+        id="how-it-works"
+        className="py-32 px-4 sm:px-6 bg-linear-to-b from-transparent via-primary/5 to-transparent"
+      >
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center mb-20">
+            <h2 className="text-5xl font-black mb-6 text-white">
+              Start Investing in{" "}
+              <span className="bg-linear-to-r from-primary via-yellow-400 to-primary bg-clip-text text-transparent">
+                3 Simple Steps
+              </span>
+            </h2>
+            <p className="text-xl text-gray-400">
+              Get started with GALLA.GOLD in minutes
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                step: "1",
+                title: "Create Account",
+                description:
+                  "Sign up in seconds. Complete KYC verification for full access.",
+                icon: Users,
+              },
+              {
+                step: "2",
+                title: "Add Funds",
+                description:
+                  "Deposit via bank transfer or card. Start with as little as $10.",
+                icon: Zap,
+              },
+              {
+                step: "3",
+                title: "Buy Gold",
+                description:
+                  "Purchase gold at live prices. Track your portfolio in real-time.",
+                icon: TrendingUp,
+              },
+            ].map((item, i) => (
+              <div key={i} className="relative">
+                {i < 2 && (
+                  <div className="hidden md:block absolute top-16 left-full w-full h-0.5 bg-linear-to-r from-primary to-transparent -z-10"></div>
+                )}
+                <div className="text-center">
+                  <div className="relative inline-flex items-center justify-center w-32 h-32 mb-6">
+                    <div className="absolute inset-0 bg-linear-to-br from-primary to-yellow-500 rounded-full opacity-20 animate-pulse"></div>
+                    <div className="absolute inset-4 bg-linear-to-br from-primary to-yellow-500 rounded-full opacity-40"></div>
+                    <div className="relative w-20 h-20 rounded-full bg-linear-to-br from-[#FFD700] to-[#FFB800] flex items-center justify-center shadow-gold-glow-strong">
+                      <item.icon className="w-10 h-10 text-black" />
+                    </div>
+                    <div className="absolute -top-2 -right-2 w-12 h-12 rounded-full bg-black border-2 border-primary flex items-center justify-center">
+                      <span className="text-2xl font-black text-primary">
+                        {item.step}
+                      </span>
+                    </div>
+                  </div>
+                  <h3 className="text-2xl font-bold mb-3 text-white">
+                    {item.title}
+                  </h3>
+                  <p className="text-gray-400">{item.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center mt-16">
+            <Link href="/auth/signup">
               <Button
                 size="lg"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-gold-glow hover:shadow-xl transition-all duration-300 text-xl px-12 py-8 rounded-full group"
+                className="h-16 px-12 text-lg font-bold bg-linear-to-r from-[#FFD700] via-[#FFC107] to-[#FFD700] hover:from-[#FFC107] hover:to-[#FFD700] text-black shadow-gold-glow-strong"
               >
                 Create Free Account
-                <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-2 transition-transform" />
+                <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </Link>
-            <p className="text-sm text-muted-foreground animate-pulse">
+            <p className="text-sm text-gray-500 mt-4">
               No credit card required • Start with just $10
             </p>
           </div>
-        </section>
-      </main>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-32 px-4 sm:px-6 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-linear-to-r from-primary/20 via-primary/10 to-primary/20"></div>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,215,0,0.1),transparent_50%)]"></div>
+        </div>
+
+        <div className="container mx-auto max-w-5xl text-center relative">
+          <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary/10 border border-primary/30 mb-8">
+            <Star className="w-5 h-5 text-primary" />
+            <span className="text-sm font-semibold text-primary">
+              Join 100,000+ investors
+            </span>
+          </div>
+
+          <h2 className="text-5xl sm:text-6xl font-black mb-8 leading-tight">
+            <span className="text-white">Ready to Build Your</span>
+            <br />
+            <span className="bg-linear-to-r from-[#FFD700] via-[#FFC107] to-[#FFD700] bg-clip-text text-transparent">
+              Gold Portfolio?
+            </span>
+          </h2>
+
+          <p className="text-xl text-gray-400 mb-12 max-w-2xl mx-auto">
+            Start investing in physical gold today. Secure, simple, and trusted
+            by investors worldwide.
+          </p>
+
+          <Link href="/auth/signup">
+            <Button
+              size="lg"
+              className="h-16 px-12 text-lg font-bold bg-linear-to-r from-[#FFD700] via-[#FFC107] to-[#FFD700] hover:from-[#FFC107] hover:to-[#FFD700] text-black shadow-gold-glow-strong"
+            >
+              <Sparkles className="w-5 h-5 mr-2" />
+              Get Started Now
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </Button>
+          </Link>
+        </div>
+      </section>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-card/50 py-12">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            {/* Brand */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <div className="relative w-8 h-8">
-                  <Image
-                    src="/gold-bars.gif"
-                    alt="GALLA.GOLD"
-                    width={32}
-                    height={32}
-                    className="object-contain"
-                    unoptimized
-                  />
-                </div>
-                <span className="text-xl font-bold text-primary">
-                  GALLA.GOLD
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                The modern way to invest in physical gold. Secure, simple, and
-                accessible to everyone.
+      <footer className="border-t border-primary/10 bg-black/50 py-12 px-4 sm:px-6">
+        <div className="container mx-auto max-w-7xl">
+          <div className="grid md:grid-cols-4 gap-8 mb-12">
+            <div>
+              <Logo />
+              <p className="text-sm text-gray-500">
+                The modern way to invest in physical gold.
               </p>
             </div>
 
-            {/* Product */}
-            <div>
-              <h3 className="font-semibold mb-4">Product</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <Link
-                    href="#features"
-                    className="hover:text-primary transition-colors"
-                  >
-                    Features
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="#pricing"
-                    className="hover:text-primary transition-colors"
-                  >
-                    Pricing
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/faq"
-                    className="hover:text-primary transition-colors"
-                  >
-                    FAQ
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {/* Company */}
-            <div>
-              <h3 className="font-semibold mb-4">Company</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <Link
-                    href="/about"
-                    className="hover:text-primary transition-colors"
-                  >
-                    About
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/contact"
-                    className="hover:text-primary transition-colors"
-                  >
-                    Contact
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/careers"
-                    className="hover:text-primary transition-colors"
-                  >
-                    Careers
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {/* Legal */}
-            <div>
-              <h3 className="font-semibold mb-4">Legal</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <Link
-                    href="/privacy"
-                    className="hover:text-primary transition-colors"
-                  >
-                    Privacy
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/terms"
-                    className="hover:text-primary transition-colors"
-                  >
-                    Terms
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/security"
-                    className="hover:text-primary transition-colors"
-                  >
-                    Security
-                  </Link>
-                </li>
-              </ul>
-            </div>
+            {[
+              {
+                title: "Product",
+                links: ["Features", "Pricing", "Security", "API"],
+              },
+              {
+                title: "Company",
+                links: ["About", "Careers", "Press", "Contact"],
+              },
+              {
+                title: "Legal",
+                links: ["Privacy", "Terms", "Compliance", "Licenses"],
+              },
+            ].map((section, i) => (
+              <div key={i}>
+                <h4 className="font-bold text-white mb-4">{section.title}</h4>
+                <ul className="space-y-2">
+                  {section.links.map((link, j) => (
+                    <li key={j}>
+                      <Link
+                        href="#"
+                        className="text-sm text-gray-500 hover:text-primary transition-colors"
+                      >
+                        {link}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
 
-          {/* Copyright */}
-          <div className="text-center pt-8 border-t border-border">
-            <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} GALLA.GOLD. All rights reserved.
+          <div className="border-t border-primary/10 pt-8 text-center">
+            <p className="text-sm text-gray-500">
+              © 2025 GALLA.GOLD. All rights reserved.
             </p>
           </div>
         </div>

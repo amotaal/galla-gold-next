@@ -43,7 +43,7 @@ export default function BuyGoldPage() {
           Back
         </Button>
 
-        <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary via-yellow-400 to-primary mb-2">
+        <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-linear-to-r from-primary via-yellow-400 to-primary mb-2">
           Buy Gold
         </h1>
         <p className="text-muted-foreground mb-8">Purchase physical gold</p>

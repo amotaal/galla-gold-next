@@ -10,6 +10,7 @@
    ============================================================================ */
 
 @layer base {
+
   /* Light Mode Variables */
   :root {
     /* Backgrounds */
@@ -19,12 +20,12 @@
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
-    
+
     /* GOLD PRIMARY - Vibrant and luxurious */
     /* #FFD700 - True gold color */
     --primary: 48 100% 50%;
     --primary-foreground: 0 0% 0%;
-    
+
     /* Secondary colors */
     --secondary: 240 4.8% 95.9%;
     --secondary-foreground: 240 5.9% 10%;
@@ -32,7 +33,7 @@
     --muted-foreground: 240 3.8% 46.1%;
     --accent: 240 4.8% 95.9%;
     --accent-foreground: 240 5.9% 10%;
-    
+
     /* Status colors */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
@@ -40,13 +41,13 @@
     --success-foreground: 0 0% 98%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 0%;
-    
+
     /* Borders and inputs */
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
     --ring: 48 100% 50%;
     --radius: 0.5rem;
-    
+
     /* Chart colors */
     --chart-1: 48 100% 50%;
     --chart-2: 142 76% 36%;
@@ -58,46 +59,46 @@
   /* Dark Mode Variables - ENHANCED GOLD */
   .dark {
     /* Dark backgrounds - Rich black like design sample */
-    --background: 0 0% 3%;
-    --foreground: 0 0% 98%;
-    
-    /* Cards - Subtle transparency for glass effect */
-    --card: 0 0% 8%;
-    --card-foreground: 0 0% 98%;
-    
+    --background: 0 0% 5%;
+    --foreground: 48 100% 95%;
+
+    /* Cards - Dark with gold tint */
+    --card: 40 5% 10%;
+    --card-foreground: 48 100% 95%;
+
     --popover: 0 0% 8%;
     --popover-foreground: 0 0% 98%;
-    
-    /* GOLD PRIMARY - Extra vibrant for dark backgrounds */
-    /* #FFC107 - Amber gold that pops on dark */
-    --primary: 45 100% 51%;
+
+    /* GOLD PRIMARY - True gold that shines */
+    /* #FFD700 - Pure gold for maximum impact */
+    --primary: 48 100% 50%;
     --primary-foreground: 0 0% 0%;
-    
+
     /* Secondary - Warm dark grays */
     --secondary: 30 3% 15%;
     --secondary-foreground: 0 0% 98%;
-    
+
     --muted: 30 3% 15%;
     --muted-foreground: 0 0% 70%;
-    
+
     --accent: 30 3% 20%;
     --accent-foreground: 0 0% 98%;
-    
+
     /* Status colors - Optimized for dark */
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
-    
+
     --success: 142 71% 45%;
     --success-foreground: 0 0% 98%;
-    
+
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 0%;
-    
+
     /* Borders - Subtle with warmth */
     --border: 30 3% 20%;
     --input: 30 3% 20%;
     --ring: 45 100% 51%;
-    
+
     /* Chart colors */
     --chart-1: 45 100% 51%;
     --chart-2: 142 71% 45%;
@@ -114,14 +115,14 @@
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings: "rlig"1, "calt"1;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
       'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
       sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  
+
   /* Remove default margins */
   h1, h2, h3, h4, h5, h6, p {
     margin: 0;
@@ -133,15 +134,16 @@
    ============================================================================ */
 
 @layer utilities {
+
   /* Gold gradient backgrounds - More vibrant */
   .gold-gradient {
     background: linear-gradient(135deg, #FFD700 0%, #FFC107 50%, #FF9800 100%);
   }
-  
+
   .gold-gradient-subtle {
     background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 152, 0, 0.15) 100%);
   }
-  
+
   /* Gold text gradient - Vibrant shine effect */
   .gold-text {
     background: linear-gradient(135deg, #FFD700 0%, #FFC107 50%, #FF9800 100%);
@@ -164,12 +166,24 @@
     -webkit-backdrop-filter: blur(24px);
     border: 1px solid hsl(var(--border) / 0.9);
   }
-  
+
+  /* Dialog overlay - Solid dark backdrop */
+  .dialog-overlay {
+    background-color: rgba(0, 0, 0, 0.85) !important;
+    backdrop-filter: blur(8px);
+  }
+
+  /* Dialog content - Solid background */
+  .dialog-content-solid {
+    background-color: hsl(var(--background)) !important;
+    border: 1px solid hsl(var(--border));
+  }
+
   /* Interactive glass effect */
   .interactive-glass {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  
+
   .interactive-glass:hover {
     background-color: hsl(var(--card) / 0.7);
     border-color: hsl(var(--primary) / 0.5);
@@ -178,21 +192,21 @@
 
   /* Gold glow effects - Enhanced visibility */
   .shadow-gold-glow {
-    box-shadow: 
+    box-shadow:
       0 0 20px rgba(255, 215, 0, 0.3),
       0 0 40px rgba(255, 193, 7, 0.2),
       0 0 60px rgba(255, 152, 0, 0.1);
   }
-  
+
   .shadow-gold-glow-strong {
-    box-shadow: 
+    box-shadow:
       0 0 30px rgba(255, 215, 0, 0.5),
       0 0 60px rgba(255, 193, 7, 0.3),
       0 0 90px rgba(255, 152, 0, 0.2);
   }
-  
+
   .shadow-gold-glow:hover {
-    box-shadow: 
+    box-shadow:
       0 0 30px rgba(255, 215, 0, 0.4),
       0 0 60px rgba(255, 193, 7, 0.3),
       0 0 90px rgba(255, 152, 0, 0.2);
@@ -202,7 +216,7 @@
   .border-gold {
     border-color: hsl(var(--primary));
   }
-  
+
   .border-gold-subtle {
     border-color: hsl(var(--primary) / 0.3);
   }
@@ -212,17 +226,17 @@
     width: 8px;
     height: 8px;
   }
-  
+
   .custom-scrollbar::-webkit-scrollbar-track {
     background: hsl(var(--background));
   }
-  
+
   .custom-scrollbar::-webkit-scrollbar-thumb {
     background: hsl(var(--primary) / 0.3);
     border-radius: 4px;
     transition: background 0.2s;
   }
-  
+
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--primary) / 0.5);
   }
@@ -237,6 +251,7 @@
       opacity: 1;
       box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
     }
+
     50% {
       opacity: 0.9;
       box-shadow: 0 0 40px rgba(255, 215, 0, 0.5);
@@ -258,6 +273,7 @@
       opacity: 0;
       transform: translateY(10px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -266,12 +282,10 @@
 
   /* Shimmer effect for loading states */
   .shimmer {
-    background: linear-gradient(
-      90deg,
-      hsl(var(--card)) 0%,
-      hsl(var(--primary) / 0.1) 50%,
-      hsl(var(--card)) 100%
-    );
+    background: linear-gradient(90deg,
+        hsl(var(--card)) 0%,
+        hsl(var(--primary) / 0.1) 50%,
+        hsl(var(--card)) 100%);
     background-size: 200% 100%;
     animation: shimmer 2s infinite;
   }
@@ -280,6 +294,7 @@
     0% {
       background-position: -200% 0;
     }
+
     100% {
       background-position: 200% 0;
     }
@@ -291,6 +306,7 @@
    ============================================================================ */
 
 @layer components {
+
   /* Gold button - Enhanced visibility */
   .btn-gold {
     background: linear-gradient(135deg, #FFD700 0%, #FFC107 50%, #FF9800 100%);
@@ -298,14 +314,14 @@
     font-weight: 600;
     padding: 0.75rem 1.5rem;
     border-radius: 0.5rem;
-    box-shadow: 
+    box-shadow:
       0 0 20px rgba(255, 215, 0, 0.3),
       0 4px 6px rgba(0, 0, 0, 0.1);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  
+
   .btn-gold:hover {
-    box-shadow: 
+    box-shadow:
       0 0 30px rgba(255, 215, 0, 0.5),
       0 0 60px rgba(255, 193, 7, 0.3),
       0 6px 12px rgba(0, 0, 0, 0.15);
@@ -315,7 +331,7 @@
   .btn-gold:active {
     transform: translateY(0);
   }
-  
+
   /* Input styling - Gold accents */
   .input-auth {
     width: 100%;
@@ -326,27 +342,27 @@
     color: rgb(17 24 39);
     transition: all 0.2s;
   }
-  
+
   .dark .input-auth {
     background-color: rgba(255, 255, 255, 0.05);
     border-color: rgba(255, 255, 255, 0.1);
     color: white;
   }
-  
+
   .input-auth::placeholder {
     color: rgb(107 114 128);
   }
-  
+
   .dark .input-auth::placeholder {
     color: rgb(156 163 175);
   }
-  
+
   .input-auth:focus {
     outline: none;
     box-shadow: 0 0 0 3px hsl(var(--primary) / 0.3);
     border-color: hsl(var(--primary));
   }
-  
+
   /* Card styling with gold accents */
   .card-auth {
     background-color: white;
@@ -356,7 +372,7 @@
     box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
     transition: all 0.3s;
   }
-  
+
   .dark .card-auth {
     background-color: rgba(255, 255, 255, 0.05);
     border-color: rgba(255, 255, 255, 0.1);
@@ -369,10 +385,44 @@
 
   .dark .card-auth:hover {
     border-color: hsl(var(--primary) / 0.3);
-    box-shadow: 
+    box-shadow:
       0 30px 60px -15px rgb(0 0 0 / 0.4),
       0 0 20px hsl(var(--primary) / 0.2);
   }
+}
+
+/* Gold-centric theme enhancements */
+.gold-shine {
+  background: linear-gradient(135deg,
+      #FFD700 0%,
+      #FDB931 25%,
+      #FFD700 50%,
+      #FDB931 75%,
+      #FFD700 100%);
+  background-size: 200% 100%;
+  animation: gold-shine 2s ease-in-out infinite;
+  /* FIX START: Add text clipping and transparency to apply background as text fill */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  /* FIX END */
+}
+
+@keyframes gold-shine {
+  0%, 100% {
+    background-position: 0% 0%;
+  }
+
+  50% {
+    background-position: 100% 0%;
+  }
+}
+
+/* Gold glow for important elements */
+.gold-glow-strong {
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.6),
+    0 0 60px rgba(255, 215, 0, 0.4),
+    0 0 90px rgba(255, 215, 0, 0.2);
 }
 
 /* ============================================================================
@@ -380,11 +430,12 @@
    ============================================================================ */
 
 @media (max-width: 640px) {
+
   /* Reduce glow effects on mobile for performance */
   .shadow-gold-glow {
     box-shadow: 0 0 15px rgba(255, 215, 0, 0.25);
   }
-  
+
   .shadow-gold-glow:hover {
     box-shadow: 0 0 20px rgba(255, 215, 0, 0.35);
   }
@@ -402,6 +453,7 @@
 
 /* Reduce motion */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -418,18 +470,14 @@
 
 /*
  * COLOR PALETTE (ENHANCED):
- * 
- * Primary Gold: #FFD700 (hsl(48 100% 50%)) - True gold
+ * * Primary Gold: #FFD700 (hsl(48 100% 50%)) - True gold
  * Amber Gold: #FFC107 (hsl(45 100% 51%)) - Warmer gold
  * Orange Gold: #FF9800 (hsl(36 100% 50%)) - Deep gold
- * 
- * These create a vibrant gradient that matches the design sample
- * 
- * Background Dark: hsl(0 0% 3%) - Pure black
+ * * These create a vibrant gradient that matches the design sample
+ * * Background Dark: hsl(0 0% 3%) - Pure black
  * Card Dark: hsl(0 0% 8%) - Dark gray
  * Border Dark: hsl(30 3% 20%) - Warm dark border
- * 
- * DESIGN PRINCIPLES:
+ * * DESIGN PRINCIPLES:
  * - High contrast for readability
  * - Vibrant gold that stands out
  * - Glass morphism for modern feel

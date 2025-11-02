@@ -280,7 +280,7 @@ export default function TransactionsPage() {
                 >
                   <div className="flex items-center gap-4">
                     {/* Icon */}
-                    <div className={`w-12 h-12 rounded-full ${bg} flex items-center justify-center flex-shrink-0`}>
+                    <div className={`w-12 h-12 rounded-full ${bg} flex items-center justify-center shrink-0`}>
                       <Icon className={`w-6 h-6 ${color}`} />
                     </div>
 
@@ -295,7 +295,7 @@ export default function TransactionsPage() {
                             {formatDate(tx.createdAt.toString())}
                           </p>
                         </div>
-                        <div className="text-right flex-shrink-0">
+                        <div className="text-right shrink-0">
                           <p className={`font-bold ${
                             tx.type === "buy_gold" || tx.type === "deposit"
                               ? "text-green-500"

@@ -72,19 +72,19 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col overflow-hidden">
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
       {/* Header - Fixed height */}
       <DashboardHeader user={user} goldPrice={goldPrice} />
-
       {/* Main Content - Fill remaining viewport height */}
-      <main className="flex-1 overflow-hidden">
+      <main className="flex-1  h-full">
         {/* Container with proper padding and max-width */}
-        <div className="h-full w-full max-w-[1920px] mx-auto px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-6">
+        <div className="h-full w-full max-w-[1920px] overflow-hidden mx-auto px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-6">
           {/* Grid Layout - Responsive 2-column on desktop, 1-column on mobile */}
           <div className="h-full grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 lg:gap-6 overflow-y-auto custom-scrollbar">
             {/* LEFT COLUMN - Portfolio, Chart, Recent Activity */}
             <div className="lg:col-span-8 flex flex-col gap-3 sm:gap-4 lg:gap-6">
-              {/* Portfolio Overview - 3 cards in row */}
+              
+              {/* Portfolio Overview - 4 cards in row */}
               <PortfolioOverview
                 totalValue={totalValueUSD}
                 goldBalance={gold?.grams || 0}
@@ -96,35 +96,38 @@ export default function DashboardPage() {
                 isLoading={isLoadingBalance}
               />
 
-              {/* Gold Price Chart - Responsive height */}
-              <div className="flex-1 min-h-[300px] lg:min-h-[400px]">
-                <GoldPriceChart
-                  currentPrice={goldPrice}
-                  isLoading={isLoadingBalance}
-                />
-              </div>
+              <div className="flex flex-row gap-4">
+                {/* Recent Activity - Desktop only (hidden on mobile) */}
+                <div className="hidden lg:block flex-1 min-h-0">
+                  <RecentActivity
+                    transactions={transactions || []}
+                    isLoading={isLoadingTransactions}
+                  />
+                </div>
 
-              {/* Recent Activity - Mobile only (hidden on desktop) */}
-              <div className="lg:hidden">
-                <RecentActivity
-                  transactions={transactions || []}
-                  isLoading={isLoadingTransactions}
-                />
+                {/* Recent Activity - Mobile only (hidden on desktop) */}
+                <div className="lg:hidden">
+                  <RecentActivity
+                    transactions={transactions || []}
+                    isLoading={isLoadingTransactions}
+                  />
+                </div>
+
+                {/* Gold Price Chart - Responsive height */}
+                <div className="flex-3 ">
+                  <GoldPriceChart
+                    currentPrice={goldPrice}
+                    isLoading={isLoadingBalance}
+                  />
+                </div>
               </div>
+              
             </div>
 
-            {/* RIGHT COLUMN - Quick Actions & Recent Activity */}
+            {/* RIGHT COLUMN - Quick Actions */}
             <div className="lg:col-span-4 flex flex-col gap-3 sm:gap-4 lg:gap-6">
               {/* Quick Actions - Responsive card */}
               <QuickActions />
-
-              {/* Recent Activity - Desktop only (hidden on mobile) */}
-              <div className="hidden lg:block flex-1 min-h-0">
-                <RecentActivity
-                  transactions={transactions || []}
-                  isLoading={isLoadingTransactions}
-                />
-              </div>
             </div>
           </div>
         </div>

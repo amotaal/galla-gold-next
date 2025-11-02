@@ -236,7 +236,7 @@ export default function AchievementsPage() {
           </div>
 
           {/* Progress Overview */}
-          <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 p-6">
+          <Card className="bg-linear-to-br from-primary/10 to-primary/5 border-primary/20 p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-lg font-bold">Your Progress</h3>
@@ -267,7 +267,7 @@ export default function AchievementsPage() {
               key={value}
               variant={selectedCategory === value ? "default" : "outline"}
               onClick={() => setSelectedCategory(value as any)}
-              className="flex-shrink-0"
+              className="shrink-0"
             >
               <Icon className="w-4 h-4 mr-2" />
               {label}
@@ -292,7 +292,7 @@ export default function AchievementsPage() {
               >
                 {/* Background Glow */}
                 {achievement.unlocked && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
+                  <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-transparent pointer-events-none" />
                 )}
 
                 {/* Icon */}

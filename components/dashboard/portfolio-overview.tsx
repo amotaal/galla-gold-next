@@ -185,7 +185,7 @@ export function PortfolioOverview({
             </Badge>
           </div>
           {/* GOLD ICON */}
-          <div className="p-3 rounded-xl bg-gradient-to-br from-[#FFD700]/20 to-[#FFC107]/10 ring-1 ring-primary/20">
+          <div className="p-3 rounded-xl bg-linear-to-br from-[#FFD700]/20 to-[#FFC107]/10 ring-1 ring-primary/20">
             <Wallet className="w-6 h-6 text-primary" />
           </div>
         </div>
