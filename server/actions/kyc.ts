@@ -224,16 +224,22 @@ export async function submitKYCAction(
   } catch (error: any) {
     console.error("Submit KYC error:", error);
 
+    // Handle Zod validation errors
     if (error.name === "ZodError") {
+      const firstError =
+        error.issues?.[0]?.message ||
+        error.issues?.[0]?.path?.join(".") ||
+        "Validation failed";
       return {
         success: false,
-        error: error.errors[0]?.message || "Validation failed",
+        error: firstError,
       };
     }
 
+    // Handle other errors
     return {
       success: false,
-      error: error.message || "Failed to submit KYC verification",
+      error: error.message || "An unexpected error occurred",
     };
   }
 }

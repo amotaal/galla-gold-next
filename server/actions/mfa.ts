@@ -173,15 +173,19 @@ export async function verifyMFASetupAction(
     const backupCodes = JSON.parse(backupCodesRaw);
 
     // Hash backup codes before storing
-    const hashedBackupCodes = await Promise.all(
-      backupCodes.map((code: string) => hashPassword(code))
+    const backupCodesWithStructure = await Promise.all(
+      backupCodes.map(async (code: string) => ({
+        code: await hashPassword(code),
+        used: false,
+        usedAt: undefined,
+        usedIp: undefined,
+      }))
     );
 
-    // Create MFA record
     const mfa = await MFA.create({
       userId: session.user.id,
-      secret: validated.secret, // In production, encrypt this!
-      backupCodes: hashedBackupCodes,
+      secret: validated.secret,
+      backupCodes: backupCodesWithStructure,
       enabled: true,
       verifiedAt: new Date(),
     });
