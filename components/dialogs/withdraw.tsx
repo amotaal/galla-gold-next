@@ -1,6 +1,6 @@
 // /components/dialogs/withdraw.tsx
 // Withdraw Dialog - Full-Screen Professional Design
-// Purpose: Withdraw funds from wallet to bank account
+// Purpose: Withdraw funds from wallet to bank account with bank details collection
 
 "use client";
 
@@ -42,16 +42,23 @@ interface WithdrawDialogProps {
  *
  * Features:
  * - Bank transfer withdrawals
+ * - Bank details collection
  * - Real-time fee calculation
  * - KYC-based limits
  * - Clear transaction flow
- * - Backend integration
+ * - Backend integration (FIXED - now sends all required fields)
  */
 export function WithdrawDialog({ open, onOpenChange }: WithdrawDialogProps) {
   const { balance, refetchAll } = useWallet();
 
   // Form state
   const [amount, setAmount] = useState<string>("");
+  const [bankDetails, setBankDetails] = useState({
+    accountName: "",
+    accountNumber: "",
+    routingNumber: "",
+    bankName: "",
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
 
@@ -70,6 +77,12 @@ export function WithdrawDialog({ open, onOpenChange }: WithdrawDialogProps) {
   useEffect(() => {
     if (!open) {
       setAmount("");
+      setBankDetails({
+        accountName: "",
+        accountNumber: "",
+        routingNumber: "",
+        bankName: "",
+      });
       setShowConfirmation(false);
       setIsSubmitting(false);
     }
@@ -83,14 +96,23 @@ export function WithdrawDialog({ open, onOpenChange }: WithdrawDialogProps) {
     { label: "All", value: Math.min(availableBalance, singleLimit) },
   ];
 
-  // Handle withdrawal
+  // Validation for bank details
+  const isBankDetailsValid =
+    bankDetails.accountName.trim() !== "" &&
+    bankDetails.accountNumber.trim() !== "" &&
+    bankDetails.routingNumber.trim() !== "" &&
+    bankDetails.bankName.trim() !== "";
+
+  // ✅ FIXED: Handle withdrawal with all required fields
   const handleWithdraw = async () => {
     try {
       setIsSubmitting(true);
 
       const formData = new FormData();
       formData.append("amount", amount);
+      formData.append("currency", "USD"); // ✅ ADDED: Currency field
       formData.append("paymentMethod", "bank_transfer");
+      formData.append("bankDetails", JSON.stringify(bankDetails)); // ✅ ADDED: Bank details
 
       const result = await withdrawalAction(formData);
 
@@ -98,16 +120,17 @@ export function WithdrawDialog({ open, onOpenChange }: WithdrawDialogProps) {
         toast.success("Withdrawal initiated successfully!", {
           description: `$${amountNum.toFixed(
             2
-          )} will be sent to your bank account`,
+          )} will arrive in 1-3 business days`,
         });
         await refetchAll();
         onOpenChange(false);
       } else {
         toast.error("Withdrawal failed", {
-          description: result.error,
+          description: result.error || "An error occurred",
         });
       }
     } catch (error) {
+      console.error("Withdrawal error:", error);
       toast.error("Withdrawal failed", {
         description: "An unexpected error occurred",
       });
@@ -122,6 +145,15 @@ export function WithdrawDialog({ open, onOpenChange }: WithdrawDialogProps) {
       onOpenChange(false);
     }
   };
+
+  // Proceed to confirmation only if amount and bank details are valid
+  const canProceed =
+    amount &&
+    amountNum >= minimumWithdrawal &&
+    amountNum <= availableBalance &&
+    amountNum <= singleLimit &&
+    isBankDetailsValid &&
+    !isSubmitting;
 
   return (
     <FullScreenDialog open={open} onOpenChange={onOpenChange}>
@@ -159,306 +191,345 @@ export function WithdrawDialog({ open, onOpenChange }: WithdrawDialogProps) {
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
           {!showConfirmation ? (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-              {/* LEFT COLUMN - Form (2/3) */}
-              <div className="lg:col-span-2 space-y-6">
-                {/* Available Balance Card */}
-                <Card className="p-6 border-purple-500/30 bg-purple-500/5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">
-                        Available to Withdraw
-                      </p>
-                      <p className="text-3xl font-bold text-purple-500">
-                        ${availableBalance.toFixed(2)}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Free bank transfers
-                      </p>
-                    </div>
-                    <div className="p-4 rounded-full bg-purple-500/10">
-                      <Wallet className="w-8 h-8 text-purple-500" />
-                    </div>
-                  </div>
-                </Card>
+            <div className="grid lg:grid-cols-2 gap-6 max-w-7xl mx-auto">
+              {/* Left Column - Withdrawal Form */}
+              <div className="space-y-6">
+                <Card className="bg-card/60 backdrop-blur-md border-border p-6">
+                  <h3 className="text-lg font-bold mb-4">Withdrawal Details</h3>
 
-                {/* Withdrawal Amount Input */}
-                <Card className="p-6 border-border">
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="amount" className="text-lg font-semibold">
-                        Withdrawal Amount
-                      </Label>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Minimum withdrawal: ${minimumWithdrawal}
-                      </p>
-                    </div>
-
+                  {/* Amount Input */}
+                  <div className="space-y-2">
+                    <Label htmlFor="amount">Withdrawal Amount (USD)</Label>
                     <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-bold text-muted-foreground">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                         $
                       </span>
                       <Input
                         id="amount"
                         type="number"
-                        min={minimumWithdrawal}
-                        step="10"
-                        max={availableBalance}
+                        placeholder="0.00"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
-                        placeholder="0.00"
-                        className="text-3xl h-16 pl-12 font-bold"
-                        disabled={isSubmitting}
+                        className="text-lg pl-7"
+                        step="0.01"
+                        min={minimumWithdrawal}
+                        max={Math.min(availableBalance, singleLimit)}
                       />
                     </div>
-
-                    {amountNum < minimumWithdrawal && amount !== "" && (
-                      <div className="flex items-center gap-2 text-sm text-orange-500">
-                        <AlertCircle className="w-4 h-4" />
-                        <span>Minimum withdrawal is ${minimumWithdrawal}</span>
-                      </div>
-                    )}
-
-                    {amountNum > availableBalance && (
-                      <div className="flex items-center gap-2 text-sm text-red-500">
-                        <AlertCircle className="w-4 h-4" />
-                        <span>Insufficient balance</span>
-                      </div>
-                    )}
-
-                    {amountNum > singleLimit &&
-                      amountNum <= availableBalance && (
-                        <div className="flex items-center gap-2 text-sm text-red-500">
-                          <AlertCircle className="w-4 h-4" />
-                          <span>
-                            Exceeds single transaction limit of ${singleLimit}
-                          </span>
-                        </div>
-                      )}
                   </div>
-                </Card>
 
-                {/* Quick Amounts */}
-                <Card className="p-6 border-border">
-                  <Label className="text-base font-semibold mb-3 block">
-                    Quick Amounts
-                  </Label>
-                  <div className="grid grid-cols-4 gap-3">
-                    {quickAmounts.map(({ label, value }) => (
+                  {/* Quick Amount Buttons */}
+                  <div className="grid grid-cols-4 gap-2 mt-4">
+                    {quickAmounts.map((quick) => (
                       <Button
-                        key={label}
+                        key={quick.label}
                         variant="outline"
-                        size="lg"
-                        onClick={() => setAmount(value.toFixed(2))}
-                        disabled={
-                          isSubmitting ||
-                          value > availableBalance ||
-                          value > singleLimit
-                        }
-                        className="text-base hover:bg-purple-500/10 hover:border-purple-500/50 hover:text-purple-500"
+                        size="sm"
+                        onClick={() => setAmount(quick.value.toString())}
+                        disabled={quick.value > availableBalance}
+                        className="hover:bg-purple-500/10 hover:border-purple-500"
                       >
-                        {label}
+                        {quick.label}
                       </Button>
                     ))}
                   </div>
+
+                  {/* Limits Display */}
+                  <div className="mt-6 space-y-2 text-sm">
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Minimum withdrawal:</span>
+                      <span>${minimumWithdrawal}</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Single transaction limit:</span>
+                      <span>${singleLimit.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Daily limit:</span>
+                      <span>${dailyLimit.toLocaleString()}</span>
+                    </div>
+                  </div>
+
+                  {/* Validation Messages */}
+                  {amountNum > 0 && amountNum < minimumWithdrawal && (
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 mt-4">
+                      <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-amber-500">
+                          Below Minimum
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Minimum withdrawal is ${minimumWithdrawal}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {amountNum > availableBalance && (
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 mt-4">
+                      <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-red-500">
+                          Insufficient Balance
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          You only have ${availableBalance.toFixed(2)} available
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {amountNum > singleLimit && (
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 mt-4">
+                      <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-red-500">
+                          Exceeds Transaction Limit
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Maximum per transaction is $
+                          {singleLimit.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </Card>
 
-                {/* Bank Account Info */}
-                <Card className="p-6 border-border">
-                  <div className="flex items-start gap-3">
-                    <Building2 className="w-5 h-5 text-purple-500 mt-1 shrink-0" />
-                    <div>
-                      <h3 className="font-semibold mb-2">Bank Account</h3>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Funds will be sent to your linked bank account:
-                      </p>
-                      <div className="bg-muted/50 rounded-lg p-3 text-sm">
-                        <p className="font-medium">**** **** **** 1234</p>
-                        <p className="text-muted-foreground">Bank of America</p>
+                {/* Bank Details Form - NEW SECTION */}
+                <Card className="bg-card/60 backdrop-blur-md border-border p-6">
+                  <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                    <Building2 className="w-5 h-5 text-purple-500" />
+                    Bank Account Details
+                  </h3>
+
+                  <div className="space-y-4">
+                    {/* Account Holder Name */}
+                    <div className="space-y-2">
+                      <Label htmlFor="accountName">Account Holder Name *</Label>
+                      <Input
+                        id="accountName"
+                        type="text"
+                        placeholder="John Doe"
+                        value={bankDetails.accountName}
+                        onChange={(e) =>
+                          setBankDetails({
+                            ...bankDetails,
+                            accountName: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+
+                    {/* Bank Name */}
+                    <div className="space-y-2">
+                      <Label htmlFor="bankName">Bank Name *</Label>
+                      <Input
+                        id="bankName"
+                        type="text"
+                        placeholder="Bank of America"
+                        value={bankDetails.bankName}
+                        onChange={(e) =>
+                          setBankDetails({
+                            ...bankDetails,
+                            bankName: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+
+                    {/* Account Number */}
+                    <div className="space-y-2">
+                      <Label htmlFor="accountNumber">Account Number *</Label>
+                      <Input
+                        id="accountNumber"
+                        type="text"
+                        placeholder="1234567890"
+                        value={bankDetails.accountNumber}
+                        onChange={(e) =>
+                          setBankDetails({
+                            ...bankDetails,
+                            accountNumber: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+
+                    {/* Routing Number */}
+                    <div className="space-y-2">
+                      <Label htmlFor="routingNumber">Routing Number *</Label>
+                      <Input
+                        id="routingNumber"
+                        type="text"
+                        placeholder="021000021"
+                        value={bankDetails.routingNumber}
+                        onChange={(e) =>
+                          setBankDetails({
+                            ...bankDetails,
+                            routingNumber: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+
+                    {/* Info Alert */}
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                      <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">
+                          Your bank details are encrypted and stored securely.
+                          We'll use these for this withdrawal only.
+                        </p>
                       </div>
                     </div>
                   </div>
                 </Card>
               </div>
 
-              {/* RIGHT COLUMN - Summary (1/3) */}
+              {/* Right Column - Summary */}
               <div className="space-y-6">
-                {/* Withdrawal Summary */}
-                <Card className="p-6 border-border sticky top-0">
-                  <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-primary" />
-                    Withdrawal Summary
-                  </h3>
+                <Card className="bg-card/60 backdrop-blur-md border-border p-6 sticky top-0">
+                  <h3 className="text-lg font-bold mb-4">Withdrawal Summary</h3>
 
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">
-                        Withdrawal Amount
-                      </span>
+                  <div className="space-y-3">
+                    <div className="flex justify-between py-2 border-b border-border">
+                      <span className="text-muted-foreground">Amount</span>
                       <span className="font-semibold">
                         ${amountNum.toFixed(2)}
                       </span>
                     </div>
 
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between py-2 border-b border-border">
                       <span className="text-muted-foreground">
-                        Transfer Method
+                        Transfer Fee
                       </span>
-                      <span className="font-semibold text-sm">
-                        Bank Transfer
-                      </span>
+                      <span className="font-semibold text-green-500">FREE</span>
                     </div>
 
-                    <div className="h-px bg-border" />
-
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">
-                        Processing Fee
-                      </span>
-                      <span className="font-semibold text-green-500">Free</span>
-                    </div>
-
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">
-                        Arrival Time
-                      </span>
-                      <span className="font-semibold text-sm">
-                        1-3 business days
-                      </span>
-                    </div>
-
-                    <div className="h-px bg-border" />
-
-                    <div className="flex justify-between items-center text-lg">
-                      <span className="font-bold">You Receive</span>
-                      <span className="font-bold text-2xl text-purple-500">
+                    <div className="flex justify-between py-3 text-lg">
+                      <span className="font-bold">You'll Receive</span>
+                      <span className="font-bold text-purple-500">
                         ${total.toFixed(2)}
                       </span>
                     </div>
-                  </div>
-                </Card>
 
-                {/* Limits Info */}
-                <Card className="p-6 border-border bg-purple-500/5">
-                  <div className="flex items-start gap-3">
-                    <Info className="w-5 h-5 text-purple-500 mt-0.5 shrink-0" />
-                    <div className="text-sm space-y-2">
-                      <p className="font-semibold text-foreground">
-                        Withdrawal Limits
-                      </p>
-                      <p className="text-muted-foreground">
-                        Daily limit: ${dailyLimit.toLocaleString()}
-                      </p>
-                      <p className="text-muted-foreground">
-                        Per transaction: ${singleLimit.toLocaleString()}
-                      </p>
-                      <p className="text-xs text-purple-500 mt-2">
-                        Complete KYC verification to increase limits
-                      </p>
+                    <div className="pt-4 space-y-2 text-sm text-muted-foreground">
+                      <div className="flex items-start gap-2">
+                        <Clock className="w-4 h-4 shrink-0 mt-0.5" />
+                        <span>Processing time: 1-3 business days</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <Shield className="w-4 h-4 shrink-0 mt-0.5" />
+                        <span>Secure bank transfer via ACH</span>
+                      </div>
                     </div>
                   </div>
                 </Card>
 
-                {/* Security Features */}
-                <Card className="p-6 border-border bg-card">
+                {/* Info Card */}
+                <Card className="bg-card/60 backdrop-blur-md border-border p-6">
                   <h3 className="text-lg font-bold mb-4">
-                    Security & Processing
+                    Withdrawal Information
                   </h3>
-                  <div className="space-y-3 text-sm">
-                    <div className="flex items-start gap-2">
-                      <Shield className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
-                      <span className="text-muted-foreground">
-                        Secure bank-verified transfers
-                      </span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <Clock className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
-                      <span className="text-muted-foreground">
-                        Processed within 1-3 business days
-                      </span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
-                      <span className="text-muted-foreground">
-                        No withdrawal fees
-                      </span>
-                    </div>
+                  <div className="space-y-3 text-sm text-muted-foreground">
+                    <p>
+                      • Withdrawals are processed via secure ACH bank transfer
+                    </p>
+                    <p>• Funds typically arrive within 1-3 business days</p>
+                    <p>• No withdrawal fees</p>
+                    <p>• Minimum withdrawal: ${minimumWithdrawal}</p>
+                    <p>
+                      • Maximum per transaction: ${singleLimit.toLocaleString()}
+                    </p>
                   </div>
                 </Card>
               </div>
             </div>
           ) : (
             /* Confirmation Screen */
-            <div className="max-w-md mx-auto">
-              <Card className="p-8 border-purple-500/30">
-                <div className="text-center space-y-6">
-                  <div className="w-16 h-16 rounded-full bg-purple-500/10 flex items-center justify-center mx-auto">
-                    <CheckCircle2 className="w-8 h-8 text-purple-500" />
-                  </div>
+            <div className="max-w-2xl mx-auto">
+              <Card className="bg-card/60 backdrop-blur-md border-border p-8 text-center">
+                <div className="w-20 h-20 rounded-full bg-purple-500/10 flex items-center justify-center mx-auto mb-6">
+                  <Send className="w-10 h-10 text-purple-500" />
+                </div>
 
-                  <div>
-                    <h3 className="text-2xl font-bold mb-2">
-                      Confirm Withdrawal
-                    </h3>
-                    <p className="text-muted-foreground">
-                      Please review your withdrawal details
-                    </p>
-                  </div>
+                <div>
+                  <h3 className="text-2xl font-bold mb-2">
+                    Confirm Withdrawal
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Please review your withdrawal details
+                  </p>
+                </div>
 
-                  <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-left">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Amount:</span>
-                      <span className="font-semibold">
-                        ${amountNum.toFixed(2)}
+                <div className="bg-muted/50 rounded-lg p-6 space-y-3 text-left mt-6 mb-6">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Amount:</span>
+                    <span className="font-semibold">
+                      ${amountNum.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Fee:</span>
+                    <span className="font-semibold text-green-500">FREE</span>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t border-border">
+                    <span className="text-muted-foreground">
+                      Total to Receive:
+                    </span>
+                    <span className="font-semibold text-purple-500 text-lg">
+                      ${total.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="pt-3 border-t border-border space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Bank:</span>
+                      <span className="font-medium">
+                        {bankDetails.bankName}
                       </span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">
-                        Destination:
-                      </span>
-                      <span className="font-semibold text-sm">
-                        Bank ****1234
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Account:</span>
+                      <span className="font-medium">
+                        ****{bankDetails.accountNumber.slice(-4)}
                       </span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">
-                        You Receive:
-                      </span>
-                      <span className="font-semibold text-purple-500">
-                        ${total.toFixed(2)}
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Name:</span>
+                      <span className="font-medium">
+                        {bankDetails.accountName}
                       </span>
                     </div>
                   </div>
+                </div>
 
-                  <div className="flex gap-3">
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      onClick={() => setShowConfirmation(false)}
-                      disabled={isSubmitting}
-                      className="flex-1"
-                    >
-                      Back
-                    </Button>
-                    <Button
-                      onClick={handleWithdraw}
-                      disabled={isSubmitting}
-                      size="lg"
-                      className="flex-1 bg-linear-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                          Processing...
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle2 className="w-5 h-5 mr-2" />
-                          Confirm Withdrawal
-                        </>
-                      )}
-                    </Button>
-                  </div>
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={() => setShowConfirmation(false)}
+                    disabled={isSubmitting}
+                    className="flex-1"
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    onClick={handleWithdraw}
+                    disabled={isSubmitting}
+                    size="lg"
+                    className="flex-1 bg-linear-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-5 h-5 mr-2" />
+                        Confirm Withdrawal
+                      </>
+                    )}
+                  </Button>
                 </div>
               </Card>
             </div>
@@ -488,18 +559,12 @@ export function WithdrawDialog({ open, onOpenChange }: WithdrawDialogProps) {
 
                 <Button
                   onClick={() => setShowConfirmation(true)}
-                  disabled={
-                    !amount ||
-                    amountNum < minimumWithdrawal ||
-                    amountNum > availableBalance ||
-                    amountNum > singleLimit ||
-                    isSubmitting
-                  }
+                  disabled={!canProceed}
                   size="lg"
                   className="px-8 bg-linear-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg"
                 >
                   <Send className="w-5 h-5 mr-2" />
-                  Withdraw Now
+                  Continue
                 </Button>
               </div>
             </div>

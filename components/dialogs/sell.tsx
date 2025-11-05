@@ -86,6 +86,9 @@ export function SellGoldDialog({ open, onOpenChange }: SellGoldDialogProps) {
 
       const formData = new FormData();
       formData.append("grams", grams);
+      formData.append("currency", "USD");
+      formData.append("totalAmount", total.toString());
+      formData.append("pricePerGram", pricePerGram.toString());
 
       const result = await sellGoldAction(formData);
 

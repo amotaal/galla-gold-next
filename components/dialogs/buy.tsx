@@ -38,7 +38,7 @@ interface BuyGoldDialogProps {
 
 /**
  * BuyGoldDialog - Professional full-screen dialog for buying gold
- * 
+ *
  * Features:
  * - Full-screen layout (95% viewport)
  * - Two-column design (form + summary)
@@ -50,7 +50,7 @@ interface BuyGoldDialogProps {
  */
 export function BuyGoldDialog({ open, onOpenChange }: BuyGoldDialogProps) {
   const { balance, goldPrice, refetchAll } = useWallet();
-  
+
   // Form state
   const [grams, setGrams] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,7 +62,7 @@ export function BuyGoldDialog({ open, onOpenChange }: BuyGoldDialogProps) {
   const subtotal = gramsNum * pricePerGram;
   const fee = subtotal * 0.01; // 1% transaction fee
   const total = subtotal + fee;
-  const availableBalance = balance?.USD || 0;  // Extract USD property
+  const availableBalance = balance?.USD || 0; // Extract USD property
 
   // Reset form when dialog closes
   useEffect(() => {
@@ -88,6 +88,9 @@ export function BuyGoldDialog({ open, onOpenChange }: BuyGoldDialogProps) {
 
       const formData = new FormData();
       formData.append("grams", grams);
+      formData.append("currency", "USD");
+      formData.append("totalAmount", total.toString());
+      formData.append("pricePerGram", pricePerGram.toString());
 
       const result = await buyGoldAction(formData);
 
@@ -137,7 +140,7 @@ export function BuyGoldDialog({ open, onOpenChange }: BuyGoldDialogProps) {
                 </FullScreenDialogDescription>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-4">
               <div className="text-right">
                 <p className="text-xs text-muted-foreground">Live Price</p>
@@ -246,32 +249,44 @@ export function BuyGoldDialog({ open, onOpenChange }: BuyGoldDialogProps) {
                     <TrendingUp className="w-5 h-5 text-primary" />
                     Purchase Summary
                   </h3>
-                  
+
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="text-muted-foreground">Gold Amount</span>
-                      <span className="font-semibold">{gramsNum.toFixed(2)}g</span>
+                      <span className="font-semibold">
+                        {gramsNum.toFixed(2)}g
+                      </span>
                     </div>
-                    
+
                     <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Price per Gram</span>
-                      <span className="font-semibold">${pricePerGram.toFixed(2)}</span>
+                      <span className="text-muted-foreground">
+                        Price per Gram
+                      </span>
+                      <span className="font-semibold">
+                        ${pricePerGram.toFixed(2)}
+                      </span>
                     </div>
-                    
+
                     <div className="h-px bg-border" />
-                    
+
                     <div className="flex justify-between items-center">
                       <span className="text-muted-foreground">Subtotal</span>
-                      <span className="font-semibold">${subtotal.toFixed(2)}</span>
+                      <span className="font-semibold">
+                        ${subtotal.toFixed(2)}
+                      </span>
                     </div>
-                    
+
                     <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Transaction Fee (1%)</span>
-                      <span className="font-semibold text-green-500">${fee.toFixed(2)}</span>
+                      <span className="text-muted-foreground">
+                        Transaction Fee (1%)
+                      </span>
+                      <span className="font-semibold text-green-500">
+                        ${fee.toFixed(2)}
+                      </span>
                     </div>
-                    
+
                     <div className="h-px bg-border" />
-                    
+
                     <div className="flex justify-between items-center text-lg">
                       <span className="font-bold">Total Cost</span>
                       <span className="font-bold text-2xl text-green-500">
@@ -315,9 +330,11 @@ export function BuyGoldDialog({ open, onOpenChange }: BuyGoldDialogProps) {
                   <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto">
                     <CheckCircle2 className="w-8 h-8 text-green-500" />
                   </div>
-                  
+
                   <div>
-                    <h3 className="text-2xl font-bold mb-2">Confirm Purchase</h3>
+                    <h3 className="text-2xl font-bold mb-2">
+                      Confirm Purchase
+                    </h3>
                     <p className="text-muted-foreground">
                       Please review your purchase details
                     </p>
@@ -325,8 +342,12 @@ export function BuyGoldDialog({ open, onOpenChange }: BuyGoldDialogProps) {
 
                   <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-left">
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Gold Amount:</span>
-                      <span className="font-semibold">{gramsNum.toFixed(2)}g</span>
+                      <span className="text-muted-foreground">
+                        Gold Amount:
+                      </span>
+                      <span className="font-semibold">
+                        {gramsNum.toFixed(2)}g
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Total Cost:</span>
@@ -376,7 +397,9 @@ export function BuyGoldDialog({ open, onOpenChange }: BuyGoldDialogProps) {
           <div className="shrink-0 border-t border-border bg-card/50 p-6">
             <div className="flex items-center justify-between max-w-7xl mx-auto">
               <div className="text-sm text-muted-foreground">
-                <p>Secure transaction • Instant settlement • Competitive rates</p>
+                <p>
+                  Secure transaction • Instant settlement • Competitive rates
+                </p>
               </div>
 
               <div className="flex gap-3">

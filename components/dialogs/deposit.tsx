@@ -127,7 +127,9 @@ export function DepositDialog({ open, onOpenChange }: DepositDialogProps) {
 
       const formData = new FormData();
       formData.append("amount", amount);
+      formData.append("currency", "USD");
       formData.append("paymentMethod", paymentMethod);
+      formData.append("fee", fee.toString());
 
       const result = await depositAction(formData);
 

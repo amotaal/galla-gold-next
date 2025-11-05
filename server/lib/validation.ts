@@ -185,6 +185,7 @@ export const depositSchema = z.object({
   amount: amountSchema("fiat"),
   currency: z.enum(["USD", "EUR", "GBP", "EGP", "SAR"]),
   paymentMethod: z.enum(["bank_transfer", "card", "mobile_wallet"]),
+  fee: z.string().optional(),
 });
 
 /**

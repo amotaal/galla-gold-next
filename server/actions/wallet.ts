@@ -166,9 +166,17 @@ export async function depositAction(
       amount: parseFloat(formData.get("amount") as string),
       currency: formData.get("currency") as string,
       paymentMethod: formData.get("paymentMethod") as string,
+      fee: formData.get("fee") as string,
     };
 
     const validatedData = depositSchema.parse(rawData);
+
+    // Calculate amounts, fees, etc
+    const feePercent = validatedData.fee ? parseFloat(validatedData.fee) : 0;
+    const feeAmount = (validatedData.amount * feePercent) / 100;
+    const netAmount = validatedData.amount - feeAmount;
+
+
 
     // Find user's wallet
     const wallet = await Wallet.findOne({ userId: session.user.id });
@@ -186,6 +194,8 @@ export async function depositAction(
       walletId: wallet._id,
       type: "deposit",
       amount: validatedData.amount,
+      feeAmount: feeAmount,
+      netAmount: netAmount,
       currency: validatedData.currency,
       status: "pending",
       paymentMethod: validatedData.paymentMethod,

@@ -13,14 +13,14 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, User, Shield, Bell, Palette, Loader2 } from "lucide-react";
-import { KYCModal } from "@/components/modals/kyc-modal";
-import { MFAModal } from "@/components/modals/mfa-modal";
+import { KYCDialog } from "@/components/dialogs/kyc";
+import { MFADialog } from "@/components/dialogs/mfa";
 
 export default function ProfilePage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
-  const [showKYCModal, setShowKYCModal] = useState(false);
-  const [showMFAModal, setShowMFAModal] = useState(false);
+  const [showKYCDialog, setShowKYCDialog] = useState(false);
+  const [showMFADialog, setShowMFADialog] = useState(false);
 
   if (isLoading || !user) {
     return (
@@ -110,7 +110,7 @@ export default function ProfilePage() {
 
                 <div className="mt-6 space-y-3">
                   <div
-                    onClick={() => setShowKYCModal(true)}
+                    onClick={() => setShowKYCDialog(true)}
                     className="flex items-center justify-between p-3 rounded-lg bg-blue-500/10 ring-1 ring-blue-500/20 cursor-pointer hover:bg-blue-500/20 transition-all"
                   >
                     <div className="flex items-center gap-2">
@@ -123,7 +123,7 @@ export default function ProfilePage() {
                   </div>
 
                   <div
-                    onClick={() => setShowMFAModal(true)}
+                    onClick={() => setShowMFADialog(true)}
                     className="flex items-center justify-between p-3 rounded-lg bg-green-500/10 ring-1 ring-green-500/20 cursor-pointer hover:bg-green-500/20 transition-all"
                   >
                     <div className="flex items-center gap-2">
@@ -254,8 +254,8 @@ export default function ProfilePage() {
         </Tabs>
       </div>
 
-      <KYCModal open={showKYCModal} onClose={() => setShowKYCModal(false)} />
-      <MFAModal open={showMFAModal} onClose={() => setShowMFAModal(false)} />
+      <KYCDialog open={showKYCDialog} onOpenChange={setShowKYCDialog} />
+      <MFADialog open={showMFADialog} onOpenChange={setShowMFADialog} />
     </div>
   );
 }
