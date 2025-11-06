@@ -313,30 +313,35 @@ export default async function SettingsPage() {
               </p>
 
               <form className="space-y-4">
-                {categoryData.configs.map((config) => (
+                {configList.map((config) => (
+                <div key={config.key} className="border-b pb-6">
                   <ConfigForm
-                    key={config.key}
                     config={{
                       key: config.key,
-                      value: config.value,
-                      type: config.type,
+                      value: configs?.[config.key] ?? config.defaultValue ?? "",
+                      dataType: config.type === "number" ? "number" : "string",
+                      displayName: config.label,
+                      description: `${config.label} configuration setting`,
+                      unit: config.unit,
+                      defaultValue: config.defaultValue ?? "",
                     }}
-                    label={config.label}
-                    type={config.type as "number" | "boolean" | "string"}
-                    value={configs[config.key]}
-                    min={config.min}
-                    max={config.max}
-                    step={config.step}
-                    onSave={async (value) => {
-                      "use server";
+                    onSave={async (key: string, value: any, reason: string) => {
                       await updateSystemConfig(userId, {
-                        key: config.key,
+                        key,
                         value,
-                        category,
+                        reason,
+                      });
+                    }}
+                    onReset={async (key: string) => {
+                      await updateSystemConfig(userId, {
+                        key,
+                        value: config.defaultValue,
+                        reason: "Reset to default value",
                       });
                     }}
                   />
-                ))}
+                </div>
+              ))}
               </form>
             </AdminCard>
           );

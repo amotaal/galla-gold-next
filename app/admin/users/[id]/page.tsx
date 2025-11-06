@@ -223,7 +223,7 @@ export default async function UserDetailPage({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-zinc-400">Balance</p>
-                  <p className="text-xl font-bold text-white"> 
+                  <p className="text-xl font-bold text-white">
                     ${user.balance?.toLocaleString() || 0}
                   </p>
                 </div>
@@ -234,12 +234,15 @@ export default async function UserDetailPage({
             <AdminCard>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-zinc-400">Gold Holdings</p>
-                  <p className="text-xl font-bold text-white">
-                    {stats?.goldBalance?.toFixed(2) || 0} oz
+                  <p className="text-sm text-zinc-400">Gold Holdings</p>
+                  <p className="text-2xl font-bold text-white">
+                    {user.wallet?.gold?.grams
+                      ? (user.wallet.gold.grams / 31.1035).toFixed(2)
+                      : "0.00"}{" "}
+                    oz
                   </p>
                 </div>
-                <Coins className="w-8 h-8 text-yellow-400" />
+                <Coins className="w-8 h-8 text-amber-400" />
               </div>
             </AdminCard>
 

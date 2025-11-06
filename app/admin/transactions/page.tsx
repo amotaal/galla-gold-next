@@ -267,11 +267,10 @@ export default async function TransactionsPage({
       <AdminCard>
         {transactions.length > 0 ? (
           <>
-            <TransactionTable
-              transactions={transactions}
-              canFlag={hasPermission(userRole, PERMISSIONS.TRANSACTION_FLAG)}
-              canRefund={hasPermission(userRole, PERMISSIONS.TRANSACTION_REFUND)}
-            />
+            {/* Transactions Table */}
+            <AdminCard>
+              <TransactionTable transactions={transactions} loading={false} />
+            </AdminCard>
 
             {/* Pagination */}
             {totalPages > 1 && (

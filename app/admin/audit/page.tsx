@@ -82,10 +82,11 @@ export default async function AuditLogsPage({
   const result = await searchAuditLogs(adminId!, filters);
   const logs = result.success ? result.data?.logs || [] : [];
   const totalPages = result.data?.totalPages || 1;
-  const stats = result.data?.stats || {
+  // Calculate stats from logs directly since API doesn't return stats
+  const stats = {
     totalActions: result.data?.total || 0,
-    successfulActions: 0,
-    failedActions: 0,
+    successfulActions: logs.filter((l: any) => l.status === "success").length,
+    failedActions: logs.filter((l: any) => l.status === "failure").length,
   };
   // Get unique categories for filtering
   const categories = [
