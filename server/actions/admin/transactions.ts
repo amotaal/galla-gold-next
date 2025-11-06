@@ -19,8 +19,25 @@ import { auditTransactionAction } from "@/server/lib/audit";
 
 const transactionFiltersSchema = z.object({
   userId: z.string().optional(),
-  type: z.enum(["deposit", "withdrawal", "gold_purchase", "gold_sale", "physical_delivery"]).optional(),
-  status: z.enum(["pending", "processing", "completed", "failed", "cancelled", "refunded"]).optional(),
+  type: z
+    .enum([
+      "deposit",
+      "withdrawal",
+      "gold_purchase",
+      "gold_sale",
+      "physical_delivery",
+    ])
+    .optional(),
+  status: z
+    .enum([
+      "pending",
+      "processing",
+      "completed",
+      "failed",
+      "cancelled",
+      "refunded",
+    ])
+    .optional(),
   minAmount: z.number().optional(),
   maxAmount: z.number().optional(),
   currency: z.enum(["USD", "EUR", "GBP", "EGP", "AED", "SAR"]).optional(),
@@ -84,7 +101,10 @@ export async function getTransactions(
   error?: string;
 }> {
   try {
-    const permCheck = await verifyTransactionPermission(adminId, PERMISSIONS.TRANSACTION_VIEW);
+    const permCheck = await verifyTransactionPermission(
+      adminId,
+      PERMISSIONS.TRANSACTION_VIEW
+    );
     if (!permCheck.success) {
       return { success: false, error: permCheck.error };
     }
@@ -110,7 +130,8 @@ export async function getTransactions(
 
     if (validated.startDate || validated.endDate) {
       query.createdAt = {};
-      if (validated.startDate) query.createdAt.$gte = new Date(validated.startDate);
+      if (validated.startDate)
+        query.createdAt.$gte = new Date(validated.startDate);
       if (validated.endDate) query.createdAt.$lte = new Date(validated.endDate);
     }
 
@@ -144,12 +165,9 @@ export async function getTransactions(
 }
 
 /**
- * Alias for searchTransactions - for page compatibility  
+ * Alias for searchTransactions - for page compatibility
  */
-export async function searchTransactions(
-  adminId: string,
-  filters: any
-) {
+export async function searchTransactions(adminId: string, filters: any) {
   return getTransactions(adminId, filters);
 }
 
@@ -170,7 +188,10 @@ export async function getTransactionDetails(
   error?: string;
 }> {
   try {
-    const permCheck = await verifyTransactionPermission(adminId, PERMISSIONS.TRANSACTION_VIEW);
+    const permCheck = await verifyTransactionPermission(
+      adminId,
+      PERMISSIONS.TRANSACTION_VIEW
+    );
     if (!permCheck.success) {
       return { success: false, error: permCheck.error };
     }
@@ -230,9 +251,7 @@ export async function getTransactionDetails(
  * Get transaction statistics for dashboard
  * Permission: TRANSACTION_VIEW
  */
-export async function getTransactionStats(
-  adminId: string
-): Promise<{
+export async function getTransactionStats(adminId: string): Promise<{
   success: boolean;
   data?: {
     totalTransactions: number;
@@ -248,7 +267,10 @@ export async function getTransactionStats(
   error?: string;
 }> {
   try {
-    const permCheck = await verifyTransactionPermission(adminId, PERMISSIONS.TRANSACTION_VIEW);
+    const permCheck = await verifyTransactionPermission(
+      adminId,
+      PERMISSIONS.TRANSACTION_VIEW
+    );
     if (!permCheck.success) {
       return { success: false, error: permCheck.error };
     }
@@ -283,7 +305,9 @@ export async function getTransactionStats(
       Transaction.countDocuments({ status: "failed" }),
       Transaction.countDocuments({ flagged: true }),
       Transaction.aggregate([{ $group: { _id: "$type", count: { $sum: 1 } } }]),
-      Transaction.aggregate([{ $group: { _id: "$status", count: { $sum: 1 } } }]),
+      Transaction.aggregate([
+        { $group: { _id: "$status", count: { $sum: 1 } } },
+      ]),
     ]);
 
     // Format aggregation results
@@ -335,10 +359,16 @@ export async function flagTransaction(
 ): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
     if (!reason || reason.length < 10) {
-      return { success: false, error: "Flag reason must be at least 10 characters" };
+      return {
+        success: false,
+        error: "Flag reason must be at least 10 characters",
+      };
     }
 
-    const permCheck = await verifyTransactionPermission(adminId, PERMISSIONS.TRANSACTION_FLAG);
+    const permCheck = await verifyTransactionPermission(
+      adminId,
+      PERMISSIONS.TRANSACTION_FLAG
+    );
     if (!permCheck.success) {
       return { success: false, error: permCheck.error };
     }
@@ -399,7 +429,10 @@ export async function unflagTransaction(
   reason?: string
 ): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
-    const permCheck = await verifyTransactionPermission(adminId, PERMISSIONS.TRANSACTION_FLAG);
+    const permCheck = await verifyTransactionPermission(
+      adminId,
+      PERMISSIONS.TRANSACTION_FLAG
+    );
     if (!permCheck.success) {
       return { success: false, error: permCheck.error };
     }
@@ -461,10 +494,16 @@ export async function cancelTransaction(
 ): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
     if (!reason || reason.length < 10) {
-      return { success: false, error: "Cancellation reason must be at least 10 characters" };
+      return {
+        success: false,
+        error: "Cancellation reason must be at least 10 characters",
+      };
     }
 
-    const permCheck = await verifyTransactionPermission(adminId, PERMISSIONS.TRANSACTION_CANCEL);
+    const permCheck = await verifyTransactionPermission(
+      adminId,
+      PERMISSIONS.TRANSACTION_CANCEL
+    );
     if (!permCheck.success) {
       return { success: false, error: permCheck.error };
     }
@@ -538,10 +577,16 @@ export async function refundTransaction(
 ): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
     if (!reason || reason.length < 10) {
-      return { success: false, error: "Refund reason must be at least 10 characters" };
+      return {
+        success: false,
+        error: "Refund reason must be at least 10 characters",
+      };
     }
 
-    const permCheck = await verifyTransactionPermission(adminId, PERMISSIONS.TRANSACTION_REFUND);
+    const permCheck = await verifyTransactionPermission(
+      adminId,
+      PERMISSIONS.TRANSACTION_REFUND
+    );
     if (!permCheck.success) {
       return { success: false, error: permCheck.error };
     }
@@ -554,10 +599,16 @@ export async function refundTransaction(
     }
 
     if (transaction.status !== "completed") {
-      return { success: false, error: "Only completed transactions can be refunded" };
+      return {
+        success: false,
+        error: "Only completed transactions can be refunded",
+      };
     }
 
-    if (transaction.status === "refunded") {
+    if (
+      transaction.status === "completed" ||
+      transaction.status === "refunded"
+    ) {
       return { success: false, error: "Transaction already refunded" };
     }
 
@@ -569,7 +620,10 @@ export async function refundTransaction(
     const refundAmount = amount || transaction.amount;
 
     if (refundAmount > transaction.amount) {
-      return { success: false, error: "Refund amount cannot exceed transaction amount" };
+      return {
+        success: false,
+        error: "Refund amount cannot exceed transaction amount",
+      };
     }
 
     // Get user wallet
@@ -579,7 +633,10 @@ export async function refundTransaction(
     }
 
     // Process refund based on transaction type
-    if (transaction.type === "gold_purchase" || transaction.type === "buy_gold") {
+    if (
+      transaction.type === "gold_purchase" ||
+      transaction.type === "buy_gold"
+    ) {
       // Refund gold purchase: return money, deduct gold
       const goldAmount = transaction.metadata?.grams || 0;
       if (wallet.gold.grams < goldAmount) {
@@ -590,7 +647,10 @@ export async function refundTransaction(
       }
       wallet.balance[transaction.currency] += refundAmount;
       wallet.gold.grams -= goldAmount;
-    } else if (transaction.type === "gold_sale" || transaction.type === "sell_gold") {
+    } else if (
+      transaction.type === "gold_sale" ||
+      transaction.type === "sell_gold"
+    ) {
       // Refund gold sale: return gold, deduct money
       const goldAmount = transaction.metadata?.grams || 0;
       if (wallet.balance[transaction.currency] < refundAmount) {

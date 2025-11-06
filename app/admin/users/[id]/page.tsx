@@ -1,14 +1,14 @@
 // /app/admin/users/[id]/page.tsx
 // Individual user detail page with full profile and management options
 
-import { notFound } from 'next/navigation';
-import { requireAdmin } from '@/server/auth/session';
-import { getUserDetails, getUserActivity } from '@/server/actions/admin/users';
-import { AdminCard, AdminBreadcrumb } from '@/components/admin/admin-shell';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { RoleBadge } from '@/components/admin/admin-sidebar';
-import { 
+import { notFound } from "next/navigation";
+import { requireAdmin } from "@/server/auth/session";
+import { getUserDetails, getUserActivity } from "@/server/actions/admin/users";
+import { AdminCard, AdminBreadcrumb } from "@/components/admin/admin-shell";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { RoleBadge } from "@/components/admin/admin-sidebar";
+import {
   User,
   Mail,
   Phone,
@@ -24,41 +24,46 @@ import {
   Coins,
   ArrowUpRight,
   ArrowDownRight,
-  Activity
-} from 'lucide-react';
-import { format } from 'date-fns';
-import Link from 'next/link';
+  Activity,
+} from "lucide-react";
+import { format } from "date-fns";
+import Link from "next/link";
 
 export default async function UserDetailPage({
-  params
+  params,
 }: {
-  params: { id: string }
+  params: { id: string };
 }) {
   const session = await requireAdmin();
   const adminId = session.user.id;
 
   // Fetch user details
   const result = await getUserDetails(adminId, params.id);
-  
+
   if (!result.success || !result.data) {
     notFound();
   }
 
   const user = result.data.user;
-  const stats = result.data.stats;
-  const activity = result.data.recentActivity || [];
+  const stats = result.data?.stats || {
+    totalTransactions: result.data?.transactionCount || 0,
+    totalDeposits: 0,
+    totalWithdrawals: 0,
+    lastActivity: result.data?.lastTransaction?.createdAt,
+  };
+  const activity = result.data?.recentActivity || [];
 
   // Status badges
   const getStatusBadge = (status: string) => {
     const variants: Record<string, any> = {
-      active: { color: 'bg-green-500/20 text-green-400', icon: CheckCircle },
-      suspended: { color: 'bg-red-500/20 text-red-400', icon: Ban },
-      pending: { color: 'bg-yellow-500/20 text-yellow-400', icon: Clock }
+      active: { color: "bg-green-500/20 text-green-400", icon: CheckCircle },
+      suspended: { color: "bg-red-500/20 text-red-400", icon: Ban },
+      pending: { color: "bg-yellow-500/20 text-yellow-400", icon: Clock },
     };
-    
+
     const variant = variants[status] || variants.pending;
     const Icon = variant.icon;
-    
+
     return (
       <Badge className={`${variant.color} border-0`}>
         <Icon className="w-3 h-3 mr-1" />
@@ -70,11 +75,13 @@ export default async function UserDetailPage({
   return (
     <>
       {/* Breadcrumb */}
-      <AdminBreadcrumb items={[
-        { label: 'Admin', href: '/admin' },
-        { label: 'Users', href: '/admin/users' },
-        { label: user.email }
-      ]} />
+      <AdminBreadcrumb
+        items={[
+          { label: "Admin", href: "/admin" },
+          { label: "Users", href: "/admin/users" },
+          { label: user.email },
+        ]}
+      />
 
       {/* Page Header */}
       <div className="flex justify-between items-start mb-8">
@@ -99,7 +106,8 @@ export default async function UserDetailPage({
           <AdminCard>
             <div className="text-center">
               <div className="w-24 h-24 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl font-bold text-black">
-                {user.firstName?.[0]}{user.lastName?.[0]}
+                {user.firstName?.[0]}
+                {user.lastName?.[0]}
               </div>
               <h2 className="text-xl font-bold text-white">
                 {user.firstName} {user.lastName}
@@ -107,7 +115,7 @@ export default async function UserDetailPage({
               <p className="text-zinc-400">{user.email}</p>
               <div className="flex justify-center gap-2 mt-4">
                 <RoleBadge role={user.role} />
-                {getStatusBadge(user.status || 'active')}
+                {getStatusBadge(user.status || "active")}
               </div>
             </div>
 
@@ -125,8 +133,8 @@ export default async function UserDetailPage({
                 <Mail className="w-3 h-3 mr-1" />
                 Send Email
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 className="text-red-400 hover:text-red-300"
               >
@@ -147,13 +155,15 @@ export default async function UserDetailPage({
               <div className="flex items-center text-sm">
                 <Phone className="w-4 h-4 text-zinc-500 mr-3" />
                 <span className="text-zinc-400">Phone:</span>
-                <span className="text-white ml-auto">{user.phone || 'Not provided'}</span>
+                <span className="text-white ml-auto">
+                  {user.phone || "Not provided"}
+                </span>
               </div>
               <div className="flex items-center text-sm">
                 <Calendar className="w-4 h-4 text-zinc-500 mr-3" />
                 <span className="text-zinc-400">Joined:</span>
                 <span className="text-white ml-auto">
-                  {format(new Date(user.createdAt), 'MMM dd, yyyy')}
+                  {format(new Date(user.createdAt), "MMM dd, yyyy")}
                 </span>
               </div>
             </div>
@@ -164,14 +174,16 @@ export default async function UserDetailPage({
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-zinc-400">Status</span>
-                {getStatusBadge(user.kycStatus || 'pending')}
+                {getStatusBadge(user.kycStatus || "pending")}
               </div>
-              {user.kycStatus === 'verified' && (
+              {user.kycStatus === "verified" && (
                 <>
                   <div className="flex justify-between text-sm">
                     <span className="text-zinc-400">Verified Date</span>
                     <span className="text-white">
-                      {user.kycVerifiedAt ? format(new Date(user.kycVerifiedAt), 'MMM dd, yyyy') : '-'}
+                      {user.kycVerifiedAt
+                        ? format(new Date(user.kycVerifiedAt), "MMM dd, yyyy")
+                        : "-"}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
@@ -180,7 +192,7 @@ export default async function UserDetailPage({
                   </div>
                 </>
               )}
-              {user.kycStatus === 'pending' && (
+              {user.kycStatus === "pending" && (
                 <Link href={`/admin/kyc/${user._id}`}>
                   <Button variant="outline" size="sm" className="w-full">
                     Review KYC Application
@@ -206,7 +218,7 @@ export default async function UserDetailPage({
                 <Coins className="w-8 h-8 text-amber-400" />
               </div>
             </AdminCard>
-            
+
             <AdminCard>
               <div className="flex items-center justify-between">
                 <div>
@@ -218,7 +230,7 @@ export default async function UserDetailPage({
                 <Coins className="w-8 h-8 text-yellow-400" />
               </div>
             </AdminCard>
-            
+
             <AdminCard>
               <div className="flex items-center justify-between">
                 <div>
@@ -237,14 +249,19 @@ export default async function UserDetailPage({
             {activity.length > 0 ? (
               <div className="space-y-3">
                 {activity.map((item: any) => (
-                  <div key={item._id} className="flex items-center justify-between p-3 rounded-lg bg-zinc-900/50">
+                  <div
+                    key={item._id}
+                    className="flex items-center justify-between p-3 rounded-lg bg-zinc-900/50"
+                  >
                     <div className="flex items-center space-x-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        item.type === 'deposit' || item.type === 'buy' 
-                          ? 'bg-green-500/20' 
-                          : 'bg-red-500/20'
-                      }`}>
-                        {item.type === 'deposit' || item.type === 'buy' ? (
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          item.type === "deposit" || item.type === "buy"
+                            ? "bg-green-500/20"
+                            : "bg-red-500/20"
+                        }`}
+                      >
+                        {item.type === "deposit" || item.type === "buy" ? (
                           <ArrowDownRight className="w-4 h-4 text-green-400" />
                         ) : (
                           <ArrowUpRight className="w-4 h-4 text-red-400" />
@@ -252,10 +269,10 @@ export default async function UserDetailPage({
                       </div>
                       <div>
                         <p className="text-sm font-medium text-white capitalize">
-                          {item.type} {item.type.includes('gold') ? 'Gold' : ''}
+                          {item.type} {item.type.includes("gold") ? "Gold" : ""}
                         </p>
                         <p className="text-xs text-zinc-500">
-                          {format(new Date(item.createdAt), 'MMM dd, HH:mm')}
+                          {format(new Date(item.createdAt), "MMM dd, HH:mm")}
                         </p>
                       </div>
                     </div>
@@ -285,20 +302,34 @@ export default async function UserDetailPage({
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-zinc-400">Two-Factor Auth</span>
-                <Badge className={user.mfaEnabled ? 'bg-green-500/20 text-green-400' : 'bg-zinc-700 text-zinc-400'}>
-                  {user.mfaEnabled ? 'Enabled' : 'Disabled'}
+                <Badge
+                  className={
+                    user.mfaEnabled
+                      ? "bg-green-500/20 text-green-400"
+                      : "bg-zinc-700 text-zinc-400"
+                  }
+                >
+                  {user.mfaEnabled ? "Enabled" : "Disabled"}
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-zinc-400">Email Verified</span>
-                <Badge className={user.emailVerified ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}>
-                  {user.emailVerified ? 'Verified' : 'Pending'}
+                <Badge
+                  className={
+                    user.emailVerified
+                      ? "bg-green-500/20 text-green-400"
+                      : "bg-yellow-500/20 text-yellow-400"
+                  }
+                >
+                  {user.emailVerified ? "Verified" : "Pending"}
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-zinc-400">Last Login</span>
                 <span className="text-sm text-white">
-                  {user.lastLogin ? format(new Date(user.lastLogin), 'MMM dd, HH:mm') : 'Never'}
+                  {user.lastLogin
+                    ? format(new Date(user.lastLogin), "MMM dd, HH:mm")
+                    : "Never"}
                 </span>
               </div>
             </div>

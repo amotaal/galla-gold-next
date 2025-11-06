@@ -194,7 +194,6 @@ export async function searchUsers(adminId: string, filters: any) {
     role: filters.role,
     isActive: filters.status === "active",
     isSuspended: filters.status === "suspended",
-    page: filters.page || 1,
     limit: filters.limit || 20,
   });
 }

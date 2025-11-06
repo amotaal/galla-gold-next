@@ -12,7 +12,12 @@ import mongoose, { Schema, Document, Model, Types } from "mongoose";
 /**
  * Configuration data types
  */
-export type ConfigDataType = "number" | "string" | "boolean" | "object" | "array";
+export type ConfigDataType =
+  | "number"
+  | "string"
+  | "boolean"
+  | "object"
+  | "array";
 
 /**
  * Configuration categories for organization
@@ -162,7 +167,16 @@ const SystemConfigSchema = new Schema<ISystemConfig>(
     // Organization
     category: {
       type: String,
-      enum: ["fees", "limits", "features", "pricing", "security", "kyc", "email", "general"],
+      enum: [
+        "fees",
+        "limits",
+        "features",
+        "pricing",
+        "security",
+        "kyc",
+        "email",
+        "general",
+      ],
       required: true,
       index: true,
     },
@@ -296,7 +310,10 @@ SystemConfigSchema.statics.getValue = async function (
   key: string,
   defaultValue?: any
 ): Promise<any> {
-  const config = await this.findOne({ key: key.toUpperCase(), isActive: true }).lean();
+  const config = await this.findOne({
+    key: key.toUpperCase(),
+    isActive: true,
+  }).lean();
 
   if (config) {
     return config.value;
@@ -372,7 +389,13 @@ SystemConfigSchema.statics.resetToDefault = async function (
     throw new Error(`Configuration key '${key}' not found`);
   }
 
-  return this.setValue(key, config.defaultValue, updatedBy, updatedByEmail, reason || "Reset to default");
+  return (this as ISystemConfigModel).setValue(
+    key,
+    config.defaultValue,
+    updatedBy,
+    updatedByEmail,
+    reason || "Reset to default"
+  );
 };
 
 /**
@@ -387,7 +410,7 @@ SystemConfigSchema.statics.getMany = async function (
   }).lean();
 
   const result: Record<string, any> = {};
-  configs.forEach((config) => {
+  configs.forEach((config: ISystemConfig) => {
     result[config.key] = config.value;
   });
 
@@ -455,9 +478,14 @@ SystemConfigSchema.statics.upsert = async function (
 /**
  * Get change history for this configuration
  */
-SystemConfigSchema.methods.getHistory = function (limit: number = 20): IConfigChange[] {
+SystemConfigSchema.methods.getHistory = function (
+  limit: number = 20
+): IConfigChange[] {
   return this.changeHistory
-    .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+    .sort(
+      (a: ISystemConfig, b: ISystemConfig) =>
+        b.updatedAt.getTime() - a.updatedAt.getTime()
+    )
     .slice(0, limit);
 };
 
@@ -541,6 +569,9 @@ interface ISystemConfigModel extends Model<ISystemConfig> {
 
 const SystemConfig =
   (mongoose.models.SystemConfig as ISystemConfigModel) ||
-  mongoose.model<ISystemConfig, ISystemConfigModel>("SystemConfig", SystemConfigSchema);
+  mongoose.model<ISystemConfig, ISystemConfigModel>(
+    "SystemConfig",
+    SystemConfigSchema
+  );
 
 export default SystemConfig;

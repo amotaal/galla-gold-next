@@ -21,12 +21,12 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import { resetPasswordAction, requestPasswordResetAction } from "@/server/actions/auth";
+import { resetPasswordAction } from "@/server/actions/auth";
 import { toast } from "sonner";
 
 /**
  * Password Reset Page Component
- * 
+ *
  * Two modes:
  * 1. Request Reset - User enters email, receives token
  * 2. Reset Password - User enters new password with token from email
@@ -34,10 +34,10 @@ import { toast } from "sonner";
 function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   // Get token from URL query params
   const tokenFromUrl = searchParams.get("token");
-  
+
   // UI state
   const [mode, setMode] = useState<"request" | "reset">(
     tokenFromUrl ? "reset" : "request"
@@ -102,7 +102,7 @@ function ResetPasswordContent() {
       const formData = new FormData();
       formData.append("email", email);
 
-      const result = await requestPasswordResetAction(formData);
+      const result = await resetPasswordAction(formData);
 
       if (result.success) {
         setSuccessMessage(
@@ -172,7 +172,7 @@ function ResetPasswordContent() {
         toast.success("Password reset successful!", {
           description: "You can now log in with your new password",
         });
-        
+
         // Redirect to login after 2 seconds
         setTimeout(() => {
           router.push("/login");
@@ -195,12 +195,12 @@ function ResetPasswordContent() {
   return (
     <div className="dark min-h-screen bg-background flex items-center justify-center p-4">
       {/* Background gradient effects */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 pointer-events-none" />
-      
+      <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-primary/5 pointer-events-none" />
+
       <Card className="relative w-full max-w-md bg-card/80 backdrop-blur-xl border-border p-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 rounded-full bg-linear-to-br from-primary/20 to-primary/10 flex items-center justify-center mx-auto mb-4">
             {mode === "request" ? (
               <Lock className="w-8 h-8 text-primary" />
             ) : (
@@ -223,7 +223,9 @@ function ResetPasswordContent() {
             <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-medium text-green-500">Email Sent!</p>
-              <p className="text-xs text-muted-foreground mt-1">{successMessage}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {successMessage}
+              </p>
             </div>
           </div>
         )}
@@ -317,7 +319,9 @@ function ResetPasswordContent() {
                     />
                     <div
                       className={`h-1 flex-1 rounded-full transition-colors ${
-                        passwordStrength === "strong" ? "bg-green-500" : "bg-secondary"
+                        passwordStrength === "strong"
+                          ? "bg-green-500"
+                          : "bg-secondary"
                       }`}
                     />
                   </div>
@@ -485,8 +489,8 @@ function ResetPasswordContent() {
           <div className="flex items-start gap-2">
             <Shield className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
             <p className="text-xs text-muted-foreground">
-              For your security, password reset links expire after 24 hours. If your link has
-              expired, request a new one.
+              For your security, password reset links expire after 24 hours. If
+              your link has expired, request a new one.
             </p>
           </div>
         </div>

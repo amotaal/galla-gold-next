@@ -17,6 +17,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Bell, LogOut, User, Home } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
+import { UserRole } from "@/types";
 
 /**
  * AdminHeader - Top header bar for admin interface
@@ -76,7 +77,7 @@ export function AdminHeader() {
                   {user?.firstName} {user?.lastName}
                 </p>
                 <p className="text-xs text-muted-foreground capitalize">
-                  {user?.role || "Admin"}
+                  {(user as any)?.role || "Admin"}{" "}
                 </p>
               </div>
             </Button>

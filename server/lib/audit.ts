@@ -45,7 +45,7 @@ export interface AuditLogParams {
  */
 export async function getClientIP(): Promise<string> {
   const headersList = await headers();
-  
+
   // Try various headers in order of preference
   const forwardedFor = headersList.get("x-forwarded-for");
   if (forwardedFor) {
@@ -89,7 +89,9 @@ export async function getHttpMethod(): Promise<string | undefined> {
  * Create an audit log entry
  * Main function used throughout the admin system
  */
-export async function createAuditLog(params: AuditLogParams): Promise<IAuditLog> {
+export async function createAuditLog(
+  params: AuditLogParams
+): Promise<IAuditLog> {
   try {
     // Get request metadata
     const ipAddress = await getClientIP();
@@ -148,7 +150,8 @@ export async function auditFailure(
     errorCode?: string;
   }
 ): Promise<IAuditLog> {
-  const errorMessage = typeof params.error === "string" ? params.error : params.error.message;
+  const errorMessage =
+    typeof params.error === "string" ? params.error : params.error.message;
 
   return createAuditLog({
     userId: params.userId,
@@ -179,7 +182,14 @@ export async function auditUserAction(params: {
   adminId: Types.ObjectId | string;
   adminEmail: string;
   adminRole: "superadmin" | "admin" | "operator";
-  action: "create" | "update" | "suspend" | "activate" | "delete" | "reset_password" | "change_role";
+  action:
+    | "create"
+    | "update"
+    | "suspend"
+    | "activate"
+    | "delete"
+    | "reset_password"
+    | "change_role";
   targetUserId: Types.ObjectId | string;
   targetUserEmail: string;
   changes?: { before?: any; after?: any };
@@ -191,7 +201,9 @@ export async function auditUserAction(params: {
     userRole: params.adminRole,
     action: `user.${params.action}`,
     category: "user",
-    description: `${params.action.replace("_", " ")} user ${params.targetUserEmail}`,
+    description: `${params.action.replace("_", " ")} user ${
+      params.targetUserEmail
+    }`,
     resource: "user",
     resourceId: params.targetUserId,
     resourceIdentifier: params.targetUserEmail,
@@ -331,7 +343,12 @@ export async function auditAuthAction(params: {
   userId: Types.ObjectId | string;
   userEmail: string;
   userRole: "superadmin" | "admin" | "operator" | "auditor" | "user";
-  action: "login" | "logout" | "failed_login" | "permission_denied" | "access_denied";
+  action:
+    | "login"
+    | "logout"
+    | "failed_login"
+    | "permission_denied"
+    | "access_denied";
   description: string;
   metadata?: Record<string, any>;
   status?: "success" | "failure";
@@ -360,10 +377,9 @@ export async function getRecentActivity(
   limit: number = 20
 ): Promise<IAuditLog[]> {
   return AuditLog.find()
-    .sort({ timestamp: -1 })
+    .sort({ createdAt: -1 })
     .limit(limit)
-    .lean()
-    .exec();
+    .lean() as any as IAuditLog[];
 }
 
 /**

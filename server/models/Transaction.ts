@@ -1,16 +1,20 @@
 // server/models/Transaction.ts
-// Purpose: Transaction Model with FIXED TransactionType enum including gold_purchase and gold_sale
+// Purpose: Transaction Model - FIXED VERSION
+// ✅ All admin fields now have correct TypeScript types in interface
 
 import mongoose, { Schema, Document, Model, Types } from "mongoose";
 
-// ✅ FIXED: Added "gold_purchase" and "gold_sale" to match action files
+// =============================================================================
+// TYPE DEFINITIONS
+// =============================================================================
+
 export type TransactionType =
   | "deposit"
   | "withdrawal"
   | "buy_gold"
   | "sell_gold"
-  | "gold_purchase" // ✅ FIXED: Added for action compatibility
-  | "gold_sale" // ✅ FIXED: Added for action compatibility
+  | "gold_purchase"
+  | "gold_sale"
   | "physical_delivery";
 
 export type TransactionStatus =
@@ -27,6 +31,10 @@ export type PaymentMethod =
   | "debit_card"
   | "wire_transfer"
   | "crypto";
+
+// =============================================================================
+// INTERFACE - ✅ FIXED: All types are now proper TypeScript, not schema syntax
+// =============================================================================
 
 export interface ITransaction extends Document {
   _id: Types.ObjectId;
@@ -79,33 +87,21 @@ export interface ITransaction extends Document {
   createdAt: Date;
   updatedAt: Date;
 
-  // Admin flag fields
-  flagged: {
-    type: Boolean;
-    default: false;
-  };
-  flagReason: String;
-  flaggedBy: {
-    type: Schema.Types.ObjectId;
-    ref: "User";
-  };
-  flaggedAt: Date;
+  // ✅ FIXED: Admin flag fields - now proper TypeScript types
+  flagged?: boolean;
+  flagReason?: string;
+  flaggedBy?: Types.ObjectId;
+  flaggedAt?: Date;
 
-  // Cancellation fields
-  cancelReason: String;
-  cancelledBy: {
-    type: Schema.Types.ObjectId;
-    ref: "User";
-  };
-  cancelledAt: Date;
+  // ✅ FIXED: Cancellation fields - now proper TypeScript types
+  cancelReason?: string;
+  cancelledBy?: Types.ObjectId;
+  cancelledAt?: Date;
 
-  // Refund fields
-  refundAmount: Number;
-  refundReason: String;
-  refundedBy: {
-    type: Schema.Types.ObjectId;
-    ref: "User";
-  };
+  // ✅ FIXED: Refund fields - now proper TypeScript types
+  refundAmount?: number;
+  refundReason?: string;
+  refundedBy?: Types.ObjectId;
 
   markAsCompleted(note?: string): Promise<void>;
   markAsFailed(error: string, code?: string): Promise<void>;
@@ -127,7 +123,10 @@ export interface ITransactionModel extends Model<ITransaction> {
   getUserStats(userId: string | Types.ObjectId): Promise<any>;
 }
 
-// Subdocument Schemas
+// =============================================================================
+// SUBDOCUMENT SCHEMAS
+// =============================================================================
+
 const StatusHistorySchema = new Schema(
   {
     status: {
@@ -164,7 +163,10 @@ const DeliveryAddressSchema = new Schema(
   { _id: false }
 );
 
-// Main Schema
+// =============================================================================
+// MAIN SCHEMA
+// =============================================================================
+
 const TransactionSchema = new Schema<ITransaction, ITransactionModel>(
   {
     userId: {
@@ -181,7 +183,6 @@ const TransactionSchema = new Schema<ITransaction, ITransactionModel>(
       index: true,
     },
 
-    // ✅ FIXED: Added "gold_purchase" and "gold_sale"
     type: {
       type: String,
       enum: [
@@ -294,7 +295,7 @@ const TransactionSchema = new Schema<ITransaction, ITransactionModel>(
     failedAt: Date,
     refundedAt: Date,
 
-    // Admin flag fields
+    // ✅ Admin flag fields - SCHEMA definition (correct syntax here)
     flagged: {
       type: Boolean,
       default: false,
@@ -306,7 +307,7 @@ const TransactionSchema = new Schema<ITransaction, ITransactionModel>(
     },
     flaggedAt: Date,
 
-    // Cancellation fields
+    // ✅ Cancellation fields - SCHEMA definition
     cancelReason: String,
     cancelledBy: {
       type: Schema.Types.ObjectId,
@@ -314,7 +315,7 @@ const TransactionSchema = new Schema<ITransaction, ITransactionModel>(
     },
     cancelledAt: Date,
 
-    // Refund fields
+    // ✅ Refund fields - SCHEMA definition
     refundAmount: Number,
     refundReason: String,
     refundedBy: {
@@ -327,13 +328,20 @@ const TransactionSchema = new Schema<ITransaction, ITransactionModel>(
   }
 );
 
-// Indexes
+// =============================================================================
+// INDEXES
+// =============================================================================
+
 TransactionSchema.index({ userId: 1, createdAt: -1 });
 TransactionSchema.index({ walletId: 1, createdAt: -1 });
 TransactionSchema.index({ type: 1, status: 1 });
 TransactionSchema.index({ status: 1, createdAt: -1 });
+TransactionSchema.index({ flagged: 1 }); // ✅ Added for admin queries
 
-// Middleware
+// =============================================================================
+// MIDDLEWARE
+// =============================================================================
+
 TransactionSchema.pre("save", function (next) {
   if (this.isModified("amount") || this.isModified("fee")) {
     this.netAmount = this.amount - this.fee;
@@ -341,7 +349,10 @@ TransactionSchema.pre("save", function (next) {
   next();
 });
 
-// Instance Methods
+// =============================================================================
+// INSTANCE METHODS
+// =============================================================================
+
 TransactionSchema.methods.markAsCompleted = async function (
   note?: string
 ): Promise<void> {
@@ -391,7 +402,10 @@ TransactionSchema.methods.addStatusUpdate = async function (
   });
 };
 
-// Static Methods
+// =============================================================================
+// STATIC METHODS
+// =============================================================================
+
 TransactionSchema.statics.findByUserId = function (
   userId: string | Types.ObjectId,
   limit: number = 50
@@ -427,7 +441,6 @@ TransactionSchema.statics.getUserStats = async function (
     const amount = tx.amount || 0;
     if (tx.type === "deposit") stats.totalDeposits += amount;
     if (tx.type === "withdrawal") stats.totalWithdrawals += amount;
-    // ✅ FIXED: Now both buy_gold and gold_purchase work
     if (tx.type === "buy_gold" || tx.type === "gold_purchase") {
       stats.totalGoldPurchases += amount;
     }
@@ -438,6 +451,10 @@ TransactionSchema.statics.getUserStats = async function (
 
   return stats;
 };
+
+// =============================================================================
+// MODEL EXPORT
+// =============================================================================
 
 const Transaction =
   (mongoose.models.Transaction as ITransactionModel) ||

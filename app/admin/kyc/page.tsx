@@ -1,14 +1,14 @@
 // /app/admin/kyc/page.tsx
 // KYC review queue with filtering and bulk actions
 
-import { getSession } from '@/server/auth/session';
-import { hasPermission, PERMISSIONS } from '@/lib/permissions';
-import { getPendingKYC } from '@/server/actions/admin/kyc';
-import { KYCCard } from '@/components/admin/kyc-card';
-import { AdminSection, AdminCard } from '@/components/admin/admin-shell';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { 
+import { getSession } from "@/server/auth/session";
+import { hasPermission, PERMISSIONS } from "@/lib/permissions";
+import { getPendingKYC } from "@/server/actions/admin/kyc";
+import { KYCCard } from "@/components/admin/kyc-card";
+import { AdminSection, AdminCard } from "@/components/admin/admin-shell";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
   FileCheck,
   Search,
   Filter,
@@ -16,21 +16,21 @@ import {
   AlertCircle,
   CheckCircle,
   XCircle,
-  RefreshCw
-} from 'lucide-react';
+  RefreshCw,
+} from "lucide-react";
 
 export default async function KYCQueuePage({
-  searchParams
+  searchParams,
 }: {
   searchParams: {
     status?: string;
     priority?: string;
     page?: string;
-  }
+  };
 }) {
   const session = await getSession();
   const userId = session?.user?.id;
-  const userRole = session?.user?.role || 'user';
+  const userRole = session?.user?.role || "user";
 
   // Check permissions
   if (!hasPermission(userRole, PERMISSIONS.KYC_VIEW)) {
@@ -38,24 +38,30 @@ export default async function KYCQueuePage({
       <div className="text-center py-12">
         <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
         <p className="text-xl font-semibold text-white">Access Denied</p>
-        <p className="text-zinc-400 mt-2">You don't have permission to view KYC applications</p>
+        <p className="text-zinc-400 mt-2">
+          You don't have permission to view KYC applications
+        </p>
       </div>
     );
   }
 
   // Parse filters
   const filters = {
-    status: searchParams.status || 'pending',
+    status: searchParams.status || "pending",
     priority: searchParams.priority,
-    page: parseInt(searchParams.page || '1'),
-    limit: 12
+    page: parseInt(searchParams.page || "1"),
+    limit: 12,
   };
 
   // Fetch KYC applications
   const result = await getPendingKYC(userId!, filters);
   const applications = result.success ? result.data?.applications || [] : [];
-  const stats = result.data?.stats || {};
-
+  const stats = result.data?.stats || {
+    pending: 0,
+    approved: 0,
+    rejected: 0,
+    avgProcessingTime: 0,
+  };
   return (
     <>
       {/* Page Header */}
@@ -72,32 +78,38 @@ export default async function KYCQueuePage({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-zinc-400">Pending Review</p>
-              <p className="text-2xl font-bold text-yellow-400">{stats.pending || 0}</p>
+              <p className="text-2xl font-bold text-yellow-400">
+                {stats.pending || 0}
+              </p>
             </div>
             <Clock className="w-8 h-8 text-yellow-400" />
           </div>
         </AdminCard>
-        
+
         <AdminCard>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-zinc-400">Approved Today</p>
-              <p className="text-2xl font-bold text-green-400">{stats.approvedToday || 0}</p>
+              <p className="text-2xl font-bold text-green-400">
+                {stats.approvedToday || 0}
+              </p>
             </div>
             <CheckCircle className="w-8 h-8 text-green-400" />
           </div>
         </AdminCard>
-        
+
         <AdminCard>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-zinc-400">Rejected Today</p>
-              <p className="text-2xl font-bold text-red-400">{stats.rejectedToday || 0}</p>
+              <p className="text-2xl font-bold text-red-400">
+                {stats.rejectedToday || 0}
+              </p>
             </div>
             <XCircle className="w-8 h-8 text-red-400" />
           </div>
         </AdminCard>
-        
+
         <AdminCard>
           <div className="flex items-center justify-between">
             <div>
@@ -114,7 +126,7 @@ export default async function KYCQueuePage({
       {/* Filters */}
       <AdminCard className="mb-6">
         <form className="flex flex-col md:flex-row gap-4">
-          <select 
+          <select
             name="status"
             defaultValue={filters.status}
             className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white"
@@ -125,8 +137,8 @@ export default async function KYCQueuePage({
             <option value="rejected">Rejected</option>
             <option value="all">All Applications</option>
           </select>
-          
-          <select 
+
+          <select
             name="priority"
             defaultValue={filters.priority}
             className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white"
@@ -136,12 +148,12 @@ export default async function KYCQueuePage({
             <option value="medium">Medium Priority</option>
             <option value="low">Low Priority</option>
           </select>
-          
+
           <Button type="submit" variant="outline">
             <Filter className="w-4 h-4 mr-2" />
             Apply Filters
           </Button>
-          
+
           {hasPermission(userRole, PERMISSIONS.KYC_APPROVE) && (
             <Button type="button" variant="outline" className="ml-auto">
               <CheckCircle className="w-4 h-4 mr-2" />
@@ -158,6 +170,12 @@ export default async function KYCQueuePage({
             <KYCCard
               key={application._id}
               kyc={application}
+              onApprove={() => {
+                /* TODO */
+              }}
+              onReject={() => {
+                /* TODO */
+              }}
             />
           ))
         ) : (
@@ -167,9 +185,9 @@ export default async function KYCQueuePage({
                 <FileCheck className="w-12 h-12 text-zinc-600 mx-auto mb-4" />
                 <p className="text-zinc-400">No KYC applications found</p>
                 <p className="text-sm text-zinc-500 mt-2">
-                  {filters.status === 'pending' 
-                    ? 'No pending applications to review'
-                    : 'Try adjusting your filters'}
+                  {filters.status === "pending"
+                    ? "No pending applications to review"
+                    : "Try adjusting your filters"}
                 </p>
               </div>
             </AdminCard>
@@ -181,9 +199,7 @@ export default async function KYCQueuePage({
       {applications.length >= filters.limit && (
         <div className="flex justify-center mt-8">
           <a href={`?page=${filters.page + 1}&status=${filters.status}`}>
-            <Button variant="outline">
-              Load More Applications
-            </Button>
+            <Button variant="outline">Load More Applications</Button>
           </a>
         </div>
       )}

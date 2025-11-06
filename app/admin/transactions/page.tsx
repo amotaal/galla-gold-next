@@ -1,14 +1,17 @@
 // /app/admin/transactions/page.tsx
 // Transaction monitoring page with advanced filtering and management
 
-import { getSession } from '@/server/auth/session';
-import { hasPermission, PERMISSIONS } from '@/lib/permissions';
-import { searchTransactions, getTransactionStats } from '@/server/actions/admin/transactions';
-import { TransactionTable } from '@/components/admin/transaction-table';
-import { AdminCard, AdminSection } from '@/components/admin/admin-shell';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { 
+import { getSession } from "@/server/auth/session";
+import { hasPermission, PERMISSIONS } from "@/lib/permissions";
+import {
+  searchTransactions,
+  getTransactionStats,
+} from "@/server/actions/admin/transactions";
+import { TransactionTable } from "@/components/admin/transaction-table";
+import { AdminCard, AdminSection } from "@/components/admin/admin-shell";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
   ArrowLeftRight,
   Search,
   Filter,
@@ -19,12 +22,12 @@ import {
   Coins,
   DollarSign,
   Flag,
-  RefreshCw
-} from 'lucide-react';
-import { format } from 'date-fns';
+  RefreshCw,
+} from "lucide-react";
+import { format } from "date-fns";
 
 export default async function TransactionsPage({
-  searchParams
+  searchParams,
 }: {
   searchParams: {
     type?: string;
@@ -35,11 +38,11 @@ export default async function TransactionsPage({
     minAmount?: string;
     maxAmount?: string;
     page?: string;
-  }
+  };
 }) {
   const session = await getSession();
   const userId = session?.user?.id;
-  const userRole = session?.user?.role || 'user';
+  const userRole = session?.user?.role || "user";
 
   // Check permissions
   if (!hasPermission(userRole, PERMISSIONS.TRANSACTION_VIEW)) {
@@ -47,7 +50,9 @@ export default async function TransactionsPage({
       <div className="text-center py-12">
         <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
         <p className="text-xl font-semibold text-white">Access Denied</p>
-        <p className="text-zinc-400 mt-2">You don't have permission to view transactions</p>
+        <p className="text-zinc-400 mt-2">
+          You don't have permission to view transactions
+        </p>
       </div>
     );
   }
@@ -56,30 +61,45 @@ export default async function TransactionsPage({
   const filters = {
     type: searchParams.type,
     status: searchParams.status,
-    flagged: searchParams.flagged === 'true',
+    flagged: searchParams.flagged === "true",
     dateFrom: searchParams.dateFrom,
     dateTo: searchParams.dateTo,
-    minAmount: searchParams.minAmount ? parseFloat(searchParams.minAmount) : undefined,
-    maxAmount: searchParams.maxAmount ? parseFloat(searchParams.maxAmount) : undefined,
-    page: parseInt(searchParams.page || '1'),
-    limit: 50
+    minAmount: searchParams.minAmount
+      ? parseFloat(searchParams.minAmount)
+      : undefined,
+    maxAmount: searchParams.maxAmount
+      ? parseFloat(searchParams.maxAmount)
+      : undefined,
+    page: parseInt(searchParams.page || "1"),
+    limit: 50,
   };
 
   // Fetch transactions and stats
   const [transactionsResult, statsResult] = await Promise.all([
     searchTransactions(userId!, filters),
-    getTransactionStats(userId!)
+    getTransactionStats(userId!),
   ]);
 
-  const transactions = transactionsResult.success ? transactionsResult.data?.transactions || [] : [];
+  const transactions = transactionsResult.success
+    ? transactionsResult.data?.transactions || []
+    : [];
   const totalPages = transactionsResult.data?.totalPages || 1;
-  const stats = statsResult.success ? statsResult.data : {};
-
+  const stats = statsResult.success
+    ? statsResult.data
+    : {
+        dailyVolume: 0,
+        volumeChange: 0,
+        goldVolume: 0,
+        totalTransactions: 0,
+        flaggedCount: 0,
+      };
   return (
     <>
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-amber-500">Transaction Monitoring</h1>
+        <h1 className="text-3xl font-bold text-amber-500">
+          Transaction Monitoring
+        </h1>
         <p className="text-zinc-400 mt-2">
           Monitor and manage all platform transactions
         </p>
@@ -95,14 +115,14 @@ export default async function TransactionsPage({
                 ${stats.dailyVolume?.toLocaleString() || 0}
               </p>
               <p className="text-xs text-green-400 mt-1">
-                <TrendingUp className="w-3 h-3 inline mr-1" />
-                +{stats.volumeChange || 0}%
+                <TrendingUp className="w-3 h-3 inline mr-1" />+
+                {stats.volumeChange || 0}%
               </p>
             </div>
             <DollarSign className="w-8 h-8 text-amber-400" />
           </div>
         </AdminCard>
-        
+
         <AdminCard>
           <div className="flex items-center justify-between">
             <div>
@@ -115,7 +135,7 @@ export default async function TransactionsPage({
             <Coins className="w-8 h-8 text-yellow-400" />
           </div>
         </AdminCard>
-        
+
         <AdminCard>
           <div className="flex items-center justify-between">
             <div>
@@ -128,7 +148,7 @@ export default async function TransactionsPage({
             <ArrowLeftRight className="w-8 h-8 text-green-400" />
           </div>
         </AdminCard>
-        
+
         <AdminCard>
           <div className="flex items-center justify-between">
             <div>
@@ -148,7 +168,7 @@ export default async function TransactionsPage({
         <form className="space-y-4">
           <div className="grid md:grid-cols-4 gap-4">
             {/* Transaction Type */}
-            <select 
+            <select
               name="type"
               defaultValue={filters.type}
               className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white"
@@ -160,9 +180,9 @@ export default async function TransactionsPage({
               <option value="sell_gold">Sell Gold</option>
               <option value="transfer">Transfer</option>
             </select>
-            
+
             {/* Status */}
-            <select 
+            <select
               name="status"
               defaultValue={filters.status}
               className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white"
@@ -174,7 +194,7 @@ export default async function TransactionsPage({
               <option value="failed">Failed</option>
               <option value="cancelled">Cancelled</option>
             </select>
-            
+
             {/* Date From */}
             <Input
               type="date"
@@ -183,7 +203,7 @@ export default async function TransactionsPage({
               className="bg-zinc-900 border-zinc-800"
               placeholder="From date"
             />
-            
+
             {/* Date To */}
             <Input
               type="date"
@@ -193,7 +213,7 @@ export default async function TransactionsPage({
               placeholder="To date"
             />
           </div>
-          
+
           <div className="grid md:grid-cols-4 gap-4">
             {/* Min Amount */}
             <Input
@@ -203,7 +223,7 @@ export default async function TransactionsPage({
               className="bg-zinc-900 border-zinc-800"
               placeholder="Min amount"
             />
-            
+
             {/* Max Amount */}
             <Input
               type="number"
@@ -212,7 +232,7 @@ export default async function TransactionsPage({
               className="bg-zinc-900 border-zinc-800"
               placeholder="Max amount"
             />
-            
+
             {/* Flagged Only */}
             <label className="flex items-center space-x-2 px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg cursor-pointer">
               <input
@@ -224,7 +244,7 @@ export default async function TransactionsPage({
               />
               <span className="text-white">Flagged Only</span>
             </label>
-            
+
             {/* Action Buttons */}
             <div className="flex gap-2">
               <Button type="submit" variant="outline" className="flex-1">
@@ -243,36 +263,54 @@ export default async function TransactionsPage({
       <AdminCard>
         {transactions.length > 0 ? (
           <>
-            <TransactionTable 
+            <TransactionTable
               transactions={transactions}
               userRole={userRole}
               canFlag={hasPermission(userRole, PERMISSIONS.TRANSACTION_FLAG)}
-              canRefund={hasPermission(userRole, PERMISSIONS.TRANSACTION_REFUND)}
+              canRefund={hasPermission(
+                userRole,
+                PERMISSIONS.TRANSACTION_REFUND
+              )}
             />
-            
+
             {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex justify-between items-center mt-6 pt-6 border-t border-zinc-800">
                 <div className="text-sm text-zinc-400">
-                  Showing {((filters.page - 1) * filters.limit) + 1} to{' '}
-                  {Math.min(filters.page * filters.limit, transactionsResult.data?.total || 0)} of{' '}
-                  {transactionsResult.data?.total || 0} transactions
+                  Showing {(filters.page - 1) * filters.limit + 1} to{" "}
+                  {Math.min(
+                    filters.page * filters.limit,
+                    transactionsResult.data?.total || 0
+                  )}{" "}
+                  of {transactionsResult.data?.total || 0} transactions
                 </div>
-                
+
                 <div className="flex gap-2">
                   {filters.page > 1 && (
-                    <a href={`?page=${filters.page - 1}${searchParams.type ? `&type=${searchParams.type}` : ''}`}>
-                      <Button variant="outline" size="sm">Previous</Button>
+                    <a
+                      href={`?page=${filters.page - 1}${
+                        searchParams.type ? `&type=${searchParams.type}` : ""
+                      }`}
+                    >
+                      <Button variant="outline" size="sm">
+                        Previous
+                      </Button>
                     </a>
                   )}
-                  
+
                   <span className="flex items-center px-4 text-sm">
                     Page {filters.page} of {totalPages}
                   </span>
-                  
+
                   {filters.page < totalPages && (
-                    <a href={`?page=${filters.page + 1}${searchParams.type ? `&type=${searchParams.type}` : ''}`}>
-                      <Button variant="outline" size="sm">Next</Button>
+                    <a
+                      href={`?page=${filters.page + 1}${
+                        searchParams.type ? `&type=${searchParams.type}` : ""
+                      }`}
+                    >
+                      <Button variant="outline" size="sm">
+                        Next
+                      </Button>
                     </a>
                   )}
                 </div>
@@ -291,28 +329,33 @@ export default async function TransactionsPage({
       </AdminCard>
 
       {/* Quick Actions */}
-      {hasPermission(userRole, PERMISSIONS.TRANSACTION_FLAG) && stats.flaggedCount > 0 && (
-        <div className="mt-6 p-4 bg-red-900/20 border border-red-900/50 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <AlertCircle className="w-5 h-5 text-red-400" />
-              <div>
-                <p className="font-semibold text-red-400">
-                  {stats.flaggedCount} Flagged Transactions Require Review
-                </p>
-                <p className="text-sm text-zinc-400 mt-1">
-                  High-value or suspicious transactions need immediate attention
-                </p>
+      {hasPermission(userRole, PERMISSIONS.TRANSACTION_FLAG) &&
+        stats.flaggedCount > 0 && (
+          <div className="mt-6 p-4 bg-red-900/20 border border-red-900/50 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <AlertCircle className="w-5 h-5 text-red-400" />
+                <div>
+                  <p className="font-semibold text-red-400">
+                    {stats.flaggedCount} Flagged Transactions Require Review
+                  </p>
+                  <p className="text-sm text-zinc-400 mt-1">
+                    High-value or suspicious transactions need immediate
+                    attention
+                  </p>
+                </div>
               </div>
+              <a href="?flagged=true">
+                <Button
+                  variant="outline"
+                  className="border-red-800 text-red-400 hover:bg-red-900/20"
+                >
+                  Review Flagged
+                </Button>
+              </a>
             </div>
-            <a href="?flagged=true">
-              <Button variant="outline" className="border-red-800 text-red-400 hover:bg-red-900/20">
-                Review Flagged
-              </Button>
-            </a>
           </div>
-        </div>
-      )}
+        )}
     </>
   );
 }

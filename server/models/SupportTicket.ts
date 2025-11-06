@@ -476,7 +476,9 @@ SupportTicketSchema.statics.getQueue = async function (filters?: {
   if (filters?.status) {
     query.status = { $in: filters.status };
   } else {
-    query.status = { $in: ["open", "assigned", "in_progress", "waiting_internal"] };
+    query.status = {
+      $in: ["open", "assigned", "in_progress", "waiting_internal"],
+    };
   }
 
   if (filters?.category) query.category = filters.category;
@@ -578,7 +580,7 @@ SupportTicketSchema.methods.addMessage = async function (
   }
 
   await this.save();
-  return this;
+  return this as unknown as ISupportTicket;
 };
 
 /**
@@ -617,7 +619,7 @@ SupportTicketSchema.methods.changeStatus = async function (
   }
 
   await this.save();
-  return this;
+  return this as unknown as ISupportTicket;
 };
 
 /**
@@ -638,7 +640,7 @@ SupportTicketSchema.methods.assign = async function (
   }
 
   await this.save();
-  return this;
+  return this as unknown as ISupportTicket;
 };
 
 // =============================================================================
@@ -646,7 +648,9 @@ SupportTicketSchema.methods.assign = async function (
 // =============================================================================
 
 interface ISupportTicketModel extends Model<ISupportTicket> {
-  getQueue(filters?: any): Promise<{ tickets: ISupportTicket[]; total: number }>;
+  getQueue(
+    filters?: any
+  ): Promise<{ tickets: ISupportTicket[]; total: number }>;
   getUserTickets(
     userId: Types.ObjectId | string,
     includeResolved?: boolean
@@ -656,6 +660,9 @@ interface ISupportTicketModel extends Model<ISupportTicket> {
 
 const SupportTicket =
   (mongoose.models.SupportTicket as ISupportTicketModel) ||
-  mongoose.model<ISupportTicket, ISupportTicketModel>("SupportTicket", SupportTicketSchema);
+  mongoose.model<ISupportTicket, ISupportTicketModel>(
+    "SupportTicket",
+    SupportTicketSchema
+  );
 
 export default SupportTicket;

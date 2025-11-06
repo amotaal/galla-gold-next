@@ -1,14 +1,17 @@
 // /app/admin/page.tsx
 // Admin dashboard overview with key metrics and quick actions
 
-import { getSession } from '@/server/auth/session';
-import { getDashboardStats, getRecentActivity } from '@/server/actions/admin/reports';
-import { StatCard } from '@/components/admin/stat-card';
-import { AdminSection, AdminCard } from '@/components/admin/admin-shell';
-import { 
-  Users, 
-  Shield, 
-  ArrowLeftRight, 
+import { getSession } from "@/server/auth/session";
+import {
+  getDashboardStats,
+  getRecentActivity,
+} from "@/server/actions/admin/reports";
+import { StatCard } from "@/components/admin/stat-card";
+import { AdminSection, AdminCard } from "@/components/admin/admin-shell";
+import {
+  Users,
+  Shield,
+  ArrowLeftRight,
   Coins,
   TrendingUp,
   TrendingDown,
@@ -17,20 +20,20 @@ import {
   AlertCircle,
   Clock,
   X,
-  CheckCircle
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { format } from 'date-fns';
+  CheckCircle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { format } from "date-fns";
 
 export default async function AdminDashboardPage() {
   const session = await getSession();
   const userId = session?.user?.id;
-  
+
   // Fetch dashboard statistics
   const statsResult = await getDashboardStats(userId!);
   const activityResult = await getRecentActivity(userId!);
-  
+
   const stats = statsResult.success ? statsResult.data : null;
   const activity = activityResult.success ? activityResult.data : [];
 
@@ -45,8 +48,8 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <AdminCard 
-        title="Quick Actions" 
+      <AdminCard
+        title="Quick Actions"
         className="mb-6"
         action={
           <Link href="/admin/reports">
@@ -87,7 +90,7 @@ export default async function AdminDashboardPage() {
       {/* Statistics Grid */}
       <AdminSection>
         <h2 className="text-xl font-semibold text-white mb-4">Key Metrics</h2>
-        
+
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="Total Users"
@@ -95,41 +98,41 @@ export default async function AdminDashboardPage() {
             icon={Users}
             trend={{
               value: stats?.userGrowth || 0,
-              isPositive: (stats?.userGrowth || 0) > 0
+              isPositive: (stats?.userGrowth || 0) > 0,
             }}
             description="Active accounts"
           />
-          
+
           <StatCard
             title="KYC Pending"
             value={stats?.pendingKYC || 0}
             icon={FileCheck}
             trend={{
               value: stats?.kycProcessingTime || 0,
-              label: "avg hours"
+              label: "avg hours",
             }}
             description="Awaiting review"
             variant="warning"
           />
-          
+
           <StatCard
             title="Daily Volume"
             value={`$${(stats?.dailyVolume || 0).toLocaleString()}`}
             icon={ArrowLeftRight}
             trend={{
               value: stats?.volumeChange || 0,
-              isPositive: (stats?.volumeChange || 0) > 0
+              isPositive: (stats?.volumeChange || 0) > 0,
             }}
             description="24h transactions"
           />
-          
+
           <StatCard
             title="Gold Holdings"
             value={`${(stats?.totalGoldOz || 0).toFixed(2)} oz`}
             icon={Coins}
             trend={{
               value: stats?.goldChange || 0,
-              isPositive: (stats?.goldChange || 0) > 0
+              isPositive: (stats?.goldChange || 0) > 0,
             }}
             description="Total in custody"
             variant="accent"
@@ -161,18 +164,24 @@ export default async function AdminDashboardPage() {
       {/* Recent Activity */}
       <AdminCard title="Recent Admin Activity" className="mt-6">
         <div className="space-y-4">
-          {activity.length > 0 ? (
+          {activity && activity.length > 0 ? (
             activity.slice(0, 10).map((item: any) => (
-              <div 
+              <div
                 key={item._id}
                 className="flex items-start justify-between p-3 rounded-lg bg-zinc-900/50 hover:bg-zinc-900 transition-colors"
               >
                 <div className="flex items-start space-x-3">
-                  <div className={`
+                  <div
+                    className={`
                     w-8 h-8 rounded-full flex items-center justify-center
-                    ${item.status === 'success' ? 'bg-green-500/20' : 'bg-red-500/20'}
-                  `}>
-                    {item.status === 'success' ? (
+                    ${
+                      item.status === "success"
+                        ? "bg-green-500/20"
+                        : "bg-red-500/20"
+                    }
+                  `}
+                  >
+                    {item.status === "success" ? (
                       <CheckCircle className="w-4 h-4 text-green-400" />
                     ) : (
                       <X className="w-4 h-4 text-red-400" />
@@ -189,18 +198,16 @@ export default async function AdminDashboardPage() {
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-zinc-400">
-                    {format(new Date(item.timestamp), 'MMM dd, HH:mm')}
+                    {format(new Date(item.timestamp), "MMM dd, HH:mm")}
                   </p>
                 </div>
               </div>
             ))
           ) : (
-            <p className="text-center text-zinc-500 py-8">
-              No recent activity
-            </p>
+            <p className="text-center text-zinc-500 py-8">No recent activity</p>
           )}
-          
-          {activity.length > 10 && (
+
+          {activity && activity.length > 10 && (
             <Link href="/admin/audit">
               <Button variant="outline" className="w-full">
                 View All Activity
@@ -216,12 +223,14 @@ export default async function AdminDashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-zinc-400">API Status</p>
-              <p className="text-lg font-semibold text-green-400">Operational</p>
+              <p className="text-lg font-semibold text-green-400">
+                Operational
+              </p>
             </div>
             <Activity className="w-8 h-8 text-green-400" />
           </div>
         </AdminCard>
-        
+
         <AdminCard>
           <div className="flex items-center justify-between">
             <div>
@@ -231,7 +240,7 @@ export default async function AdminDashboardPage() {
             <Clock className="w-8 h-8 text-amber-400" />
           </div>
         </AdminCard>
-        
+
         <AdminCard>
           <div className="flex items-center justify-between">
             <div>
