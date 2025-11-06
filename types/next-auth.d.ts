@@ -13,7 +13,7 @@ declare module "next-auth" {
     name: string;
     firstName: string;
     lastName: string;
-    role: "user" | "admin";
+    role: "user" | "operator" | "admin" | "superadmin" | "auditor";
     hasMFA: boolean;
     kycStatus: "none" | "pending" | "submitted" | "verified" | "rejected";
     locale: string;
@@ -27,7 +27,7 @@ declare module "next-auth" {
       name: string;
       firstName: string;
       lastName: string;
-      role: "user" | "admin";
+      role: "user" | "operator" | "admin" | "superadmin" | "auditor";
       hasMFA: boolean;
       kycStatus: "none" | "pending" | "submitted" | "verified" | "rejected";
       locale: string;
@@ -46,7 +46,7 @@ declare module "next-auth/jwt" {
     name: string;
     firstName: string;
     lastName: string;
-    role: "user" | "admin";
+    role: "user" | "operator" | "admin" | "superadmin" | "auditor";
     hasMFA: boolean;
     kycStatus: "none" | "pending" | "submitted" | "verified" | "rejected";
     locale: string;

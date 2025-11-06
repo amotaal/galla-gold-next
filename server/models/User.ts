@@ -48,7 +48,7 @@ export interface IUser extends Document {
   locale: string;
   currency: string;
   timezone: string;
-  role: "user" | "admin";
+  role: "user" | "operator" | "admin" | "superadmin" | "auditor";
 
   lastLoginAt?: Date;
   lastLoginIp?: string;
@@ -136,7 +136,7 @@ const UserSchema = new Schema<IUser, IUserModel>(
     timezone: { type: String, default: "UTC" },
     role: {
       type: String,
-      enum: ["user", "admin"],
+      enum: ["user", "operator", "admin", "superadmin", "auditor"],
       default: "user",
     },
 

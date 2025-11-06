@@ -12,7 +12,7 @@
 /**
  * User roles in the system
  */
-export type UserRole = "user" | "admin";
+export type UserRole = "user" | "operator" | "admin" | "superadmin" | "auditor";
 
 /**
  * KYC (Know Your Customer) verification status

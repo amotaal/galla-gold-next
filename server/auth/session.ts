@@ -20,11 +20,11 @@ export async function getSession(): Promise<Session | null> {
 
 export async function requireSession(): Promise<Session> {
   const session = await getSession();
-  
+
   if (!session || !session.user) {
     throw new Error("Unauthorized: Please log in");
   }
-  
+
   return session;
 }
 
@@ -47,13 +47,13 @@ export async function requireUserId(): Promise<string> {
 export async function hasRole(role: UserRole): Promise<boolean> {
   const session = await getSession();
   if (!session?.user) return false;
-  
+
   return session.user.role === role;
 }
 
 export async function requireRole(role: UserRole): Promise<void> {
   const session = await requireSession();
-  
+
   if (session.user.role !== role) {
     throw new Error(`Access denied: ${role} role required`);
   }
@@ -83,7 +83,7 @@ export async function getUserRole(): Promise<UserRole | null> {
 
 export async function isKYCVerified(): Promise<boolean> {
   const session = await getSession();
-  
+
   return session?.user?.kycStatus === "verified";
 }
 
@@ -95,11 +95,11 @@ export async function isKYCVerified(): Promise<boolean> {
  */
 export async function requireKYC(): Promise<Session> {
   const session = await requireSession();
-  
+
   if (session.user.kycStatus !== "verified") {
     throw new Error("KYC verification required");
   }
-  
+
   return session; // ✅ FIXED: Return the session
 }
 
@@ -120,13 +120,13 @@ export async function checkKYCVerified(): Promise<boolean> {
 export async function hasMFA(): Promise<boolean> {
   const session = await getSession();
   if (!session?.user) return false;
-  
+
   return session.user.hasMFA || false;
 }
 
 export async function requireMFA(): Promise<void> {
   const session = await requireSession();
-  
+
   if (!session.user.hasMFA) {
     throw new Error("MFA verification required");
   }
@@ -144,13 +144,13 @@ export async function checkMFAEnabled(): Promise<boolean> {
 export async function isEmailVerified(): Promise<boolean> {
   const session = await getSession();
   if (!session?.user) return false;
-  
+
   return !!session.user.emailVerified;
 }
 
 export async function requireEmailVerified(): Promise<void> {
   const session = await requireSession();
-  
+
   if (!session.user.emailVerified) {
     throw new Error("Email verification required");
   }
@@ -198,4 +198,46 @@ export async function refreshSession(): Promise<void> {
 export async function isAuthenticated(): Promise<boolean> {
   const session = await getSession();
   return !!session?.user;
+}
+
+// =============================================================================
+// ADMIN ROLE CHECKING
+// =============================================================================
+
+export async function isOperator(): Promise<boolean> {
+  const session = await getSession();
+  return session?.user?.role === "operator";
+}
+
+export async function requireOperator(): Promise<Session> {
+  const session = await requireSession();
+  if (!["operator", "admin", "superadmin"].includes(session.user.role)) {
+    throw new Error("Operator access required");
+  }
+  return session;
+}
+
+export async function isSuperAdmin(): Promise<boolean> {
+  const session = await getSession();
+  return session?.user?.role === "superadmin";
+}
+
+export async function requireSuperAdmin(): Promise<Session> {
+  const session = await requireSession();
+  if (session.user.role !== "superadmin") {
+    throw new Error("Super admin access required");
+  }
+  return session;
+}
+
+export async function isAuditor(): Promise<boolean> {
+  const session = await getSession();
+  return session?.user?.role === "auditor";
+}
+
+export async function hasAdminAccess(): Promise<boolean> {
+  const session = await getSession();
+  return ["operator", "admin", "superadmin", "auditor"].includes(
+    session?.user?.role || ""
+  );
 }
