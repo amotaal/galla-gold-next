@@ -9,8 +9,8 @@ export type TransactionType =
   | "withdrawal"
   | "buy_gold"
   | "sell_gold"
-  | "gold_purchase"  // ✅ FIXED: Added for action compatibility
-  | "gold_sale"      // ✅ FIXED: Added for action compatibility
+  | "gold_purchase" // ✅ FIXED: Added for action compatibility
+  | "gold_sale" // ✅ FIXED: Added for action compatibility
   | "physical_delivery";
 
 export type TransactionStatus =
@@ -78,6 +78,34 @@ export interface ITransaction extends Document {
   refundedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
+
+  // Admin flag fields
+  flagged: {
+    type: Boolean;
+    default: false;
+  };
+  flagReason: String;
+  flaggedBy: {
+    type: Schema.Types.ObjectId;
+    ref: "User";
+  };
+  flaggedAt: Date;
+
+  // Cancellation fields
+  cancelReason: String;
+  cancelledBy: {
+    type: Schema.Types.ObjectId;
+    ref: "User";
+  };
+  cancelledAt: Date;
+
+  // Refund fields
+  refundAmount: Number;
+  refundReason: String;
+  refundedBy: {
+    type: Schema.Types.ObjectId;
+    ref: "User";
+  };
 
   markAsCompleted(note?: string): Promise<void>;
   markAsFailed(error: string, code?: string): Promise<void>;
@@ -265,6 +293,34 @@ const TransactionSchema = new Schema<ITransaction, ITransactionModel>(
     completedAt: Date,
     failedAt: Date,
     refundedAt: Date,
+
+    // Admin flag fields
+    flagged: {
+      type: Boolean,
+      default: false,
+    },
+    flagReason: String,
+    flaggedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+    flaggedAt: Date,
+
+    // Cancellation fields
+    cancelReason: String,
+    cancelledBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+    cancelledAt: Date,
+
+    // Refund fields
+    refundAmount: Number,
+    refundReason: String,
+    refundedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
   },
   {
     timestamps: true,
@@ -340,18 +396,14 @@ TransactionSchema.statics.findByUserId = function (
   userId: string | Types.ObjectId,
   limit: number = 50
 ) {
-  return this.find({ userId })
-    .sort({ createdAt: -1 })
-    .limit(limit);
+  return this.find({ userId }).sort({ createdAt: -1 }).limit(limit);
 };
 
 TransactionSchema.statics.findByWalletId = function (
   walletId: string | Types.ObjectId,
   limit: number = 50
 ) {
-  return this.find({ walletId })
-    .sort({ createdAt: -1 })
-    .limit(limit);
+  return this.find({ walletId }).sort({ createdAt: -1 }).limit(limit);
 };
 
 TransactionSchema.statics.findPendingTransactions = function () {
@@ -362,7 +414,7 @@ TransactionSchema.statics.getUserStats = async function (
   userId: string | Types.ObjectId
 ) {
   const transactions = await this.find({ userId });
-  
+
   const stats = {
     totalTransactions: transactions.length,
     totalDeposits: 0,
@@ -387,7 +439,11 @@ TransactionSchema.statics.getUserStats = async function (
   return stats;
 };
 
-const Transaction = (mongoose.models.Transaction as ITransactionModel) || 
-  mongoose.model<ITransaction, ITransactionModel>("Transaction", TransactionSchema);
+const Transaction =
+  (mongoose.models.Transaction as ITransactionModel) ||
+  mongoose.model<ITransaction, ITransactionModel>(
+    "Transaction",
+    TransactionSchema
+  );
 
 export default Transaction;

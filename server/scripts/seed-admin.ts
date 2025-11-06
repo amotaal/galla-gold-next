@@ -6,7 +6,8 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@gallagold.com";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "e+#15@15@4@+35+G";
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://egg_admin_db_user:dbKidFvZyIiK2wxd@egg.bckodlg.mongodb.net/EGG?";
 
 async function seedSuperAdmin() {
   console.log("🌱 Seeding Super Admin...\n");
@@ -17,7 +18,7 @@ async function seedSuperAdmin() {
   }
 
   // Connect to MongoDB (adjust connection string as needed)
-  await mongoose.connect(process.env.MONGODB_URI!);
+  await mongoose.connect(MONGODB_URI!);
   console.log("✅ Connected to MongoDB\n");
 
   const User = mongoose.model("User");

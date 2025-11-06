@@ -157,9 +157,7 @@ export default async function KYCQueuePage({
           applications.map((application: any) => (
             <KYCCard
               key={application._id}
-              application={application}
-              userRole={userRole}
-              canApprove={hasPermission(userRole, PERMISSIONS.KYC_APPROVE)}
+              kyc={application}
             />
           ))
         ) : (

@@ -171,8 +171,50 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 
   // Super Admin - unrestricted access
   superadmin: [
+    PERMISSIONS.USER_VIEW,
+    PERMISSIONS.USER_CREATE,
     // All permissions from admin
-    ...ROLE_PERMISSIONS.admin,
+    PERMISSIONS.USER_VIEW,
+    PERMISSIONS.USER_CREATE,
+    PERMISSIONS.USER_UPDATE,
+    PERMISSIONS.USER_SUSPEND,
+    PERMISSIONS.USER_DELETE,
+    PERMISSIONS.USER_CHANGE_ROLE, // Can change roles except to superadmin
+    PERMISSIONS.USER_RESET_PASSWORD,
+
+    // KYC management (full)
+    PERMISSIONS.KYC_VIEW,
+    PERMISSIONS.KYC_REVIEW,
+    PERMISSIONS.KYC_APPROVE,
+    PERMISSIONS.KYC_REJECT,
+    PERMISSIONS.KYC_REQUEST_DOCUMENTS,
+
+    // Transaction management (full)
+    PERMISSIONS.TRANSACTION_VIEW,
+    PERMISSIONS.TRANSACTION_FLAG,
+    PERMISSIONS.TRANSACTION_CANCEL,
+    PERMISSIONS.TRANSACTION_REFUND,
+    PERMISSIONS.TRANSACTION_EXPORT,
+
+    // Configuration (non-critical)
+    PERMISSIONS.CONFIG_VIEW,
+    PERMISSIONS.CONFIG_UPDATE, // Can update most configs
+    PERMISSIONS.CONFIG_RESET,
+
+    // Reports (full)
+    PERMISSIONS.REPORTS_VIEW,
+    PERMISSIONS.REPORTS_GENERATE,
+    PERMISSIONS.REPORTS_EXPORT,
+
+    // Audit (full)
+    PERMISSIONS.AUDIT_VIEW,
+    PERMISSIONS.AUDIT_EXPORT,
+
+    // Support tickets (full)
+    PERMISSIONS.TICKET_VIEW,
+    PERMISSIONS.TICKET_ASSIGN,
+    PERMISSIONS.TICKET_RESPOND,
+    PERMISSIONS.TICKET_CLOSE,
 
     // Additional critical permissions
     PERMISSIONS.CONFIG_UPDATE_CRITICAL, // Can update critical configs like fees
@@ -198,14 +240,20 @@ export function hasPermission(role: UserRole, permission: Permission): boolean {
 /**
  * Check if a role has ALL of the specified permissions
  */
-export function hasAllPermissions(role: UserRole, permissions: Permission[]): boolean {
+export function hasAllPermissions(
+  role: UserRole,
+  permissions: Permission[]
+): boolean {
   return permissions.every((permission) => hasPermission(role, permission));
 }
 
 /**
  * Check if a role has ANY of the specified permissions
  */
-export function hasAnyPermission(role: UserRole, permissions: Permission[]): boolean {
+export function hasAnyPermission(
+  role: UserRole,
+  permissions: Permission[]
+): boolean {
   return permissions.some((permission) => hasPermission(role, permission));
 }
 
@@ -412,13 +460,18 @@ export function getPermissionDeniedMessage(
   permission: Permission,
   role: UserRole
 ): string {
-  return `Access denied: Your role (${getRoleName(role)}) does not have permission to perform this action (${permission})`;
+  return `Access denied: Your role (${getRoleName(
+    role
+  )}) does not have permission to perform this action (${permission})`;
 }
 
 /**
  * Create permission error object
  */
-export function createPermissionError(permission: Permission, role: UserRole): Error {
+export function createPermissionError(
+  permission: Permission,
+  role: UserRole
+): Error {
   const error = new Error(getPermissionDeniedMessage(permission, role));
   error.name = "PermissionDeniedError";
   return error;

@@ -63,8 +63,16 @@ export async function isAdmin(): Promise<boolean> {
   return hasRole("admin");
 }
 
-export async function requireAdmin(): Promise<void> {
-  return requireRole("admin");
+export async function requireAdmin(): Promise<Session> {
+  const session = await requireSession();
+
+  if (
+    !["operator", "admin", "superadmin", "auditor"].includes(session.user.role)
+  ) {
+    throw new Error("Admin access required");
+  }
+
+  return session;
 }
 
 export async function checkIsAdmin(): Promise<boolean> {
