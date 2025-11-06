@@ -166,10 +166,20 @@ export async function getTransactions(
 }
 
 /**
- * Alias for searchTransactions - for page compatibility
+ * Search Transactions - for page compatibility
  */
 export async function searchTransactions(adminId: string, filters: any) {
-  return getTransactions(adminId, filters);
+  console.log("💰 searchTransactions called:", { adminId, filters });
+
+  const result = await getTransactions(adminId, filters);
+
+  console.log("📦 searchTransactions result:", {
+    success: result.success,
+    txCount: result.data?.transactions?.length || 0,
+    error: result.error,
+  });
+
+  return result;
 }
 
 /**

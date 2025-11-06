@@ -1,5 +1,6 @@
 // /app/admin/users/page.tsx
 // User management page with search, filters, and actions
+// FIXED: Properly awaiting searchParams Promise
 
 import { getSession, requireAdmin } from "@/server/auth/session";
 import { searchUsers } from "@/server/actions/admin/users";
@@ -16,10 +17,10 @@ import {
   Shield,
   AlertCircle,
   CheckCircle,
+  Clock,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-// Add this helper function right after imports:
 function RoleBadge({ role }: { role: string }) {
   const colors: Record<string, string> = {
     user: "bg-blue-500/20 text-blue-400",
@@ -34,26 +35,28 @@ function RoleBadge({ role }: { role: string }) {
   );
 }
 
-// Server component for initial data fetching
 async function UsersPageContent({
   searchParams,
 }: {
-  searchParams: {
+  searchParams: Promise<{
     q?: string;
     role?: string;
     status?: string;
     page?: string;
-  };
+  }>;
 }) {
   const session = await requireAdmin();
   const userId = session.user.id;
 
-  // Parse search parameters
-  const page = parseInt(searchParams.page || "1");
+  // CRITICAL: Await searchParams BEFORE using it
+  const params = await searchParams;
+
+  // Now parse search parameters from awaited params
+  const page = parseInt(params.page || "1");
   const filters = {
-    search: searchParams.q,
-    role: searchParams.role,
-    status: searchParams.status,
+    search: params.q,
+    role: params.role,
+    status: params.status,
     page,
     limit: 20,
   };
@@ -74,7 +77,6 @@ async function UsersPageContent({
 
   return (
     <>
-      {/* Page Header with Stats */}
       <div className="mb-8">
         <div className="flex justify-between items-start">
           <div>
@@ -92,7 +94,6 @@ async function UsersPageContent({
         </div>
       </div>
 
-      {/* Quick Stats */}
       <div className="grid gap-4 md:grid-cols-4 mb-6">
         <AdminCard>
           <div className="flex items-center justify-between">
@@ -124,7 +125,7 @@ async function UsersPageContent({
                 {stats.pending}
               </p>
             </div>
-            <AlertCircle className="w-8 h-8 text-yellow-400" />
+            <Clock className="w-8 h-8 text-yellow-400" />
           </div>
         </AdminCard>
 
@@ -141,69 +142,70 @@ async function UsersPageContent({
         </AdminCard>
       </div>
 
-      {/* Search and Filters */}
       <AdminCard className="mb-6">
-        <form className="flex flex-col md:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-zinc-500" />
-            <Input
-              type="text"
-              name="q"
-              placeholder="Search by name, email, or ID..."
-              defaultValue={searchParams.q}
-              className="pl-10 bg-zinc-900 border-zinc-800"
-            />
+        <form method="GET" action="/admin/users">
+          <div className="grid gap-4 md:grid-cols-5">
+            <div className="md:col-span-2 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+              <Input
+                type="text"
+                name="q"
+                placeholder="Search by name, email, or ID..."
+                defaultValue={params.q}
+                className="pl-10 bg-zinc-900 border-zinc-800"
+              />
+            </div>
+
+            <select
+              name="role"
+              defaultValue={params.role}
+              className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white"
+            >
+              <option value="">All Roles</option>
+              <option value="user">User</option>
+              <option value="operator">Operator</option>
+              <option value="admin">Admin</option>
+              <option value="superadmin">Super Admin</option>
+              <option value="auditor">Auditor</option>
+            </select>
+
+            <select
+              name="status"
+              defaultValue={params.status}
+              className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white"
+            >
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="suspended">Suspended</option>
+              <option value="pending">Pending</option>
+            </select>
+
+            <Button type="submit" variant="outline">
+              <Filter className="w-4 h-4 mr-2" />
+              Apply Filters
+            </Button>
           </div>
 
-          <select
-            name="role"
-            defaultValue={searchParams.role}
-            className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white"
-          >
-            <option value="">All Roles</option>
-            <option value="user">User</option>
-            <option value="operator">Operator</option>
-            <option value="admin">Admin</option>
-            <option value="superadmin">Super Admin</option>
-            <option value="auditor">Auditor</option>
-          </select>
-
-          <select
-            name="status"
-            defaultValue={searchParams.status}
-            className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white"
-          >
-            <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="suspended">Suspended</option>
-            <option value="pending">Pending</option>
-          </select>
-
-          <Button type="submit" variant="outline">
-            <Filter className="w-4 h-4 mr-2" />
-            Apply Filters
-          </Button>
-
-          <Button type="button" variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
+          <div className="flex gap-2 mt-4">
+            <Button type="button" variant="outline">
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </Button>
+          </div>
         </form>
       </AdminCard>
 
-      {/* Users Table */}
       <AdminCard>
         {users.length > 0 ? (
           <>
             <UserTable users={users} />
 
-            {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex justify-center gap-2 mt-6 pt-6 border-t border-zinc-800">
                 {page > 1 && (
                   <a
                     href={`?page=${page - 1}${
-                      searchParams.q ? `&q=${searchParams.q}` : ""
+                      params.q ? `&q=${params.q}` : ""
                     }`}
                   >
                     <Button variant="outline" size="sm">
@@ -219,7 +221,7 @@ async function UsersPageContent({
                 {page < totalPages && (
                   <a
                     href={`?page=${page + 1}${
-                      searchParams.q ? `&q=${searchParams.q}` : ""
+                      params.q ? `&q=${params.q}` : ""
                     }`}
                   >
                     <Button variant="outline" size="sm">
@@ -247,12 +249,12 @@ async function UsersPageContent({
 export default function UsersPage({
   searchParams,
 }: {
-  searchParams: {
+  searchParams: Promise<{
     q?: string;
     role?: string;
     status?: string;
     page?: string;
-  };
+  }>;
 }) {
   return <UsersPageContent searchParams={searchParams} />;
 }

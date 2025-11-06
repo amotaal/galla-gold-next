@@ -1,5 +1,6 @@
 // /app/admin/audit/page.tsx
 // Audit logs page for tracking all admin actions and system events
+// FIXED: Updated for Next.js 16 async searchParams
 
 import { getSession } from "@/server/auth/session";
 import { hasPermission, PERMISSIONS } from "@/lib/permissions";
@@ -26,10 +27,14 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 
+/**
+ * Audit Logs Page Component
+ * Handles Next.js 16 async searchParams by awaiting the Promise
+ */
 export default async function AuditLogsPage({
   searchParams,
 }: {
-  searchParams: {
+  searchParams: Promise<{
     action?: string;
     category?: string;
     userId?: string;
@@ -37,8 +42,9 @@ export default async function AuditLogsPage({
     dateFrom?: string;
     dateTo?: string;
     page?: string;
-  };
+  }>;
 }) {
+  // Get session and check permissions
   const session = await getSession();
   const adminId = session?.user?.id;
   const userRole = session?.user?.role || "user";
@@ -56,10 +62,13 @@ export default async function AuditLogsPage({
     );
   }
 
-  // Parse filters
+  // IMPORTANT: Await searchParams before accessing its properties (Next.js 16 requirement)
+  const params = await searchParams;
+
+  // Parse filters from awaited params
   const filters = {
-    action: searchParams.action,
-    category: searchParams.category as
+    action: params.action,
+    category: params.category as
       | "user"
       | "auth"
       | "transaction"
@@ -67,23 +76,20 @@ export default async function AuditLogsPage({
       | "kyc"
       | "system"
       | undefined,
-    userId: searchParams.userId,
-    status: searchParams.status as
-      | "success"
-      | "failure"
-      | "partial"
-      | undefined,
-    startDate: searchParams.dateFrom,
-    endDate: searchParams.dateTo,
-    page: parseInt(searchParams.page || "1"),
+    userId: params.userId,
+    status: params.status as "success" | "failure" | "partial" | undefined,
+    startDate: params.dateFrom,
+    endDate: params.dateTo,
+    page: parseInt(params.page || "1"),
     limit: 20,
   };
+
   // Fetch audit logs
   const result = await searchAuditLogs(adminId!, filters);
   const logs = result.success ? result.data?.logs || [] : [];
   const totalPages = result.data?.totalPages || 1;
 
-  // Get unique categories for filtering
+  // Get unique categories and actions for filtering
   const categories = [
     "all",
     "user",
@@ -105,6 +111,17 @@ export default async function AuditLogsPage({
     "logout",
   ];
 
+  // Calculate stats from logs
+  const stats = {
+    total: result.data?.total || 0,
+    successful: logs.filter((log: any) => log.status === "success").length,
+    failed: logs.filter((log: any) => log.status === "failure").length,
+    last24h: logs.filter(
+      (log: any) =>
+        new Date(log.timestamp) > new Date(Date.now() - 24 * 60 * 60 * 1000)
+    ).length,
+  };
+
   return (
     <>
       {/* Page Header */}
@@ -121,7 +138,7 @@ export default async function AuditLogsPage({
               <Shield className="w-3 h-3 mr-1" />
               {userRole === "superadmin" ? "Super Admin" : "Auditor"}
             </Badge>
-            <Button variant="outline">
+            <Button variant="outline" size="sm">
               <Download className="w-4 h-4 mr-2" />
               Export Logs
             </Button>
@@ -129,71 +146,66 @@ export default async function AuditLogsPage({
         </div>
       </div>
 
-      {/* Statistics */}
       {/* Stats Cards */}
-      <div className="grid md:grid-cols-4 gap-4 mb-6">
+      <div className="grid md:grid-cols-4 gap-6 mb-8">
         <AdminCard>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xl font-bold text-white">{logs.length}</p>
               <p className="text-sm text-zinc-400">Total Logs</p>
+              <p className="text-2xl font-bold text-white mt-1">
+                {stats.total}
+              </p>
             </div>
-            <Activity className="w-8 h-8 text-amber-400" />
+            <Activity className="w-8 h-8 text-amber-500" />
           </div>
         </AdminCard>
 
         <AdminCard>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xl font-bold text-white">
-                {logs.filter((log) => log.status === "success").length}
-              </p>
               <p className="text-sm text-zinc-400">Successful</p>
+              <p className="text-2xl font-bold text-green-400 mt-1">
+                {stats.successful}
+              </p>
             </div>
-            <CheckCircle className="w-8 h-8 text-green-400" />
+            <CheckCircle className="w-8 h-8 text-green-500" />
           </div>
         </AdminCard>
 
         <AdminCard>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xl font-bold text-white">
-                {logs.filter((log) => log.status === "failure").length}
-              </p>
               <p className="text-sm text-zinc-400">Failed</p>
+              <p className="text-2xl font-bold text-red-400 mt-1">
+                {stats.failed}
+              </p>
             </div>
-            <XCircle className="w-8 h-8 text-red-400" />
+            <XCircle className="w-8 h-8 text-red-500" />
           </div>
         </AdminCard>
 
         <AdminCard>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xl font-bold text-white">
-                {
-                  logs.filter(
-                    (log) =>
-                      new Date(log.timestamp) >
-                      new Date(Date.now() - 24 * 60 * 60 * 1000)
-                  ).length
-                }
-              </p>
               <p className="text-sm text-zinc-400">Last 24h</p>
+              <p className="text-2xl font-bold text-blue-400 mt-1">
+                {stats.last24h}
+              </p>
             </div>
-            <Clock className="w-8 h-8 text-blue-400" />
+            <Clock className="w-8 h-8 text-blue-500" />
           </div>
         </AdminCard>
       </div>
 
-      {/* Filters */}
+      {/* Filters Section */}
       <AdminCard className="mb-6">
-        <form className="space-y-4">
-          <div className="grid md:grid-cols-4 gap-4">
+        <form method="GET" action="/admin/audit">
+          <div className="grid md:grid-cols-5 gap-4 mb-4">
             {/* Category Filter */}
             <select
               name="category"
               defaultValue={filters.category || "all"}
-              className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white"
+              className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
             >
               {categories.map((cat) => (
                 <option key={cat} value={cat === "all" ? "" : cat}>
@@ -206,7 +218,7 @@ export default async function AuditLogsPage({
             <select
               name="action"
               defaultValue={filters.action || "all"}
-              className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white"
+              className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
             >
               {actions.map((action) => (
                 <option key={action} value={action === "all" ? "" : action}>
@@ -219,7 +231,7 @@ export default async function AuditLogsPage({
             <select
               name="status"
               defaultValue={filters.status || "all"}
-              className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white"
+              className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
             >
               <option value="">All Status</option>
               <option value="success">Success</option>
@@ -233,8 +245,14 @@ export default async function AuditLogsPage({
               name="userId"
               placeholder="User ID or Email"
               defaultValue={filters.userId}
-              className="bg-zinc-900 border-zinc-800"
+              className="bg-zinc-900 border-zinc-800 focus:ring-2 focus:ring-amber-500"
             />
+
+            {/* Apply Filters Button */}
+            <Button type="submit" variant="outline">
+              <Filter className="w-4 h-4 mr-2" />
+              Apply
+            </Button>
           </div>
 
           <div className="grid md:grid-cols-4 gap-4">
@@ -242,27 +260,25 @@ export default async function AuditLogsPage({
             <Input
               type="date"
               name="dateFrom"
-              defaultValue={searchParams.dateFrom}
-              className="bg-zinc-900 border-zinc-800"
+              defaultValue={params.dateFrom}
+              className="bg-zinc-900 border-zinc-800 focus:ring-2 focus:ring-amber-500"
             />
 
             {/* Date To */}
             <Input
               type="date"
               name="dateTo"
-              defaultValue={searchParams.dateTo}
-              className="bg-zinc-900 border-zinc-800"
+              defaultValue={params.dateTo}
+              className="bg-zinc-900 border-zinc-800 focus:ring-2 focus:ring-amber-500"
             />
-
-            {/* Search Button */}
-            <Button type="submit" variant="outline">
-              <Filter className="w-4 h-4 mr-2" />
-              Apply Filters
-            </Button>
 
             {/* Clear Filters */}
             <a href="/admin/audit">
-              <Button type="button" variant="outline" className="w-full">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full hover:bg-zinc-800"
+              >
                 Clear Filters
               </Button>
             </a>
@@ -278,45 +294,42 @@ export default async function AuditLogsPage({
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex justify-between items-center mt-6 pt-6 border-t border-zinc-800">
-                <div className="text-sm text-zinc-400">
-                  Showing {(filters.page - 1) * filters.limit + 1} to{" "}
-                  {Math.min(
-                    filters.page * filters.limit,
-                    result.data?.total || 0
-                  )}{" "}
-                  of {result.data?.total || 0} logs
-                </div>
+              <div className="flex justify-center items-center gap-2 mt-6 pt-6 border-t border-zinc-800">
+                {filters.page > 1 && (
+                  <a
+                    href={`?page=${filters.page - 1}${
+                      params.action ? `&action=${params.action}` : ""
+                    }${params.category ? `&category=${params.category}` : ""}${
+                      params.status ? `&status=${params.status}` : ""
+                    }${params.userId ? `&userId=${params.userId}` : ""}${
+                      params.dateFrom ? `&dateFrom=${params.dateFrom}` : ""
+                    }${params.dateTo ? `&dateTo=${params.dateTo}` : ""}`}
+                  >
+                    <Button variant="outline" size="sm">
+                      Previous
+                    </Button>
+                  </a>
+                )}
 
-                <div className="flex gap-2">
-                  {filters.page > 1 && (
-                    <a
-                      href={`?page=${filters.page - 1}${
-                        filters.category ? `&category=${filters.category}` : ""
-                      }`}
-                    >
-                      <Button variant="outline" size="sm">
-                        Previous
-                      </Button>
-                    </a>
-                  )}
+                <span className="flex items-center px-4 text-sm text-zinc-400">
+                  Page {filters.page} of {totalPages}
+                </span>
 
-                  <span className="flex items-center px-4 text-sm">
-                    Page {filters.page} of {totalPages}
-                  </span>
-
-                  {filters.page < totalPages && (
-                    <a
-                      href={`?page=${filters.page + 1}${
-                        filters.category ? `&category=${filters.category}` : ""
-                      }`}
-                    >
-                      <Button variant="outline" size="sm">
-                        Next
-                      </Button>
-                    </a>
-                  )}
-                </div>
+                {filters.page < totalPages && (
+                  <a
+                    href={`?page=${filters.page + 1}${
+                      params.action ? `&action=${params.action}` : ""
+                    }${params.category ? `&category=${params.category}` : ""}${
+                      params.status ? `&status=${params.status}` : ""
+                    }${params.userId ? `&userId=${params.userId}` : ""}${
+                      params.dateFrom ? `&dateFrom=${params.dateFrom}` : ""
+                    }${params.dateTo ? `&dateTo=${params.dateTo}` : ""}`}
+                  >
+                    <Button variant="outline" size="sm">
+                      Next
+                    </Button>
+                  </a>
+                )}
               </div>
             )}
           </>
@@ -331,12 +344,11 @@ export default async function AuditLogsPage({
         )}
       </AdminCard>
 
-      {/* Info Section */}
-      <div className="mt-6 grid md:grid-cols-2 gap-6">
-        {/* Retention Policy */}
+      {/* Retention Policy and Compliance Info */}
+      <div className="grid md:grid-cols-2 gap-6 mt-6">
         <AdminCard>
-          <div className="flex items-start space-x-3">
-            <FileText className="w-5 h-5 text-amber-400 mt-1" />
+          <div className="flex items-start gap-3">
+            <Shield className="w-5 h-5 text-amber-500 mt-1" />
             <div>
               <h3 className="font-semibold text-white mb-2">
                 Retention Policy
@@ -351,10 +363,9 @@ export default async function AuditLogsPage({
           </div>
         </AdminCard>
 
-        {/* Compliance Note */}
         <AdminCard>
-          <div className="flex items-start space-x-3">
-            <Shield className="w-5 h-5 text-purple-400 mt-1" />
+          <div className="flex items-start gap-3">
+            <FileText className="w-5 h-5 text-amber-500 mt-1" />
             <div>
               <h3 className="font-semibold text-white mb-2">
                 Compliance & Security
@@ -362,7 +373,7 @@ export default async function AuditLogsPage({
               <p className="text-sm text-zinc-400">
                 This audit trail meets regulatory requirements for financial
                 services. All sensitive actions are logged including user
-                management, KYC reviews, transaction modifications, and
+                management, KYC decisions, transaction modifications, and
                 configuration changes. Regular audits should be conducted to
                 ensure compliance.
               </p>
@@ -370,37 +381,6 @@ export default async function AuditLogsPage({
           </div>
         </AdminCard>
       </div>
-
-      {/* Recent High-Risk Actions 
-      {stats.highRiskActions && stats.highRiskActions.length > 0 && (
-        <AdminCard title="Recent High-Risk Actions" className="mt-6">
-          <div className="space-y-3">
-            {stats.highRiskActions.map((action: any) => (
-              <div
-                key={action._id}
-                className="flex items-center justify-between p-3 bg-red-900/20 border border-red-900/50 rounded-lg"
-              >
-                <div className="flex items-center space-x-3">
-                  <AlertCircle className="w-5 h-5 text-red-400" />
-                  <div>
-                    <p className="text-sm font-medium text-white">
-                      {action.description}
-                    </p>
-                    <p className="text-xs text-zinc-400">
-                      by {action.userEmail} •{" "}
-                      {format(new Date(action.timestamp), "MMM dd, HH:mm")}
-                    </p>
-                  </div>
-                </div>
-                <Badge className="bg-red-500/20 text-red-400 border-0">
-                  {action.action}
-                </Badge>
-              </div>
-            ))}
-          </div>
-        </AdminCard>
-      )}
-        */}
     </>
   );
 }

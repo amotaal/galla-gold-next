@@ -186,16 +186,24 @@ export async function getUsers(
 }
 
 /**
- * Alias for searchUsers - for page compatibility
+ * Search Users - for page compatibility
  */
 export async function searchUsers(adminId: string, filters: any) {
-  return getUsers(adminId, {
+  const queryFilters: any = {
     query: filters.search,
     role: filters.role,
-    isActive: filters.status === "active",
-    isSuspended: filters.status === "suspended",
     limit: filters.limit || 20,
-  });
+  };
+  
+  // Only add status filters if explicitly set
+  if (filters.status === "active") {
+    queryFilters.isActive = true;
+  } else if (filters.status === "suspended") {
+    queryFilters.isSuspended = true;
+  }
+  // If status is undefined, don't filter by it at all
+  
+  return getUsers(adminId, queryFilters);
 }
 
 /**

@@ -1,5 +1,6 @@
 // /app/admin/reports/page.tsx
 // Reports and analytics page with comprehensive business intelligence
+// FIXED: Properly awaiting searchParams Promise
 
 import { getSession } from "@/server/auth/session";
 import { hasPermission, PERMISSIONS } from "@/lib/permissions";
@@ -28,17 +29,20 @@ import {
   LineChart,
   AlertCircle,
   Percent,
+  Clock,
+  XCircle,
+  CheckCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 
 export default async function ReportsPage({
   searchParams,
 }: {
-  searchParams: {
+  searchParams: Promise<{
     period?: string;
     from?: string;
     to?: string;
-  };
+  }>;
 }) {
   const session = await getSession();
   const userId = session?.user?.id;
@@ -57,12 +61,15 @@ export default async function ReportsPage({
     );
   }
 
-  // Parse date range
-  const period = searchParams.period || "30d";
+  // CRITICAL: Await searchParams BEFORE using it
+  const params = await searchParams;
+
+  // Parse date range from awaited params
+  const period = params.period || "30d";
   const dateFrom =
-    searchParams.from ||
+    params.from ||
     format(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), "yyyy-MM-dd");
-  const dateTo = searchParams.to || format(new Date(), "yyyy-MM-dd");
+  const dateTo = params.to || format(new Date(), "yyyy-MM-dd");
 
   // Fetch all reports
   const [financialReport, userReport, transactionReport, kycReport] =
@@ -91,82 +98,61 @@ export default async function ReportsPage({
               Comprehensive business intelligence and analytics
             </p>
           </div>
-          <Button className="bg-amber-600 hover:bg-amber-700">
-            <Download className="w-4 h-4 mr-2" />
-            Export All Reports
-          </Button>
+          <div className="flex items-center gap-2">
+            <form method="GET" className="flex gap-2">
+              <select
+                name="period"
+                defaultValue={period}
+                className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white text-sm"
+              >
+                <option value="7d">Last 7 Days</option>
+                <option value="30d">Last 30 Days</option>
+                <option value="90d">Last 90 Days</option>
+                <option value="1y">Last Year</option>
+                <option value="custom">Custom Range</option>
+              </select>
+              <Button type="submit" size="sm" variant="outline">
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Generate Reports
+              </Button>
+            </form>
+            <Button size="sm" variant="outline">
+              <Download className="w-4 h-4 mr-2" />
+              Export All Reports
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Date Range Selector */}
-      <AdminCard className="mb-6">
-        <form className="flex flex-col md:flex-row gap-4">
-          <select
-            name="period"
-            defaultValue={period}
-            className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white"
-          >
-            <option value="7d">Last 7 Days</option>
-            <option value="30d">Last 30 Days</option>
-            <option value="90d">Last 90 Days</option>
-            <option value="1y">Last Year</option>
-            <option value="custom">Custom Range</option>
-          </select>
-
-          {period === "custom" && (
-            <>
-              <input
-                type="date"
-                name="from"
-                defaultValue={dateFrom}
-                className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white"
-              />
-              <input
-                type="date"
-                name="to"
-                defaultValue={dateTo}
-                className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white"
-              />
-            </>
-          )}
-
-          <Button type="submit" variant="outline">
-            <BarChart3 className="w-4 h-4 mr-2" />
-            Generate Reports
-          </Button>
-        </form>
-      </AdminCard>
-
       {/* Financial Overview */}
-      <AdminSection>
-        <h2 className="text-xl font-semibold text-white mb-4">
-          Financial Overview
-        </h2>
-
-        <div className="grid md:grid-cols-4 gap-4 mb-6">
+      <AdminSection title="Financial Overview" icon={DollarSign}>
+        <div className="grid md:grid-cols-4 gap-6">
           <AdminCard>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-zinc-400">Total Revenue</p>
                 <p className="text-2xl font-bold text-white">
-                  ${financial.totalRevenue?.toLocaleString() || 0}
+                  ${(financial as any)?.totalRevenue?.toLocaleString() || "0"}
                 </p>
-                <p
-                  className={`text-xs mt-1 ${
-                    financial.revenueChange > 0
-                      ? "text-green-400"
-                      : "text-red-400"
-                  }`}
-                >
-                  {financial.revenueChange > 0 ? (
-                    <TrendingUp className="w-3 h-3 inline mr-1" />
+                <div className="flex items-center gap-1 mt-1">
+                  {(financial as any)?.revenueChange >= 0 ? (
+                    <TrendingUp className="w-3 h-3 text-green-400" />
                   ) : (
-                    <TrendingDown className="w-3 h-3 inline mr-1" />
+                    <TrendingDown className="w-3 h-3 text-red-400" />
                   )}
-                  {Math.abs(financial.revenueChange || 0)}% vs prev period
-                </p>
+                  <span
+                    className={`text-xs ${
+                      (financial as any)?.revenueChange >= 0
+                        ? "text-green-400"
+                        : "text-red-400"
+                    }`}
+                  >
+                    {(financial as any)?.revenueChange > 0 ? "+" : ""}
+                    {(financial as any)?.revenueChange?.toFixed(1) || "0"}%
+                  </span>
+                </div>
               </div>
-              <DollarSign className="w-8 h-8 text-amber-400" />
+              <DollarSign className="w-8 h-8 text-green-500" />
             </div>
           </AdminCard>
 
@@ -175,13 +161,14 @@ export default async function ReportsPage({
               <div>
                 <p className="text-sm text-zinc-400">Transaction Fees</p>
                 <p className="text-2xl font-bold text-white">
-                  ${financial.totalFees?.toLocaleString() || 0}
+                  $
+                  {(financial as any)?.transactionFees?.toLocaleString() || "0"}
                 </p>
-                <p className="text-xs text-zinc-400 mt-1">
-                  {financial.feePercentage || 0}% of volume
+                <p className="text-xs text-zinc-500 mt-1">
+                  {(financial as any)?.feePercentage || "0"}% of volume
                 </p>
               </div>
-              <Percent className="w-8 h-8 text-green-400" />
+              <Percent className="w-8 h-8 text-amber-500" />
             </div>
           </AdminCard>
 
@@ -189,14 +176,15 @@ export default async function ReportsPage({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-zinc-400">Gold in Custody</p>
-                <p className="text-2xl font-bold text-white">
-                  {financial.totalGoldOz?.toFixed(2) || 0} oz
+                <p className="text-2xl font-bold text-amber-400">
+                  {(financial as any)?.goldInCustody?.toFixed(2) || "0.00"} oz
                 </p>
-                <p className="text-xs text-zinc-400 mt-1">
-                  ${(financial.totalGoldValue || 0).toLocaleString()} value
+                <p className="text-xs text-zinc-500 mt-1">
+                  ${(financial as any)?.goldValue?.toLocaleString() || "0"}{" "}
+                  value
                 </p>
               </div>
-              <Coins className="w-8 h-8 text-yellow-400" />
+              <Coins className="w-8 h-8 text-amber-500" />
             </div>
           </AdminCard>
 
@@ -204,42 +192,54 @@ export default async function ReportsPage({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-zinc-400">Cash Balance</p>
-                <p className="text-2xl font-bold text-white">
-                  ${financial.totalCashBalance?.toLocaleString() || 0}
+                <p className="text-2xl font-bold text-blue-400">
+                  ${(financial as any)?.cashBalance?.toLocaleString() || "0"}
                 </p>
-                <p className="text-xs text-zinc-400 mt-1">Across all users</p>
+                <p className="text-xs text-zinc-500 mt-1">Across all users</p>
               </div>
-              <DollarSign className="w-8 h-8 text-blue-400" />
+              <DollarSign className="w-8 h-8 text-blue-500" />
             </div>
           </AdminCard>
         </div>
 
-        {/* Revenue Chart */}
-        <AdminCard title="Revenue Trend">
+        {/* Revenue Chart Placeholder */}
+        <AdminCard className="mt-6">
+          <h3 className="text-lg font-semibold text-white mb-4">
+            Revenue Trend
+          </h3>
           <div className="h-64 flex items-center justify-center text-zinc-500">
-            <LineChart className="w-8 h-8 mr-2" />
+            <LineChart className="w-12 h-12 mr-3" />
             Revenue Chart Component Placeholder
           </div>
         </AdminCard>
       </AdminSection>
 
-      {/* User Growth Report */}
-      <AdminSection className="mt-8">
-        <h2 className="text-xl font-semibold text-white mb-4">User Growth</h2>
-
-        <div className="grid md:grid-cols-3 gap-4 mb-6">
+      {/* User Growth */}
+      <AdminSection title="User Growth" icon={Users} className="mt-8">
+        <div className="grid md:grid-cols-4 gap-6">
           <AdminCard>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-zinc-400">Total Users</p>
                 <p className="text-2xl font-bold text-white">
-                  {userGrowth.totalUsers || 0}
+                  {(userGrowth as any)?.totalUsers || 0}
                 </p>
-                <p className="text-xs text-green-400 mt-1">
-                  +{userGrowth.newUsersThisPeriod || 0} new this period
-                </p>
+                <p className="text-xs text-zinc-500 mt-1">All time</p>
               </div>
-              <Users className="w-8 h-8 text-amber-400" />
+              <Users className="w-8 h-8 text-blue-500" />
+            </div>
+          </AdminCard>
+
+          <AdminCard>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-zinc-400">New Users</p>
+                <p className="text-2xl font-bold text-green-400">
+                  {(userGrowth as any)?.newUsers || 0}
+                </p>
+                <p className="text-xs text-zinc-500 mt-1">This period</p>
+              </div>
+              <ArrowUpRight className="w-8 h-8 text-green-500" />
             </div>
           </AdminCard>
 
@@ -247,157 +247,146 @@ export default async function ReportsPage({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-zinc-400">Active Users</p>
-                <p className="text-2xl font-bold text-white">
-                  {userGrowth.activeUsers || 0}
+                <p className="text-2xl font-bold text-blue-400">
+                  {(userGrowth as any)?.activeUsers || 0}
                 </p>
-                <p className="text-xs text-zinc-400 mt-1">
-                  {(
-                    (userGrowth.activeUsers / userGrowth.totalUsers) *
-                    100
-                  ).toFixed(1)}
-                  % of total
+                <p className="text-xs text-zinc-500 mt-1">
+                  {(userGrowth as any)?.activePercentage || 0}% of total
                 </p>
               </div>
-              <Activity className="w-8 h-8 text-green-400" />
+              <Activity className="w-8 h-8 text-blue-500" />
             </div>
           </AdminCard>
 
           <AdminCard>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-zinc-400">Retention Rate</p>
-                <p className="text-2xl font-bold text-white">
-                  {userGrowth.retentionRate || 0}%
+                <p className="text-sm text-zinc-400">Verified Users</p>
+                <p className="text-2xl font-bold text-green-400">
+                  {(userGrowth as any)?.verifiedUsers || 0}
                 </p>
-                <p className="text-xs text-zinc-400 mt-1">Month over month</p>
+                <p className="text-xs text-zinc-500 mt-1">KYC approved</p>
               </div>
-              <TrendingUp className="w-8 h-8 text-blue-400" />
+              <FileText className="w-8 h-8 text-green-500" />
             </div>
           </AdminCard>
         </div>
 
-        {/* User Growth Chart */}
-        <AdminCard title="User Growth Trend">
+        {/* User Growth Chart Placeholder */}
+        <AdminCard className="mt-6">
+          <h3 className="text-lg font-semibold text-white mb-4">
+            User Growth Trend
+          </h3>
           <div className="h-64 flex items-center justify-center text-zinc-500">
-            <BarChart3 className="w-8 h-8 mr-2" />
+            <BarChart3 className="w-12 h-12 mr-3" />
             User Growth Chart Component Placeholder
           </div>
         </AdminCard>
       </AdminSection>
 
       {/* Transaction Analytics */}
-      <AdminSection className="mt-8">
-        <h2 className="text-xl font-semibold text-white mb-4">
-          Transaction Analytics
-        </h2>
-
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* Transaction Volume */}
-          <AdminCard title="Transaction Volume">
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-zinc-400">
-                  Total Transactions
-                </span>
-                <span className="text-lg font-semibold text-white">
-                  {transactions.totalCount || 0}
-                </span>
+      <AdminSection
+        title="Transaction Analytics"
+        icon={ArrowUpRight}
+        className="mt-8"
+      >
+        <div className="grid md:grid-cols-3 gap-6">
+          <AdminCard>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-zinc-400">Total Transactions</p>
+                <p className="text-2xl font-bold text-white">
+                  {(transactions as any)?.totalTransactions || 0}
+                </p>
+                <p className="text-xs text-zinc-500 mt-1">This period</p>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-zinc-400">Total Volume</span>
-                <span className="text-lg font-semibold text-white">
-                  ${transactions.totalVolume?.toLocaleString() || 0}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-zinc-400">
-                  Average Transaction
-                </span>
-                <span className="text-lg font-semibold text-white">
-                  ${transactions.avgTransaction?.toFixed(2) || 0}
-                </span>
-              </div>
+              <Activity className="w-8 h-8 text-purple-500" />
             </div>
           </AdminCard>
 
-          {/* Transaction Types */}
-          <AdminCard title="Transaction Types">
-            <div className="space-y-4">
-              {transactions.byType &&
-                Object.entries(transactions.byType).map(
-                  ([type, data]: [string, any]) => (
-                    <div
-                      key={type}
-                      className="flex items-center justify-between"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className="w-2 h-2 bg-amber-400 rounded-full" />
-                        <span className="text-sm text-zinc-300 capitalize">
-                          {type.replace("_", " ")}
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-sm font-semibold text-white">
-                          {data.count}
-                        </span>
-                        <span className="text-xs text-zinc-500 ml-2">
-                          (${data.volume?.toLocaleString()})
-                        </span>
-                      </div>
-                    </div>
-                  )
-                )}
+          <AdminCard>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-zinc-400">Transaction Volume</p>
+                <p className="text-2xl font-bold text-amber-400">
+                  ${(transactions as any)?.volume?.toLocaleString() || "0"}
+                </p>
+                <p className="text-xs text-zinc-500 mt-1">
+                  Avg: $
+                  {(transactions as any)?.avgTransaction?.toLocaleString() ||
+                    "0"}
+                </p>
+              </div>
+              <DollarSign className="w-8 h-8 text-amber-500" />
+            </div>
+          </AdminCard>
+
+          <AdminCard>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-zinc-400">Success Rate</p>
+                <p className="text-2xl font-bold text-green-400">
+                  {(transactions as any)?.successRate || 0}%
+                </p>
+                <p className="text-xs text-zinc-500 mt-1">
+                  {(transactions as any)?.successfulTransactions || 0}{" "}
+                  successful
+                </p>
+              </div>
+              <PieChart className="w-8 h-8 text-green-500" />
             </div>
           </AdminCard>
         </div>
       </AdminSection>
 
-      {/* KYC Report */}
-      <AdminSection className="mt-8">
-        <h2 className="text-xl font-semibold text-white mb-4">
-          KYC Compliance
-        </h2>
-
-        <div className="grid md:grid-cols-4 gap-4">
+      {/* KYC Analytics */}
+      <AdminSection title="KYC Analytics" icon={FileText} className="mt-8">
+        <div className="grid md:grid-cols-4 gap-6">
           <AdminCard>
-            <div className="text-center">
-              <p className="text-sm text-zinc-400 mb-2">Verified Users</p>
-              <p className="text-3xl font-bold text-green-400">
-                {kyc.verifiedCount || 0}
-              </p>
-              <p className="text-xs text-zinc-500 mt-1">
-                {kyc.verifiedPercentage || 0}% of total
-              </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-zinc-400">Pending Review</p>
+                <p className="text-2xl font-bold text-yellow-400">
+                  {(kyc as any)?.pending || 0}
+                </p>
+              </div>
+              <Clock className="w-8 h-8 text-yellow-500" />
             </div>
           </AdminCard>
 
           <AdminCard>
-            <div className="text-center">
-              <p className="text-sm text-zinc-400 mb-2">Pending KYC</p>
-              <p className="text-3xl font-bold text-yellow-400">
-                {kyc.pendingCount || 0}
-              </p>
-              <p className="text-xs text-zinc-500 mt-1">Awaiting review</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-zinc-400">Approved</p>
+                <p className="text-2xl font-bold text-green-400">
+                  {(kyc as any)?.approved || 0}
+                </p>
+              </div>
+              <CheckCircle className="w-8 h-8 text-green-500" />
             </div>
           </AdminCard>
 
           <AdminCard>
-            <div className="text-center">
-              <p className="text-sm text-zinc-400 mb-2">Rejected</p>
-              <p className="text-3xl font-bold text-red-400">
-                {kyc.rejectedCount || 0}
-              </p>
-              <p className="text-xs text-zinc-500 mt-1">This period</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-zinc-400">Rejected</p>
+                <p className="text-2xl font-bold text-red-400">
+                  {(kyc as any)?.rejected || 0}
+                </p>
+              </div>
+              <XCircle className="w-8 h-8 text-red-500" />
             </div>
           </AdminCard>
 
           <AdminCard>
-            <div className="text-center">
-              <p className="text-sm text-zinc-400 mb-2">Avg Processing</p>
-              <p className="text-3xl font-bold text-white">
-                {kyc.avgProcessingHours || 0}h
-              </p>
-              <p className="text-xs text-zinc-500 mt-1">Time to review</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-zinc-400">Avg Processing</p>
+                <p className="text-2xl font-bold text-blue-400">
+                  {(kyc as any)?.avgProcessingTime || "0h"}
+                </p>
+              </div>
+              <Clock className="w-8 h-8 text-blue-500" />
             </div>
           </AdminCard>
         </div>

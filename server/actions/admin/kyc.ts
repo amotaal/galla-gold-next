@@ -139,13 +139,23 @@ export async function getKYCQueue(
 }
 
 /**
- * Alias for getPendingKYC - for backward compatibility
+ * Get Pending KYC - for backward compatibility
  */
 export async function getPendingKYC(adminId: string, filters: any) {
-  return getKYCQueue(adminId, {
+  console.log("📋 getPendingKYC called:", { adminId, filters });
+
+  const result = await getKYCQueue(adminId, {
     ...filters,
     status: filters.status || "pending",
   });
+
+  console.log("📦 getPendingKYC result:", {
+    success: result.success,
+    kycCount: result.data?.applications?.length || 0,
+    error: result.error,
+  });
+
+  return result;
 }
 
 /**
