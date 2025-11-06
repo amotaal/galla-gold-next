@@ -84,16 +84,7 @@ async function verifyConfigPermission(
  */
 export async function getAllConfigs(adminId: string): Promise<{
   success: boolean;
-  data?: {
-    fees: any[];
-    limits: any[];
-    features: any[];
-    pricing: any[];
-    security: any[];
-    kyc: any[];
-    email: any[];
-    general: any[];
-  };
+  data?: Record<string, any>; // ✅ Changed to key-value pairs
   error?: string;
 }> {
   try {
@@ -105,30 +96,18 @@ export async function getAllConfigs(adminId: string): Promise<{
     await dbConnect();
 
     const configs = await SystemConfig.find({ isActive: true })
-      .sort({ category: 1, key: 1 })
+      .sort({ key: 1 })
       .lean();
 
-    // Group by category
-    const grouped: any = {
-      fees: [],
-      limits: [],
-      features: [],
-      pricing: [],
-      security: [],
-      kyc: [],
-      email: [],
-      general: [],
-    };
-
+    // ✅ Convert to key-value object for easy access
+    const configMap: Record<string, any> = {};
     configs.forEach((config) => {
-      if (grouped[config.category]) {
-        grouped[config.category].push(config);
-      }
+      configMap[config.key] = config.value;
     });
 
     return {
       success: true,
-      data: grouped,
+      data: configMap, // ✅ Returns { GOLD_PURCHASE_FEE: 2, MIN_DEPOSIT: 10, ... }
     };
   } catch (error: any) {
     console.error("Get all configs error:", error);

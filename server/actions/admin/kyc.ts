@@ -350,13 +350,12 @@ export async function approveKYC(
     try {
       await sendEmail({
         to: user.email,
-        subject: "KYC Verification Approved - GALLA.GOLD",
-        html: `
-          <h2>KYC Verification Approved</h2>
-          <p>Dear ${user.firstName},</p>
-          <p>Your KYC verification has been approved. You now have full access to all trading features.</p>
-          <p>Thank you for completing the verification process.</p>
-        `,
+        subject: "KYC Verification Approved",
+        template: "kyc-approved", // ✅ Use template system
+        data: {
+          firstName: user.firstName,
+          verificationDate: new Date().toLocaleDateString(),
+        },
       });
     } catch (emailError) {
       console.error("Failed to send KYC approval email:", emailError);
@@ -451,15 +450,15 @@ export async function rejectKYC(
     try {
       await sendEmail({
         to: user.email,
-        subject: "KYC Verification Status Update - GALLA.GOLD",
-        html: `
-          <h2>KYC Verification Update</h2>
-          <p>Dear ${user.firstName},</p>
-          <p>We've reviewed your KYC submission and unfortunately cannot verify your account at this time.</p>
-          <p><strong>Reason:</strong> ${validated.rejectionReason}</p>
-          <p>You may submit a new KYC application with corrected documents.</p>
-          <p>If you have questions, please contact our support team.</p>
-        `,
+        subject: "KYC Verification Rejected",
+        template: "kyc-rejected", // ✅ Use template system
+        data: {
+          firstName: user.firstName,
+          reason:
+            validated.rejectionReason ||
+            "Documents did not meet our requirements",
+          notes: validated.reviewNotes || "",
+        },
       });
     } catch (emailError) {
       console.error("Failed to send KYC rejection email:", emailError);
@@ -533,17 +532,13 @@ export async function requestKYCDocuments(
     try {
       await sendEmail({
         to: user.email,
-        subject: "Additional Documents Required - GALLA.GOLD KYC",
-        html: `
-          <h2>Additional Documents Needed</h2>
-          <p>Dear ${user.firstName},</p>
-          <p>We're reviewing your KYC application and need additional documents:</p>
-          <ul>
-            ${documentsNeeded.map((doc) => `<li>${doc}</li>`).join("")}
-          </ul>
-          ${notes ? `<p><strong>Notes:</strong> ${notes}</p>` : ""}
-          <p>Please upload the requested documents in your account dashboard.</p>
-        `,
+        subject: "Additional KYC Documents Required - Galla Gold",
+        template: "kyc-documents-required", // ✅ Use template system
+        data: {
+          firstName: user.firstName,
+          requiredDocuments: documentsNeeded.join(", "),
+          notes: notes || "",
+        },
       });
     } catch (emailError) {
       console.error("Failed to send document request email:", emailError);

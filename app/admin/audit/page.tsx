@@ -82,12 +82,7 @@ export default async function AuditLogsPage({
   const result = await searchAuditLogs(adminId!, filters);
   const logs = result.success ? result.data?.logs || [] : [];
   const totalPages = result.data?.totalPages || 1;
-  // Calculate stats from logs directly since API doesn't return stats
-  const stats = {
-    totalActions: result.data?.total || 0,
-    successfulActions: logs.filter((l: any) => l.status === "success").length,
-    failedActions: logs.filter((l: any) => l.status === "failure").length,
-  };
+
   // Get unique categories for filtering
   const categories = [
     "all",
@@ -135,15 +130,13 @@ export default async function AuditLogsPage({
       </div>
 
       {/* Statistics */}
+      {/* Stats Cards */}
       <div className="grid md:grid-cols-4 gap-4 mb-6">
         <AdminCard>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-zinc-400">Total Actions</p>
-              <p className="text-2xl font-bold text-white">
-                {stats.totalLogs || 0}
-              </p>
-              <p className="text-xs text-zinc-400 mt-1">All time</p>
+              <p className="text-2xl font-bold text-white">{logs.length}</p>
+              <p className="text-sm text-zinc-400">Total Logs</p>
             </div>
             <Activity className="w-8 h-8 text-amber-400" />
           </div>
@@ -152,24 +145,10 @@ export default async function AuditLogsPage({
         <AdminCard>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-zinc-400">Today's Actions</p>
               <p className="text-2xl font-bold text-white">
-                {stats.todayLogs || 0}
+                {logs.filter((log) => log.status === "success").length}
               </p>
-              <p className="text-xs text-zinc-400 mt-1">Last 24 hours</p>
-            </div>
-            <Clock className="w-8 h-8 text-blue-400" />
-          </div>
-        </AdminCard>
-
-        <AdminCard>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-zinc-400">Success Rate</p>
-              <p className="text-2xl font-bold text-green-400">
-                {stats.successRate || 100}%
-              </p>
-              <p className="text-xs text-zinc-400 mt-1">Action completion</p>
+              <p className="text-sm text-zinc-400">Successful</p>
             </div>
             <CheckCircle className="w-8 h-8 text-green-400" />
           </div>
@@ -178,13 +157,30 @@ export default async function AuditLogsPage({
         <AdminCard>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-zinc-400">Failed Actions</p>
-              <p className="text-2xl font-bold text-red-400">
-                {stats.failedCount || 0}
+              <p className="text-2xl font-bold text-white">
+                {logs.filter((log) => log.status === "failure").length}
               </p>
-              <p className="text-xs text-zinc-400 mt-1">Requires review</p>
+              <p className="text-sm text-zinc-400">Failed</p>
             </div>
             <XCircle className="w-8 h-8 text-red-400" />
+          </div>
+        </AdminCard>
+
+        <AdminCard>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-2xl font-bold text-white">
+                {
+                  logs.filter(
+                    (log) =>
+                      new Date(log.timestamp) >
+                      new Date(Date.now() - 24 * 60 * 60 * 1000)
+                  ).length
+                }
+              </p>
+              <p className="text-sm text-zinc-400">Last 24h</p>
+            </div>
+            <Clock className="w-8 h-8 text-blue-400" />
           </div>
         </AdminCard>
       </div>
@@ -375,7 +371,7 @@ export default async function AuditLogsPage({
         </AdminCard>
       </div>
 
-      {/* Recent High-Risk Actions */}
+      {/* Recent High-Risk Actions 
       {stats.highRiskActions && stats.highRiskActions.length > 0 && (
         <AdminCard title="Recent High-Risk Actions" className="mt-6">
           <div className="space-y-3">
@@ -404,6 +400,7 @@ export default async function AuditLogsPage({
           </div>
         </AdminCard>
       )}
+        */}
     </>
   );
 }
