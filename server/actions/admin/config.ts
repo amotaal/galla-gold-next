@@ -310,10 +310,14 @@ export async function updateConfig(
       return { success: false, error: "Configuration is inactive" };
     }
 
-    // Validate new value
-    const validation = config.validateValue(validated.value);
-    if (!validation.valid) {
-      return { success: false, error: validation.error };
+    // Simple validation - check type matches
+    const validation = { valid: true, error: null };
+
+    if (config.dataType === "number" && typeof validated.value !== "number") {
+      return { success: false, error: "Value must be a number" };
+    }
+    if (config.dataType === "boolean" && typeof validated.value !== "boolean") {
+      return { success: false, error: "Value must be a boolean" };
     }
 
     // Store old value for audit

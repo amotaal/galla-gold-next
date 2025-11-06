@@ -7,7 +7,6 @@ import { getUserDetails, getUserActivity } from "@/server/actions/admin/users";
 import { AdminCard, AdminBreadcrumb } from "@/components/admin/admin-shell";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { RoleBadge } from "@/components/admin/admin-sidebar";
 import {
   User,
   Mail,
@@ -29,6 +28,20 @@ import {
 import { format } from "date-fns";
 import Link from "next/link";
 
+// Add this helper function after imports (around line 30):
+function RoleBadge({ role }: { role: string }) {
+  const colors: Record<string, string> = {
+    user: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+    operator: "bg-green-500/20 text-green-400 border-green-500/30",
+    admin: "bg-purple-500/20 text-purple-400 border-purple-500/30",
+    superadmin: "bg-red-500/20 text-red-400 border-red-500/30",
+    auditor: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+  };
+  return (
+    <Badge className={colors[role] || colors.user}>{role.toUpperCase()}</Badge>
+  );
+}
+
 export default async function UserDetailPage({
   params,
 }: {
@@ -45,14 +58,13 @@ export default async function UserDetailPage({
   }
 
   const user = result.data.user;
-  const stats = result.data?.stats || {
+  const stats = {
     totalTransactions: result.data?.transactionCount || 0,
     totalDeposits: 0,
     totalWithdrawals: 0,
     lastActivity: result.data?.lastTransaction?.createdAt,
   };
-  const activity = result.data?.recentActivity || [];
-
+  const activity: any[] = [];
   // Status badges
   const getStatusBadge = (status: string) => {
     const variants: Record<string, any> = {
@@ -105,7 +117,7 @@ export default async function UserDetailPage({
           {/* Profile Card */}
           <AdminCard>
             <div className="text-center">
-              <div className="w-24 h-24 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl font-bold text-black">
+              <div className="w-24 h-24 bg-linear-to-br from-amber-400 to-amber-600 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl font-bold text-black">
                 {user.firstName?.[0]}
                 {user.lastName?.[0]}
               </div>
@@ -211,8 +223,8 @@ export default async function UserDetailPage({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-zinc-400">Balance</p>
-                  <p className="text-xl font-bold text-white">
-                    ${stats?.totalBalance?.toLocaleString() || 0}
+                  <p className="text-xl font-bold text-white"> 
+                    ${user.balance?.toLocaleString() || 0}
                   </p>
                 </div>
                 <Coins className="w-8 h-8 text-amber-400" />

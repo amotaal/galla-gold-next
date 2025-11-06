@@ -12,6 +12,7 @@ import Transaction from "@/server/models/Transaction";
 import Wallet from "@/server/models/Wallet";
 import { hasPermission, PERMISSIONS } from "@/lib/permissions";
 import { auditTransactionAction } from "@/server/lib/audit";
+import { Types } from "mongoose";
 
 // =============================================================================
 // VALIDATION SCHEMAS
@@ -388,7 +389,7 @@ export async function flagTransaction(
     // Flag transaction
     transaction.flagged = true;
     transaction.flagReason = reason;
-    transaction.flaggedBy = adminId;
+    transaction.flaggedBy = new Types.ObjectId(adminId);
     transaction.flaggedAt = new Date();
     await transaction.save();
 
@@ -534,7 +535,7 @@ export async function cancelTransaction(
     // Cancel transaction
     transaction.status = "cancelled";
     transaction.cancelReason = reason;
-    transaction.cancelledBy = adminId;
+    transaction.cancelledBy = new Types.ObjectId(adminId);
     transaction.cancelledAt = new Date();
     await transaction.save();
 
@@ -681,7 +682,7 @@ export async function refundTransaction(
     transaction.status = "refunded";
     transaction.refundAmount = refundAmount;
     transaction.refundReason = reason;
-    transaction.refundedBy = adminId;
+    transaction.refundedBy = new Types.ObjectId(adminId);
     transaction.refundedAt = new Date();
     await transaction.save();
 

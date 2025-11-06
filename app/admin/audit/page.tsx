@@ -68,9 +68,13 @@ export default async function AuditLogsPage({
       | "system"
       | undefined,
     userId: searchParams.userId,
-    status: searchParams.status,
-    startDate: searchParams.startDate,
-    endDate: searchParams.endDate,
+    status: searchParams.status as
+      | "success"
+      | "failure"
+      | "partial"
+      | undefined,
+    startDate: searchParams.dateFrom,
+    endDate: searchParams.dateTo,
     page: parseInt(searchParams.page || "1"),
     limit: 20,
   };
@@ -241,7 +245,7 @@ export default async function AuditLogsPage({
             <Input
               type="date"
               name="dateFrom"
-              defaultValue={filters.startDate}
+              defaultValue={searchParams.dateFrom}
               className="bg-zinc-900 border-zinc-800"
             />
 
@@ -249,7 +253,7 @@ export default async function AuditLogsPage({
             <Input
               type="date"
               name="dateTo"
-              defaultValue={filters.endDate}
+              defaultValue={searchParams.dateTo}
               className="bg-zinc-900 border-zinc-800"
             />
 

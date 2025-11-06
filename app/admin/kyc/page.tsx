@@ -56,10 +56,10 @@ export default async function KYCQueuePage({
   // Fetch KYC applications
   const result = await getPendingKYC(userId!, filters);
   const applications = result.success ? result.data?.applications || [] : [];
-  const stats = result.data?.stats || {
-    pending: 0,
-    approved: 0,
-    rejected: 0,
+  const stats = {
+    pending: applications.filter((a: any) => a.status === "pending").length,
+    approved: applications.filter((a: any) => a.status === "verified").length,
+    rejected: applications.filter((a: any) => a.status === "rejected").length,
     avgProcessingTime: 0,
   };
   return (
@@ -89,9 +89,9 @@ export default async function KYCQueuePage({
         <AdminCard>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-zinc-400">Approved Today</p>
+              <p className="text-sm text-zinc-400">Approved</p>
               <p className="text-2xl font-bold text-green-400">
-                {stats.approvedToday || 0}
+                {stats.approved || 0}
               </p>
             </div>
             <CheckCircle className="w-8 h-8 text-green-400" />
@@ -101,9 +101,9 @@ export default async function KYCQueuePage({
         <AdminCard>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-zinc-400">Rejected Today</p>
+              <p className="text-sm text-zinc-400">Rejected</p>
               <p className="text-2xl font-bold text-red-400">
-                {stats.rejectedToday || 0}
+                {stats.rejected || 0}
               </p>
             </div>
             <XCircle className="w-8 h-8 text-red-400" />

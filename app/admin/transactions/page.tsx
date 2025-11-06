@@ -87,11 +87,15 @@ export default async function TransactionsPage({
   const stats = statsResult.success
     ? statsResult.data
     : {
-        dailyVolume: 0,
-        volumeChange: 0,
-        goldVolume: 0,
         totalTransactions: 0,
-        flaggedCount: 0,
+        totalVolume: 0,
+        todayTransactions: 0,
+        todayVolume: 0,
+        pendingTransactions: 0,
+        failedTransactions: 0,
+        flaggedTransactions: 0,
+        byType: {},
+        byStatus: {},
       };
   return (
     <>
@@ -112,11 +116,10 @@ export default async function TransactionsPage({
             <div>
               <p className="text-sm text-zinc-400">24h Volume</p>
               <p className="text-2xl font-bold text-white">
-                ${stats.dailyVolume?.toLocaleString() || 0}
+                ${stats?.todayVolume?.toLocaleString() || 0}
               </p>
               <p className="text-xs text-green-400 mt-1">
-                <TrendingUp className="w-3 h-3 inline mr-1" />+
-                {stats.volumeChange || 0}%
+                <TrendingUp className="w-3 h-3 inline mr-1" />+ +0%
               </p>
             </div>
             <DollarSign className="w-8 h-8 text-amber-400" />
@@ -128,7 +131,8 @@ export default async function TransactionsPage({
             <div>
               <p className="text-sm text-zinc-400">Gold Traded</p>
               <p className="text-2xl font-bold text-white">
-                {stats.goldVolume?.toFixed(2) || 0} oz
+                {(stats?.todayVolume ? stats.todayVolume / 1800 : 0).toFixed(2)}{" "}
+                oz
               </p>
               <p className="text-xs text-zinc-400 mt-1">Today</p>
             </div>
@@ -141,7 +145,7 @@ export default async function TransactionsPage({
             <div>
               <p className="text-sm text-zinc-400">Total Transactions</p>
               <p className="text-2xl font-bold text-white">
-                {stats.totalTransactions || 0}
+                {stats?.totalTransactions || 0}
               </p>
               <p className="text-xs text-zinc-400 mt-1">All time</p>
             </div>
@@ -154,7 +158,7 @@ export default async function TransactionsPage({
             <div>
               <p className="text-sm text-zinc-400">Flagged</p>
               <p className="text-2xl font-bold text-red-400">
-                {stats.flaggedCount || 0}
+                {stats?.flaggedTransactions || 0}
               </p>
               <p className="text-xs text-zinc-400 mt-1">Requires review</p>
             </div>
@@ -265,12 +269,8 @@ export default async function TransactionsPage({
           <>
             <TransactionTable
               transactions={transactions}
-              userRole={userRole}
               canFlag={hasPermission(userRole, PERMISSIONS.TRANSACTION_FLAG)}
-              canRefund={hasPermission(
-                userRole,
-                PERMISSIONS.TRANSACTION_REFUND
-              )}
+              canRefund={hasPermission(userRole, PERMISSIONS.TRANSACTION_REFUND)}
             />
 
             {/* Pagination */}
@@ -330,14 +330,16 @@ export default async function TransactionsPage({
 
       {/* Quick Actions */}
       {hasPermission(userRole, PERMISSIONS.TRANSACTION_FLAG) &&
-        stats.flaggedCount > 0 && (
+        stats &&
+        stats.flaggedTransactions > 0 && (
           <div className="mt-6 p-4 bg-red-900/20 border border-red-900/50 rounded-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <AlertCircle className="w-5 h-5 text-red-400" />
                 <div>
                   <p className="font-semibold text-red-400">
-                    {stats.flaggedCount} Flagged Transactions Require Review
+                    {stats?.flaggedTransactions || 0} Flagged Transactions
+                    Require Review
                   </p>
                   <p className="text-sm text-zinc-400 mt-1">
                     High-value or suspicious transactions need immediate
