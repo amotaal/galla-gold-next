@@ -10,7 +10,8 @@ import User from "@/server/models/User";
 import Transaction from "@/server/models/Transaction";
 import Wallet from "@/server/models/Wallet";
 import KYC from "@/server/models/KYC";
-import { hasPermission, PERMISSIONS } from "@/server/lib/permissions";
+import AuditLog from "@/server/models/AuditLog"; // Import AuditLog model
+import { hasPermission, PERMISSIONS } from "@/lib/permissions";
 
 // =============================================================================
 // VALIDATION SCHEMAS
@@ -18,16 +19,14 @@ import { hasPermission, PERMISSIONS } from "@/server/lib/permissions";
 
 const dateRangeSchema = z.object({
   startDate: z.string(), // ISO date
-  endDate: z.string(),   // ISO date
+  endDate: z.string(), // ISO date
 });
 
 // =============================================================================
 // HELPER FUNCTIONS
 // =============================================================================
 
-async function verifyReportPermission(
-  adminId: string
-): Promise<{
+async function verifyReportPermission(adminId: string): Promise<{
   success: boolean;
   admin?: any;
   error?: string;
@@ -63,49 +62,123 @@ export async function generateFinancialReport(
     await dbConnect();
 
     // Get transaction aggregates
-    const [revenue, deposits, withdrawals, goldPurchases, goldSales, fees] = await Promise.all([
-      Transaction.aggregate([
-        { $match: { createdAt: { $gte: startDate, $lte: endDate }, status: "completed" } },
-        { $group: { _id: null, total: { $sum: "$amount" } } },
-      ]),
-      Transaction.aggregate([
-        { $match: { type: "deposit", createdAt: { $gte: startDate, $lte: endDate }, status: "completed" } },
-        { $group: { _id: null, total: { $sum: "$amount" }, count: { $sum: 1 } } },
-      ]),
-      Transaction.aggregate([
-        { $match: { type: "withdrawal", createdAt: { $gte: startDate, $lte: endDate }, status: "completed" } },
-        { $group: { _id: null, total: { $sum: "$amount" }, count: { $sum: 1 } } },
-      ]),
-      Transaction.aggregate([
-        { $match: { type: { $in: ["gold_purchase", "buy_gold"] }, createdAt: { $gte: startDate, $lte: endDate }, status: "completed" } },
-        { $group: { _id: null, total: { $sum: "$amount" }, count: { $sum: 1 } } },
-      ]),
-      Transaction.aggregate([
-        { $match: { type: { $in: ["gold_sale", "sell_gold"] }, createdAt: { $gte: startDate, $lte: endDate }, status: "completed" } },
-        { $group: { _id: null, total: { $sum: "$amount" }, count: { $sum: 1 } } },
-      ]),
-      Transaction.aggregate([
-        { $match: { createdAt: { $gte: startDate, $lte: endDate }, status: "completed" } },
-        { $group: { _id: null, total: { $sum: "$fee" } } },
-      ]),
-    ]);
+    const [revenue, deposits, withdrawals, goldPurchases, goldSales, fees] =
+      await Promise.all([
+        Transaction.aggregate([
+          {
+            $match: {
+              createdAt: { $gte: startDate, $lte: endDate },
+              status: "completed",
+            },
+          },
+          { $group: { _id: null, total: { $sum: "$amount" } } },
+        ]),
+        Transaction.aggregate([
+          {
+            $match: {
+              type: "deposit",
+              createdAt: { $gte: startDate, $lte: endDate },
+              status: "completed",
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              total: { $sum: "$amount" },
+              count: { $sum: 1 },
+            },
+          },
+        ]),
+        Transaction.aggregate([
+          {
+            $match: {
+              type: "withdrawal",
+              createdAt: { $gte: startDate, $lte: endDate },
+              status: "completed",
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              total: { $sum: "$amount" },
+              count: { $sum: 1 },
+            },
+          },
+        ]),
+        Transaction.aggregate([
+          {
+            $match: {
+              type: { $in: ["gold_purchase", "buy_gold"] },
+              createdAt: { $gte: startDate, $lte: endDate },
+              status: "completed",
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              total: { $sum: "$amount" },
+              count: { $sum: 1 },
+            },
+          },
+        ]),
+        Transaction.aggregate([
+          {
+            $match: {
+              type: { $in: ["gold_sale", "sell_gold"] },
+              createdAt: { $gte: startDate, $lte: endDate },
+              status: "completed",
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              total: { $sum: "$amount" },
+              count: { $sum: 1 },
+            },
+          },
+        ]),
+        Transaction.aggregate([
+          {
+            $match: {
+              createdAt: { $gte: startDate, $lte: endDate },
+              status: "completed",
+            },
+          },
+          { $group: { _id: null, total: { $sum: "$fee" } } },
+        ]),
+      ]);
 
     return {
       success: true,
       data: {
         period: { start: startDate, end: endDate },
         revenue: revenue[0]?.total || 0,
-        deposits: { total: deposits[0]?.total || 0, count: deposits[0]?.count || 0 },
-        withdrawals: { total: withdrawals[0]?.total || 0, count: withdrawals[0]?.count || 0 },
-        goldPurchases: { total: goldPurchases[0]?.total || 0, count: goldPurchases[0]?.count || 0 },
-        goldSales: { total: goldSales[0]?.total || 0, count: goldSales[0]?.count || 0 },
+        deposits: {
+          total: deposits[0]?.total || 0,
+          count: deposits[0]?.count || 0,
+        },
+        withdrawals: {
+          total: withdrawals[0]?.total || 0,
+          count: withdrawals[0]?.count || 0,
+        },
+        goldPurchases: {
+          total: goldPurchases[0]?.total || 0,
+          count: goldPurchases[0]?.count || 0,
+        },
+        goldSales: {
+          total: goldSales[0]?.total || 0,
+          count: goldSales[0]?.count || 0,
+        },
         totalFees: fees[0]?.total || 0,
-        netRevenue: (fees[0]?.total || 0),
+        netRevenue: fees[0]?.total || 0,
       },
     };
   } catch (error: any) {
     console.error("Generate financial report error:", error);
-    return { success: false, error: error.message || "Failed to generate report" };
+    return {
+      success: false,
+      error: error.message || "Failed to generate report",
+    };
   }
 }
 
@@ -131,7 +204,10 @@ export async function generateUserGrowthReport(
       User.countDocuments({ createdAt: { $lte: endDate } }),
       User.countDocuments({ createdAt: { $gte: startDate, $lte: endDate } }),
       User.countDocuments({ lastLoginAt: { $gte: startDate, $lte: endDate } }),
-      User.countDocuments({ kycStatus: "verified", kycVerifiedAt: { $gte: startDate, $lte: endDate } }),
+      User.countDocuments({
+        kycStatus: "verified",
+        kycVerifiedAt: { $gte: startDate, $lte: endDate },
+      }),
     ]);
 
     // Daily signups
@@ -159,7 +235,10 @@ export async function generateUserGrowthReport(
     };
   } catch (error: any) {
     console.error("Generate user growth report error:", error);
-    return { success: false, error: error.message || "Failed to generate report" };
+    return {
+      success: false,
+      error: error.message || "Failed to generate report",
+    };
   }
 }
 
@@ -181,31 +260,32 @@ export async function generateKYCReport(
 
     await dbConnect();
 
-    const [submitted, verified, rejected, pending, avgProcessingTime] = await Promise.all([
-      KYC.countDocuments({ submittedAt: { $gte: startDate, $lte: endDate } }),
-      KYC.countDocuments({ verifiedAt: { $gte: startDate, $lte: endDate } }),
-      KYC.countDocuments({ rejectedAt: { $gte: startDate, $lte: endDate } }),
-      KYC.countDocuments({ status: { $in: ["pending", "submitted"] } }),
-      KYC.aggregate([
-        {
-          $match: {
-            verifiedAt: { $gte: startDate, $lte: endDate },
-            submittedAt: { $exists: true },
+    const [submitted, verified, rejected, pending, avgProcessingTime] =
+      await Promise.all([
+        KYC.countDocuments({ submittedAt: { $gte: startDate, $lte: endDate } }),
+        KYC.countDocuments({ verifiedAt: { $gte: startDate, $lte: endDate } }),
+        KYC.countDocuments({ rejectedAt: { $gte: startDate, $lte: endDate } }),
+        KYC.countDocuments({ status: { $in: ["pending", "submitted"] } }),
+        KYC.aggregate([
+          {
+            $match: {
+              verifiedAt: { $gte: startDate, $lte: endDate },
+              submittedAt: { $exists: true },
+            },
           },
-        },
-        {
-          $project: {
-            processingTime: { $subtract: ["$verifiedAt", "$submittedAt"] },
+          {
+            $project: {
+              processingTime: { $subtract: ["$verifiedAt", "$submittedAt"] },
+            },
           },
-        },
-        {
-          $group: {
-            _id: null,
-            avgTime: { $avg: "$processingTime" },
+          {
+            $group: {
+              _id: null,
+              avgTime: { $avg: "$processingTime" },
+            },
           },
-        },
-      ]),
-    ]);
+        ]),
+      ]);
 
     return {
       success: true,
@@ -223,7 +303,10 @@ export async function generateKYCReport(
     };
   } catch (error: any) {
     console.error("Generate KYC report error:", error);
-    return { success: false, error: error.message || "Failed to generate report" };
+    return {
+      success: false,
+      error: error.message || "Failed to generate report",
+    };
   }
 }
 
@@ -247,7 +330,12 @@ export async function generateTransactionVolumeReport(
 
     // Daily transaction volume
     const dailyVolume = await Transaction.aggregate([
-      { $match: { createdAt: { $gte: startDate, $lte: endDate }, status: "completed" } },
+      {
+        $match: {
+          createdAt: { $gte: startDate, $lte: endDate },
+          status: "completed",
+        },
+      },
       {
         $group: {
           _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
@@ -260,7 +348,12 @@ export async function generateTransactionVolumeReport(
 
     // Volume by type
     const volumeByType = await Transaction.aggregate([
-      { $match: { createdAt: { $gte: startDate, $lte: endDate }, status: "completed" } },
+      {
+        $match: {
+          createdAt: { $gte: startDate, $lte: endDate },
+          status: "completed",
+        },
+      },
       {
         $group: {
           _id: "$type",
@@ -280,7 +373,10 @@ export async function generateTransactionVolumeReport(
     };
   } catch (error: any) {
     console.error("Generate transaction volume report error:", error);
-    return { success: false, error: error.message || "Failed to generate report" };
+    return {
+      success: false,
+      error: error.message || "Failed to generate report",
+    };
   }
 }
 
@@ -302,7 +398,11 @@ export async function getDashboardOverview(
     await dbConnect();
 
     const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    );
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
     const [
@@ -320,7 +420,10 @@ export async function getDashboardOverview(
       User.countDocuments({ createdAt: { $gte: monthStart } }),
       KYC.countDocuments({ status: { $in: ["pending", "submitted"] } }),
       Transaction.countDocuments({ status: "completed" }),
-      Transaction.countDocuments({ createdAt: { $gte: todayStart }, status: "completed" }),
+      Transaction.countDocuments({
+        createdAt: { $gte: todayStart },
+        status: "completed",
+      }),
       Transaction.aggregate([
         { $match: { status: "completed" } },
         { $group: { _id: null, total: { $sum: "$amount" } } },
@@ -353,18 +456,61 @@ export async function getDashboardOverview(
     };
   } catch (error: any) {
     console.error("Get dashboard overview error:", error);
-    return { success: false, error: error.message || "Failed to fetch dashboard data" };
+    return {
+      success: false,
+      error: error.message || "Failed to fetch dashboard data",
+    };
   }
 }
 
 // =============================================================================
-// EXPORT
+// DASHBOARD FUNCTIONS (Add these new functions)
 // =============================================================================
 
-export default {
-  generateFinancialReport,
-  generateUserGrowthReport,
-  generateKYCReport,
-  generateTransactionVolumeReport,
-  getDashboardOverview,
+/**
+ * Get dashboard statistics
+ * Renamed function for page compatibility
+ */
+export async function getDashboardStats(adminId: string) {
+  return getDashboardOverview(adminId);
+}
+
+/**
+ * Get recent admin activity
+ */
+export async function getRecentActivity(
+  adminId: string,
+  limit: number = 10
+): Promise<{ success: boolean; data?: any[]; error?: string }> {
+  try {
+    const permCheck = await verifyReportPermission(adminId);
+    if (!permCheck.success) return { success: false, error: permCheck.error };
+
+    await dbConnect();
+
+    // Get recent audit logs for dashboard
+    const recentLogs = await AuditLog.find({
+      category: { $in: ["user", "kyc", "transaction"] },
+    })
+      .sort({ timestamp: -1 })
+      .limit(limit)
+      .lean();
+
+    return {
+      success: true,
+      data: recentLogs,
+    };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+// Add function aliases for page compatibility
+export {
+  generateFinancialReport as getFinancialReport,
+  generateUserGrowthReport as getUserGrowthReport,
+  generateKYCReport as getKYCReport,
+  generateTransactionVolumeReport as getTransactionReport,
 };
+
+// Remove the default export - it was here

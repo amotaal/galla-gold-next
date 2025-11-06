@@ -1,9 +1,7 @@
-// server/lib/permissions.ts
+// /lib/permissions.ts
 // Purpose: Permission Checking Utilities for Role-Based Access Control (RBAC)
 // Defines what each role can do and provides helper functions to check permissions
 // Used throughout admin actions to enforce access control
-
-"use server";
 
 import type { UserRole } from "@/types";
 

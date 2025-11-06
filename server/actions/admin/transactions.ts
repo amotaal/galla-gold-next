@@ -10,7 +10,7 @@ import dbConnect from "@/server/db/connect";
 import User from "@/server/models/User";
 import Transaction from "@/server/models/Transaction";
 import Wallet from "@/server/models/Wallet";
-import { hasPermission, PERMISSIONS } from "@/server/lib/permissions";
+import { hasPermission, PERMISSIONS } from "@/lib/permissions";
 import { auditTransactionAction } from "@/server/lib/audit";
 
 // =============================================================================
@@ -141,6 +141,16 @@ export async function getTransactions(
       error: error.message || "Failed to fetch transactions",
     };
   }
+}
+
+/**
+ * Alias for searchTransactions - for page compatibility  
+ */
+export async function searchTransactions(
+  adminId: string,
+  filters: any
+) {
+  return getTransactions(adminId, filters);
 }
 
 /**

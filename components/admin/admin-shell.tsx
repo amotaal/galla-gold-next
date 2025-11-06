@@ -7,6 +7,8 @@
 import { ReactNode } from "react";
 import { AdminSidebar } from "./admin-sidebar";
 import { AdminHeader } from "./admin-header";
+import Link from "next/link";
+import React from "react";
 
 // =============================================================================
 // TYPES
@@ -62,3 +64,81 @@ export function AdminShell({ children }: AdminShellProps) {
 // =============================================================================
 
 export default AdminShell;
+
+// =============================================================================
+// ADDITIONAL EXPORTS FOR ADMIN PAGES
+// =============================================================================
+
+/**
+ * AdminSection - Section wrapper with consistent spacing
+ */
+export function AdminSection({ 
+  children, 
+  className = "" 
+}: { 
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <section className={`space-y-6 ${className}`}>
+      {children}
+    </section>
+  );
+}
+
+/**
+ * AdminCard - Consistent card styling for admin interface
+ */
+export function AdminCard({ 
+  children, 
+  title,
+  action,
+  className = "" 
+}: { 
+  children: React.ReactNode;
+  title?: React.ReactNode;
+  action?: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={`bg-zinc-900/50 border border-zinc-800 rounded-lg p-6 ${className}`}>
+      {(title || action) && (
+        <div className="flex justify-between items-center mb-4">
+          {title && (
+            <h3 className="text-lg font-semibold text-white">
+              {title}
+            </h3>
+          )}
+          {action && <div>{action}</div>}
+        </div>
+      )}
+      {children}
+    </div>
+  );
+}
+
+/**
+ * AdminBreadcrumb - Breadcrumb navigation
+ */
+export function AdminBreadcrumb({
+  items
+}: {
+  items: Array<{ label: string; href?: string }>;
+}) {
+  return (
+    <nav className="flex items-center space-x-2 text-sm text-zinc-400 mb-4">
+      {items.map((item, index) => (
+        <React.Fragment key={index}>
+          {index > 0 && <span>/</span>}
+          {item.href ? (
+            <Link href={item.href} className="hover:text-white transition-colors">
+              {item.label}
+            </Link>
+          ) : (
+            <span className="text-white">{item.label}</span>
+          )}
+        </React.Fragment>
+      ))}
+    </nav>
+  );
+}

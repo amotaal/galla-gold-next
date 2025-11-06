@@ -8,7 +8,7 @@ import { z } from "zod";
 import dbConnect from "@/server/db/connect";
 import User from "@/server/models/User";
 import AuditLog from "@/server/models/AuditLog";
-import { hasPermission, PERMISSIONS } from "@/server/lib/permissions";
+import { hasPermission, PERMISSIONS } from "@/lib/permissions";
 
 // =============================================================================
 // VALIDATION SCHEMAS

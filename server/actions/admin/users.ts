@@ -12,7 +12,12 @@ import User from "@/server/models/User";
 import Wallet from "@/server/models/Wallet";
 import Transaction from "@/server/models/Transaction";
 import KYC from "@/server/models/KYC";
-import { hasPermission, canModifyUser, canModifyRole, PERMISSIONS } from "@/server/lib/permissions";
+import {
+  hasPermission,
+  canModifyUser,
+  canModifyRole,
+  PERMISSIONS,
+} from "@/lib/permissions";
 import { auditUserAction, auditFailure } from "@/server/lib/audit";
 import type { UserRole } from "@/types";
 
@@ -25,13 +30,19 @@ import type { UserRole } from "@/types";
  */
 const userSearchSchema = z.object({
   query: z.string().optional(), // Search by name or email
-  role: z.enum(["user", "operator", "admin", "superadmin", "auditor"]).optional(),
-  kycStatus: z.enum(["none", "pending", "submitted", "verified", "rejected"]).optional(),
+  role: z
+    .enum(["user", "operator", "admin", "superadmin", "auditor"])
+    .optional(),
+  kycStatus: z
+    .enum(["none", "pending", "submitted", "verified", "rejected"])
+    .optional(),
   isActive: z.boolean().optional(),
   isSuspended: z.boolean().optional(),
   limit: z.number().min(1).max(100).default(20),
   skip: z.number().min(0).default(0),
-  sortBy: z.enum(["createdAt", "lastLoginAt", "email", "firstName"]).default("createdAt"),
+  sortBy: z
+    .enum(["createdAt", "lastLoginAt", "email", "firstName"])
+    .default("createdAt"),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
 
@@ -46,7 +57,9 @@ const userUpdateSchema = z.object({
     firstName: z.string().min(1).max(50).optional(),
     lastName: z.string().min(1).max(50).optional(),
     phone: z.string().optional(),
-    preferredCurrency: z.enum(["USD", "EUR", "GBP", "EGP", "AED", "SAR"]).optional(),
+    preferredCurrency: z
+      .enum(["USD", "EUR", "GBP", "EGP", "AED", "SAR"])
+      .optional(),
     preferredLanguage: z.enum(["en", "es", "fr", "ru", "ar"]).optional(),
   }),
   reason: z.string().optional(),
@@ -140,7 +153,8 @@ export async function getUsers(
     if (validated.role) query.role = validated.role;
     if (validated.kycStatus) query.kycStatus = validated.kycStatus;
     if (validated.isActive !== undefined) query.isActive = validated.isActive;
-    if (validated.isSuspended !== undefined) query.isSuspended = validated.isSuspended;
+    if (validated.isSuspended !== undefined)
+      query.isSuspended = validated.isSuspended;
 
     // Execute query
     const [users, total] = await Promise.all([
@@ -172,6 +186,31 @@ export async function getUsers(
 }
 
 /**
+ * Alias for searchUsers - for page compatibility
+ */
+export async function searchUsers(adminId: string, filters: any) {
+  return getUsers(adminId, {
+    query: filters.search,
+    role: filters.role,
+    isActive: filters.status === "active",
+    isSuspended: filters.status === "suspended",
+    page: filters.page || 1,
+    limit: filters.limit || 20,
+  });
+}
+
+/**
+ * Get user activity (placeholder - implement with audit logs)
+ */
+export async function getUserActivity(
+  adminId: string,
+  userId: string
+): Promise<{ success: boolean; data?: any[]; error?: string }> {
+  // TODO: Implement by fetching from audit logs
+  return { success: true, data: [] };
+}
+
+/**
  * Get detailed user information including wallet and KYC
  * Permission: USER_VIEW
  */
@@ -199,13 +238,16 @@ export async function getUserDetails(
     await dbConnect();
 
     // Fetch user data
-    const [user, wallet, kyc, transactionCount, lastTransaction] = await Promise.all([
-      User.findById(userId).select("-password -mfaSecret -mfaBackupCodes").lean(),
-      Wallet.findOne({ userId }).lean(),
-      KYC.findOne({ userId }).lean(),
-      Transaction.countDocuments({ userId }),
-      Transaction.findOne({ userId }).sort({ createdAt: -1 }).lean(),
-    ]);
+    const [user, wallet, kyc, transactionCount, lastTransaction] =
+      await Promise.all([
+        User.findById(userId)
+          .select("-password -mfaSecret -mfaBackupCodes")
+          .lean(),
+        Wallet.findOne({ userId }).lean(),
+        KYC.findOne({ userId }).lean(),
+        Transaction.countDocuments({ userId }),
+        Transaction.findOne({ userId }).sort({ createdAt: -1 }).lean(),
+      ]);
 
     if (!user) {
       return { success: false, error: "User not found" };
@@ -238,9 +280,7 @@ export async function getUserDetails(
  * Get user statistics for dashboard
  * Permission: USER_VIEW
  */
-export async function getUserStats(
-  adminId: string
-): Promise<{
+export async function getUserStats(adminId: string): Promise<{
   success: boolean;
   data?: {
     totalUsers: number;
@@ -264,7 +304,11 @@ export async function getUserStats(
     await dbConnect();
 
     const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    );
     const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
@@ -369,13 +413,19 @@ export async function updateUser(
     const newValues: any = {};
 
     // Update fields
-    if (validated.updates.firstName && validated.updates.firstName !== targetUser.firstName) {
+    if (
+      validated.updates.firstName &&
+      validated.updates.firstName !== targetUser.firstName
+    ) {
       oldValues.firstName = targetUser.firstName;
       targetUser.firstName = validated.updates.firstName;
       newValues.firstName = validated.updates.firstName;
     }
 
-    if (validated.updates.lastName && validated.updates.lastName !== targetUser.lastName) {
+    if (
+      validated.updates.lastName &&
+      validated.updates.lastName !== targetUser.lastName
+    ) {
       oldValues.lastName = targetUser.lastName;
       targetUser.lastName = validated.updates.lastName;
       newValues.lastName = validated.updates.lastName;
@@ -472,7 +522,11 @@ export async function suspendUser(
     }
 
     // Check if admin can modify this user
-    const canModify = canModifyUser(permCheck.admin!.role, targetUser.role, adminId === userId);
+    const canModify = canModifyUser(
+      permCheck.admin!.role,
+      targetUser.role,
+      adminId === userId
+    );
 
     if (!canModify.allowed) {
       await auditFailure({
@@ -591,7 +645,10 @@ export async function changeUserRole(
     const validated = roleChangeSchema.parse(data);
 
     // Verify permission
-    const permCheck = await verifyPermission(adminId, PERMISSIONS.USER_CHANGE_ROLE);
+    const permCheck = await verifyPermission(
+      adminId,
+      PERMISSIONS.USER_CHANGE_ROLE
+    );
     if (!permCheck.success) {
       return { success: false, error: permCheck.error };
     }
@@ -674,7 +731,10 @@ export async function resetUserPassword(
 ): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
     // Verify permission
-    const permCheck = await verifyPermission(adminId, PERMISSIONS.USER_RESET_PASSWORD);
+    const permCheck = await verifyPermission(
+      adminId,
+      PERMISSIONS.USER_RESET_PASSWORD
+    );
     if (!permCheck.success) {
       return { success: false, error: permCheck.error };
     }

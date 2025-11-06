@@ -20,8 +20,14 @@ interface StatCardProps {
   iconColor?: string;
   description?: string;
   loading?: boolean;
+  variant?: string; // For styling variants
+  trend?: {
+    // Add trend support
+    value: number;
+    isPositive?: boolean;
+    label?: string;
+  };
 }
-
 // =============================================================================
 // STAT CARD COMPONENT
 // =============================================================================
@@ -56,7 +62,21 @@ export function StatCard({
   iconColor = "text-primary",
   description,
   loading = false,
+  variant,
+  trend,
 }: StatCardProps) {
+  // Convert trend to change display if provided
+  const displayChange =
+    change ||
+    (trend
+      ? `${trend.isPositive ? "+" : ""}${trend.value}${trend.label || "%"}`
+      : undefined);
+  const displayChangeType =
+    changeType !== "neutral"
+      ? changeType
+      : trend?.isPositive
+      ? "positive"
+      : "negative";
   return (
     <Card>
       <CardContent className="p-6">

@@ -2,7 +2,7 @@
 // Reports and analytics page with comprehensive business intelligence
 
 import { getSession } from '@/server/auth/session';
-import { hasPermission, PERMISSIONS } from '@/server/lib/permissions';
+import { hasPermission, PERMISSIONS } from '@/lib/permissions';
 import { 
   getFinancialReport,
   getUserGrowthReport,
@@ -25,7 +25,9 @@ import {
   Coins,
   Activity,
   PieChart,
-  LineChart
+  LineChart,
+  AlertCircle,
+  Percent
 } from 'lucide-react';
 import { format } from 'date-fns';
 

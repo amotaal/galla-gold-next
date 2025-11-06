@@ -2,7 +2,7 @@
 // Transaction monitoring page with advanced filtering and management
 
 import { getSession } from '@/server/auth/session';
-import { hasPermission, PERMISSIONS } from '@/server/lib/permissions';
+import { hasPermission, PERMISSIONS } from '@/lib/permissions';
 import { searchTransactions, getTransactionStats } from '@/server/actions/admin/transactions';
 import { TransactionTable } from '@/components/admin/transaction-table';
 import { AdminCard, AdminSection } from '@/components/admin/admin-shell';

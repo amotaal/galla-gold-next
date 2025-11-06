@@ -2,7 +2,7 @@
 // Audit logs page for tracking all admin actions and system events
 
 import { getSession } from '@/server/auth/session';
-import { hasPermission, PERMISSIONS } from '@/server/lib/permissions';
+import { hasPermission, PERMISSIONS } from '@/lib/permissions';
 import { searchAuditLogs } from '@/server/actions/admin/audit';
 import { AuditTable } from '@/components/admin/audit-table';
 import { AdminCard, AdminSection } from '@/components/admin/admin-shell';

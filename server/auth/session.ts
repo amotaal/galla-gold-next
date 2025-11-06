@@ -222,22 +222,39 @@ export async function isSuperAdmin(): Promise<boolean> {
   return session?.user?.role === "superadmin";
 }
 
-export async function requireSuperAdmin(): Promise<Session> {
-  const session = await requireSession();
-  if (session.user.role !== "superadmin") {
-    throw new Error("Super admin access required");
-  }
-  return session;
-}
-
 export async function isAuditor(): Promise<boolean> {
   const session = await getSession();
   return session?.user?.role === "auditor";
 }
 
+/**
+ * Check if user has admin access (any admin role)
+ */
 export async function hasAdminAccess(): Promise<boolean> {
+  try {
+    const session = await getSession();
+    if (!session?.user?.role) return false;
+
+    const adminRoles = ["operator", "admin", "superadmin", "auditor"];
+    return adminRoles.includes(session.user.role);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Require superadmin role or throw
+ */
+export async function requireSuperAdmin() {
   const session = await getSession();
-  return ["operator", "admin", "superadmin", "auditor"].includes(
-    session?.user?.role || ""
-  );
+
+  if (!session?.user) {
+    throw new Error("Not authenticated");
+  }
+
+  if (session.user.role !== "superadmin") {
+    throw new Error("Super admin access required");
+  }
+
+  return session;
 }

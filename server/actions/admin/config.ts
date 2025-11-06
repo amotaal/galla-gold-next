@@ -9,9 +9,19 @@ import { z } from "zod";
 import dbConnect from "@/server/db/connect";
 import User from "@/server/models/User";
 import SystemConfig from "@/server/models/SystemConfig";
-import { hasPermission, canUpdateCriticalConfig, PERMISSIONS } from "@/server/lib/permissions";
+import {
+  hasPermission,
+  canUpdateCriticalConfig,
+  PERMISSIONS,
+} from "@/lib/permissions";
 import { auditConfigChange } from "@/server/lib/audit";
-import type { ConfigCategory, ConfigDataType } from "@/server/models/SystemConfig";
+import type {
+  ConfigCategory,
+  ConfigDataType,
+} from "@/server/models/SystemConfig";
+
+// Function aliases for page compatibility
+export { getConfig as getSystemConfigs, updateConfig as updateSystemConfig };
 
 // =============================================================================
 // VALIDATION SCHEMAS
@@ -72,9 +82,7 @@ async function verifyConfigPermission(
  * Get all configurations grouped by category
  * Permission: CONFIG_VIEW
  */
-export async function getAllConfigs(
-  adminId: string
-): Promise<{
+export async function getAllConfigs(adminId: string): Promise<{
   success: boolean;
   data?: {
     fees: any[];
@@ -96,7 +104,9 @@ export async function getAllConfigs(
 
     await dbConnect();
 
-    const configs = await SystemConfig.find({ isActive: true }).sort({ category: 1, key: 1 }).lean();
+    const configs = await SystemConfig.find({ isActive: true })
+      .sort({ category: 1, key: 1 })
+      .lean();
 
     // Group by category
     const grouped: any = {
@@ -184,7 +194,10 @@ export async function getConfig(
 
     await dbConnect();
 
-    const config = await SystemConfig.findOne({ key: key.toUpperCase(), isActive: true }).lean();
+    const config = await SystemConfig.findOne({
+      key: key.toUpperCase(),
+      isActive: true,
+    }).lean();
 
     if (!config) {
       return { success: false, error: "Configuration not found" };
@@ -224,7 +237,9 @@ export async function getConfigHistory(
 
     await dbConnect();
 
-    const config = await SystemConfig.findOne({ key: key.toUpperCase() }).lean();
+    const config = await SystemConfig.findOne({
+      key: key.toUpperCase(),
+    }).lean();
 
     if (!config) {
       return { success: false, error: "Configuration not found" };
@@ -283,7 +298,9 @@ export async function updateConfig(
     await dbConnect();
 
     // Get current config
-    const config = await SystemConfig.findOne({ key: validated.key.toUpperCase() });
+    const config = await SystemConfig.findOne({
+      key: validated.key.toUpperCase(),
+    });
 
     if (!config) {
       return { success: false, error: "Configuration not found" };
@@ -439,7 +456,10 @@ export async function bulkUpdateConfigs(
     }
 
     if (updates.length > 50) {
-      return { success: false, error: "Maximum 50 configs can be updated at once" };
+      return {
+        success: false,
+        error: "Maximum 50 configs can be updated at once",
+      };
     }
 
     const permCheck = await verifyConfigPermission(adminId);
@@ -536,7 +556,11 @@ export async function upsertConfig(
 
     await dbConnect();
 
-    const config = await SystemConfig.upsert(configData, adminId, permCheck.admin!.email);
+    const config = await SystemConfig.upsert(
+      configData,
+      adminId,
+      permCheck.admin!.email
+    );
 
     return {
       success: true,

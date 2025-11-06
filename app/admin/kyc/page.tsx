@@ -2,7 +2,7 @@
 // KYC review queue with filtering and bulk actions
 
 import { getSession } from '@/server/auth/session';
-import { hasPermission, PERMISSIONS } from '@/server/lib/permissions';
+import { hasPermission, PERMISSIONS } from '@/lib/permissions';
 import { getPendingKYC } from '@/server/actions/admin/kyc';
 import { KYCCard } from '@/components/admin/kyc-card';
 import { AdminSection, AdminCard } from '@/components/admin/admin-shell';

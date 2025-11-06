@@ -9,7 +9,7 @@ import { z } from "zod";
 import dbConnect from "@/server/db/connect";
 import User from "@/server/models/User";
 import KYC from "@/server/models/KYC";
-import { hasPermission, PERMISSIONS } from "@/server/lib/permissions";
+import { hasPermission, PERMISSIONS } from "@/lib/permissions";
 import { auditKYCAction, auditFailure } from "@/server/lib/audit";
 import { sendEmail } from "@/server/email/send";
 
@@ -24,12 +24,16 @@ const kycApprovalSchema = z.object({
 
 const kycRejectionSchema = z.object({
   kycId: z.string(),
-  rejectionReason: z.string().min(10, "Rejection reason must be at least 10 characters"),
+  rejectionReason: z
+    .string()
+    .min(10, "Rejection reason must be at least 10 characters"),
   reviewNotes: z.string().optional(),
 });
 
 const kycFiltersSchema = z.object({
-  status: z.enum(["none", "pending", "submitted", "verified", "rejected"]).optional(),
+  status: z
+    .enum(["none", "pending", "submitted", "verified", "rejected"])
+    .optional(),
   limit: z.number().min(1).max(100).default(50),
   skip: z.number().min(0).default(0),
   sortBy: z.enum(["submittedAt", "createdAt"]).default("submittedAt"),
@@ -135,6 +139,16 @@ export async function getKYCQueue(
 }
 
 /**
+ * Alias for getPendingKYC - for backward compatibility
+ */
+export async function getPendingKYC(adminId: string, filters: any) {
+  return getKYCQueue(adminId, {
+    ...filters,
+    status: filters.status || "pending",
+  });
+}
+
+/**
  * Get detailed KYC application
  * Permission: KYC_VIEW
  */
@@ -157,13 +171,17 @@ export async function getKYCDetails(
 
     await dbConnect();
 
-    const kyc = await KYC.findById(kycId).populate("userId", "firstName lastName email phone").lean();
+    const kyc = await KYC.findById(kycId)
+      .populate("userId", "firstName lastName email phone")
+      .lean();
 
     if (!kyc) {
       return { success: false, error: "KYC application not found" };
     }
 
-    const user = await User.findById(kyc.userId).select("-password -mfaSecret -mfaBackupCodes").lean();
+    const user = await User.findById(kyc.userId)
+      .select("-password -mfaSecret -mfaBackupCodes")
+      .lean();
 
     return {
       success: true,
@@ -189,9 +207,7 @@ export async function getKYCDetails(
  * Get KYC statistics for dashboard
  * Permission: KYC_VIEW
  */
-export async function getKYCStats(
-  adminId: string
-): Promise<{
+export async function getKYCStats(adminId: string): Promise<{
   success: boolean;
   data?: {
     totalApplications: number;
@@ -227,9 +243,16 @@ export async function getKYCStats(
       KYC.countDocuments({ status: "verified" }),
       KYC.countDocuments({ status: "rejected" }),
       KYC.countDocuments({
-        $or: [{ verifiedAt: { $gte: todayStart } }, { rejectedAt: { $gte: todayStart } }],
+        $or: [
+          { verifiedAt: { $gte: todayStart } },
+          { rejectedAt: { $gte: todayStart } },
+        ],
       }),
-      KYC.find({ status: "verified", verifiedAt: { $exists: true }, submittedAt: { $exists: true } })
+      KYC.find({
+        status: "verified",
+        verifiedAt: { $exists: true },
+        submittedAt: { $exists: true },
+      })
         .select("submittedAt verifiedAt")
         .limit(100)
         .lean(),
@@ -244,7 +267,8 @@ export async function getKYCStats(
         }
         return sum;
       }, 0);
-      averageProcessingTime = totalTime / recentVerified.length / (1000 * 60 * 60); // Convert to hours
+      averageProcessingTime =
+        totalTime / recentVerified.length / (1000 * 60 * 60); // Convert to hours
     }
 
     return {
@@ -282,7 +306,10 @@ export async function approveKYC(
   try {
     const validated = kycApprovalSchema.parse(data);
 
-    const permCheck = await verifyKYCPermission(adminId, PERMISSIONS.KYC_APPROVE);
+    const permCheck = await verifyKYCPermission(
+      adminId,
+      PERMISSIONS.KYC_APPROVE
+    );
     if (!permCheck.success) {
       return { success: false, error: permCheck.error };
     }
@@ -379,7 +406,10 @@ export async function rejectKYC(
   try {
     const validated = kycRejectionSchema.parse(data);
 
-    const permCheck = await verifyKYCPermission(adminId, PERMISSIONS.KYC_REJECT);
+    const permCheck = await verifyKYCPermission(
+      adminId,
+      PERMISSIONS.KYC_REJECT
+    );
     if (!permCheck.success) {
       return { success: false, error: permCheck.error };
     }
@@ -479,7 +509,10 @@ export async function requestKYCDocuments(
   notes?: string
 ): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
-    const permCheck = await verifyKYCPermission(adminId, PERMISSIONS.KYC_REQUEST_DOCUMENTS);
+    const permCheck = await verifyKYCPermission(
+      adminId,
+      PERMISSIONS.KYC_REQUEST_DOCUMENTS
+    );
     if (!permCheck.success) {
       return { success: false, error: permCheck.error };
     }
@@ -561,7 +594,10 @@ export async function bulkApproveKYC(
   error?: string;
 }> {
   try {
-    const permCheck = await verifyKYCPermission(adminId, PERMISSIONS.KYC_APPROVE);
+    const permCheck = await verifyKYCPermission(
+      adminId,
+      PERMISSIONS.KYC_APPROVE
+    );
     if (!permCheck.success) {
       return { success: false, error: permCheck.error };
     }
@@ -571,7 +607,10 @@ export async function bulkApproveKYC(
     }
 
     if (kycIds.length > 50) {
-      return { success: false, error: "Maximum 50 applications can be processed at once" };
+      return {
+        success: false,
+        error: "Maximum 50 applications can be processed at once",
+      };
     }
 
     let approved = 0;

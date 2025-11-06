@@ -15,7 +15,9 @@ import {
   Activity,
   FileCheck,
   AlertCircle,
-  Clock
+  Clock,
+  X,
+  CheckCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
