@@ -16,7 +16,15 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/providers/auth";
-import { Mail, Lock, Loader2, ArrowLeft, EyeOff, Eye } from "lucide-react";
+import {
+  Mail,
+  Lock,
+  Loader2,
+  ArrowLeft,
+  EyeOff,
+  Eye,
+  AlertCircle,
+} from "lucide-react";
 import { Logo } from "@/components/logo";
 
 /**
@@ -44,6 +52,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Get callback URL from query params
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
@@ -65,6 +74,8 @@ export default function LoginPage() {
    */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError(null); // Clear previous errors
 
     // Validation
     if (!email || !password) {
@@ -160,7 +171,9 @@ export default function LoginPage() {
             <Logo />
 
             {/* Title */}
-            <h1 className="text-2xl text-foreground font-bold my-2">Welcome Back</h1>
+            <h1 className="text-2xl text-foreground font-bold my-2">
+              Welcome Back
+            </h1>
             <p className="text-muted-foreground text-sm my-2">
               Sign in to your account to continue
             </p>
@@ -228,6 +241,16 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
+
+            {/* Error Message Display */}
+            {error && (
+              <div className="p-4 bg-red-900/20 border border-red-900/50 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <AlertCircle className="w-5 h-5 text-red-400" />
+                  <p className="text-sm text-red-400">{error}</p>
+                </div>
+              </div>
+            )}
 
             {/* Submit Button */}
             <Button

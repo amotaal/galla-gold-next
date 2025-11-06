@@ -1,5 +1,6 @@
 // /app/admin/page.tsx
 // Admin dashboard overview with key metrics and quick actions
+// ✅ FIXED: Removed icon components from StatCard props to avoid client component errors
 
 import { getSession } from "@/server/auth/session";
 import {
@@ -92,10 +93,10 @@ export default async function AdminDashboardPage() {
         <h2 className="text-xl font-semibold text-white mb-4">Key Metrics</h2>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {/* ✅ FIXED: Removed icon prop */}
           <StatCard
             title="Total Users"
             value={stats?.totalUsers || 0}
-            icon={Users}
             trend={{
               value: stats?.userGrowth || 0,
               isPositive: (stats?.userGrowth || 0) > 0,
@@ -103,10 +104,10 @@ export default async function AdminDashboardPage() {
             description="Active accounts"
           />
 
+          {/* ✅ FIXED: Removed icon prop */}
           <StatCard
             title="KYC Pending"
             value={stats?.pendingKYC || 0}
-            icon={FileCheck}
             trend={{
               value: stats?.kycProcessingTime || 0,
               label: "avg hours",
@@ -115,10 +116,10 @@ export default async function AdminDashboardPage() {
             variant="warning"
           />
 
+          {/* ✅ FIXED: Removed icon prop */}
           <StatCard
             title="Daily Volume"
             value={`$${(stats?.dailyVolume || 0).toLocaleString()}`}
-            icon={ArrowLeftRight}
             trend={{
               value: stats?.volumeChange || 0,
               isPositive: (stats?.volumeChange || 0) > 0,
@@ -126,10 +127,10 @@ export default async function AdminDashboardPage() {
             description="24h transactions"
           />
 
+          {/* ✅ FIXED: Removed icon prop */}
           <StatCard
             title="Gold Holdings"
             value={`${(stats?.totalGoldOz || 0).toFixed(2)} oz`}
-            icon={Coins}
             trend={{
               value: stats?.goldChange || 0,
               isPositive: (stats?.goldChange || 0) > 0,
@@ -165,15 +166,15 @@ export default async function AdminDashboardPage() {
       <AdminCard title="Recent Admin Activity" className="mt-6">
         <div className="space-y-4">
           {activity && activity.length > 0 ? (
-            activity.slice(0, 10).map((item: any) => (
+            activity.map((item: any, index: number) => (
               <div
-                key={item._id}
-                className="flex items-start justify-between p-3 rounded-lg bg-zinc-900/50 hover:bg-zinc-900 transition-colors"
+                key={index}
+                className="flex items-center justify-between p-3 bg-zinc-900/50 rounded-lg border border-zinc-800"
               >
-                <div className="flex items-start space-x-3">
+                <div className="flex items-center space-x-3">
                   <div
                     className={`
-                    w-8 h-8 rounded-full flex items-center justify-center
+                    w-8 h-8 rounded-lg flex items-center justify-center
                     ${
                       item.status === "success"
                         ? "bg-green-500/20"

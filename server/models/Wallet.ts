@@ -124,7 +124,6 @@ const WalletSchema = new Schema<IWallet, IWalletModel>(
 // ============================================================================
 // INDEXES - Only for fields WITHOUT unique constraint
 // ============================================================================
-// ❌ REMOVED: WalletSchema.index({ userId: 1 }); - Already indexed via unique: true
 WalletSchema.index({ isActive: 1, isFrozen: 1 });
 
 // ============================================================================

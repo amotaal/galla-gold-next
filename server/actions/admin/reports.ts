@@ -512,5 +512,3 @@ export {
   generateKYCReport as getKYCReport,
   generateTransactionVolumeReport as getTransactionReport,
 };
-
-// Remove the default export - it was here

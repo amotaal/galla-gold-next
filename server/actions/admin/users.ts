@@ -776,18 +776,3 @@ export async function resetUserPassword(
     };
   }
 }
-
-// =============================================================================
-// EXPORT
-// =============================================================================
-
-export default {
-  getUsers,
-  getUserDetails,
-  getUserStats,
-  updateUser,
-  suspendUser,
-  activateUser,
-  changeUserRole,
-  resetUserPassword,
-};

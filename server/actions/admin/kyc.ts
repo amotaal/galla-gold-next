@@ -639,17 +639,3 @@ export async function bulkApproveKYC(
     };
   }
 }
-
-// =============================================================================
-// EXPORT
-// =============================================================================
-
-export default {
-  getKYCQueue,
-  getKYCDetails,
-  getKYCStats,
-  approveKYC,
-  rejectKYC,
-  requestKYCDocuments,
-  bulkApproveKYC,
-};

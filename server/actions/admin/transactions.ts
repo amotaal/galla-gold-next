@@ -732,17 +732,3 @@ export async function refundTransaction(
     };
   }
 }
-
-// =============================================================================
-// EXPORT
-// =============================================================================
-
-export default {
-  getTransactions,
-  getTransactionDetails,
-  getTransactionStats,
-  flagTransaction,
-  unflagTransaction,
-  cancelTransaction,
-  refundTransaction,
-};

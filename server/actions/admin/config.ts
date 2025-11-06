@@ -557,18 +557,3 @@ export async function upsertConfig(
     };
   }
 }
-
-// =============================================================================
-// EXPORT
-// =============================================================================
-
-export default {
-  getAllConfigs,
-  getConfigsByCategory,
-  getConfig,
-  getConfigHistory,
-  updateConfig,
-  resetConfig,
-  bulkUpdateConfigs,
-  upsertConfig,
-};

@@ -419,23 +419,3 @@ export async function searchAuditLogs(filters: {
 }): Promise<{ logs: IAuditLog[]; total: number }> {
   return AuditLog.search(filters);
 }
-
-// =============================================================================
-// EXPORT
-// =============================================================================
-
-export default {
-  createAuditLog,
-  auditSuccess,
-  auditFailure,
-  auditUserAction,
-  auditKYCAction,
-  auditTransactionAction,
-  auditConfigChange,
-  auditSystemAction,
-  auditAuthAction,
-  getRecentActivity,
-  getUserAuditHistory,
-  getResourceAuditTrail,
-  searchAuditLogs,
-};

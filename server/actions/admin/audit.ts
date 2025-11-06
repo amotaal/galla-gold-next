@@ -224,13 +224,3 @@ export async function getUserAuditHistory(
   }
 }
 
-// =============================================================================
-// EXPORT
-// =============================================================================
-
-export default {
-  searchAuditLogs,
-  getRecentActivity,
-  getResourceAuditTrail,
-  getUserAuditHistory,
-};

@@ -313,35 +313,46 @@ export default async function SettingsPage() {
               </p>
 
               <form className="space-y-4">
-                {configList.map((config) => (
-                <div key={config.key} className="border-b pb-6">
-                  <ConfigForm
-                    config={{
-                      key: config.key,
-                      value: configs?.[config.key] ?? config.defaultValue ?? "",
-                      dataType: config.type === "number" ? "number" : "string",
-                      displayName: config.label,
-                      description: `${config.label} configuration setting`,
-                      unit: config.unit,
-                      defaultValue: config.defaultValue ?? "",
-                    }}
-                    onSave={async (key: string, value: any, reason: string) => {
-                      await updateSystemConfig(userId, {
-                        key,
-                        value,
-                        reason,
-                      });
-                    }}
-                    onReset={async (key: string) => {
-                      await updateSystemConfig(userId, {
-                        key,
-                        value: config.defaultValue,
-                        reason: "Reset to default value",
-                      });
-                    }}
-                  />
-                </div>
-              ))}
+                {categoryData.configs.map((config: any) => (
+                  <div
+                    key={config.key}
+                    className="border-b border-zinc-800 pb-6 last:border-0"
+                  >
+                    <ConfigForm
+                      config={{
+                        key: config.key,
+                        value:
+                          configs?.[config.key] ?? config.defaultValue ?? "",
+                        dataType:
+                          config.type === "number" ? "number" : "string",
+                        displayName: config.label,
+                        description: `${config.label} configuration setting`,
+                        unit: config.unit,
+                        defaultValue: config.defaultValue ?? "",
+                      }}
+                      onSave={async (
+                        key: string,
+                        value: any,
+                        reason: string
+                      ) => {
+                        "use server";
+                        await updateSystemConfig(userId, {
+                          key,
+                          value,
+                          reason,
+                        });
+                      }}
+                      onReset={async (key: string) => {
+                        "use server";
+                        await updateSystemConfig(userId, {
+                          key,
+                          value: config.defaultValue,
+                          reason: "Reset to default value",
+                        });
+                      }}
+                    />
+                  </div>
+                ))}
               </form>
             </AdminCard>
           );
