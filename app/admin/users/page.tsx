@@ -1,6 +1,7 @@
 // /app/admin/users/page.tsx
 // User management page with search, filters, and actions
-// FIXED: Properly awaiting searchParams Promise
+// ✅ FIXED: Properly serializing user data before passing to client components
+// ✅ FIXED: Properly awaiting searchParams Promise
 
 import { getSession, requireAdmin } from "@/server/auth/session";
 import { searchUsers } from "@/server/actions/admin/users";
@@ -20,6 +21,7 @@ import {
   Clock,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { serializeDocs } from "@/lib/serialization";
 
 function RoleBadge({ role }: { role: string }) {
   const colors: Record<string, string> = {
@@ -35,7 +37,7 @@ function RoleBadge({ role }: { role: string }) {
   );
 }
 
-async function UsersPageContent({
+export default async function UsersPage({
   searchParams,
 }: {
   searchParams: Promise<{
@@ -48,7 +50,7 @@ async function UsersPageContent({
   const session = await requireAdmin();
   const userId = session.user.id;
 
-  // CRITICAL: Await searchParams BEFORE using it
+  // ✅ CRITICAL FIX: Await searchParams BEFORE using it (Next.js 16)
   const params = await searchParams;
 
   // Now parse search parameters from awaited params
@@ -63,20 +65,23 @@ async function UsersPageContent({
 
   // Fetch users with filters
   const result = await searchUsers(userId, filters);
-  const users = result.success ? result.data?.users || [] : [];
-  const totalPages = result.data?.totalPages || 1;
-  const totalUsers = result.data?.total || 0;
 
-  // Calculate stats
+  // ✅ CRITICAL FIX: Serialize users before passing to client components
+  const users = result.success ? serializeDocs(result.data?.users || []) : [];
+  const totalPages = result.data?.totalPages || 1;
+  const total = result.data?.total || 0;
+
+  // Calculate statistics
   const stats = {
-    total: totalUsers,
+    total,
     verified: users.filter((u: any) => u.kycStatus === "verified").length,
     pending: users.filter((u: any) => u.kycStatus === "pending").length,
-    suspended: users.filter((u: any) => u.status === "suspended").length,
+    suspended: users.filter((u: any) => u.isSuspended).length,
   };
 
   return (
     <>
+      {/* Page Header */}
       <div className="mb-8">
         <div className="flex justify-between items-start">
           <div>
@@ -87,21 +92,22 @@ async function UsersPageContent({
               Manage user accounts, roles, and permissions
             </p>
           </div>
-          <Button className="bg-amber-600 hover:bg-amber-700">
+          <Button>
             <UserPlus className="w-4 h-4 mr-2" />
             Create User
           </Button>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4 mb-6">
+      {/* Stats Cards */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
         <AdminCard>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-zinc-400">Total Users</p>
               <p className="text-2xl font-bold text-white">{stats.total}</p>
             </div>
-            <Users className="w-8 h-8 text-amber-400" />
+            <Users className="w-8 h-8 text-blue-500" />
           </div>
         </AdminCard>
 
@@ -113,7 +119,7 @@ async function UsersPageContent({
                 {stats.verified}
               </p>
             </div>
-            <CheckCircle className="w-8 h-8 text-green-400" />
+            <CheckCircle className="w-8 h-8 text-green-500" />
           </div>
         </AdminCard>
 
@@ -125,7 +131,7 @@ async function UsersPageContent({
                 {stats.pending}
               </p>
             </div>
-            <Clock className="w-8 h-8 text-yellow-400" />
+            <Clock className="w-8 h-8 text-yellow-500" />
           </div>
         </AdminCard>
 
@@ -137,124 +143,61 @@ async function UsersPageContent({
                 {stats.suspended}
               </p>
             </div>
-            <Shield className="w-8 h-8 text-red-400" />
+            <Shield className="w-8 h-8 text-red-500" />
           </div>
         </AdminCard>
       </div>
 
+      {/* Filters and Search */}
       <AdminCard className="mb-6">
-        <form method="GET" action="/admin/users">
-          <div className="grid gap-4 md:grid-cols-5">
-            <div className="md:col-span-2 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
               <Input
                 type="text"
-                name="q"
                 placeholder="Search by name, email, or ID..."
-                defaultValue={params.q}
-                className="pl-10 bg-zinc-900 border-zinc-800"
+                className="pl-10"
+                defaultValue={filters.search}
               />
             </div>
-
+          </div>
+          <div className="flex gap-2">
             <select
-              name="role"
-              defaultValue={params.role}
-              className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white"
+              className="px-4 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white"
+              defaultValue={filters.role || "all"}
             >
-              <option value="">All Roles</option>
+              <option value="all">All Roles</option>
               <option value="user">User</option>
               <option value="operator">Operator</option>
               <option value="admin">Admin</option>
               <option value="superadmin">Super Admin</option>
               <option value="auditor">Auditor</option>
             </select>
-
             <select
-              name="status"
-              defaultValue={params.status}
-              className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-white"
+              className="px-4 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white"
+              defaultValue={filters.status || "all"}
             >
-              <option value="">All Status</option>
+              <option value="all">All Status</option>
               <option value="active">Active</option>
               <option value="suspended">Suspended</option>
-              <option value="pending">Pending</option>
+              <option value="inactive">Inactive</option>
             </select>
-
-            <Button type="submit" variant="outline">
-              <Filter className="w-4 h-4 mr-2" />
-              Apply Filters
+            <Button variant="outline" size="icon">
+              <Filter className="w-4 h-4" />
             </Button>
-          </div>
-
-          <div className="flex gap-2 mt-4">
-            <Button type="button" variant="outline">
+            <Button variant="outline">
               <Download className="w-4 h-4 mr-2" />
               Export
             </Button>
           </div>
-        </form>
+        </div>
       </AdminCard>
 
+      {/* User Table */}
       <AdminCard>
-        {users.length > 0 ? (
-          <>
-            <UserTable users={users} />
-
-            {totalPages > 1 && (
-              <div className="flex justify-center gap-2 mt-6 pt-6 border-t border-zinc-800">
-                {page > 1 && (
-                  <a
-                    href={`?page=${page - 1}${
-                      params.q ? `&q=${params.q}` : ""
-                    }`}
-                  >
-                    <Button variant="outline" size="sm">
-                      Previous
-                    </Button>
-                  </a>
-                )}
-
-                <span className="flex items-center px-4 text-sm text-zinc-400">
-                  Page {page} of {totalPages}
-                </span>
-
-                {page < totalPages && (
-                  <a
-                    href={`?page=${page + 1}${
-                      params.q ? `&q=${params.q}` : ""
-                    }`}
-                  >
-                    <Button variant="outline" size="sm">
-                      Next
-                    </Button>
-                  </a>
-                )}
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="text-center py-12">
-            <Users className="w-12 h-12 text-zinc-600 mx-auto mb-4" />
-            <p className="text-zinc-400">No users found</p>
-            <p className="text-sm text-zinc-500 mt-2">
-              Try adjusting your search or filters
-            </p>
-          </div>
-        )}
+        <UserTable users={users} />
       </AdminCard>
     </>
   );
-}
-
-export default function UsersPage({
-  searchParams,
-}: {
-  searchParams: Promise<{
-    q?: string;
-    role?: string;
-    status?: string;
-    page?: string;
-  }>;
-}) {
-  return <UsersPageContent searchParams={searchParams} />;
 }

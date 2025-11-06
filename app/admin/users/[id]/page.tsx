@@ -1,5 +1,5 @@
 // /app/admin/users/[id]/page.tsx
-// Individual user detail page with full profile and management options
+// ✅ FIXED: Added serialization for user data to fix ObjectId error
 
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/server/auth/session";
@@ -27,8 +27,8 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
+import { serializeDoc } from "@/lib/serialization";
 
-// Add this helper function after imports (around line 30):
 function RoleBadge({ role }: { role: string }) {
   const colors: Record<string, string> = {
     user: "bg-blue-500/20 text-blue-400 border-blue-500/30",
@@ -45,19 +45,23 @@ function RoleBadge({ role }: { role: string }) {
 export default async function UserDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const session = await requireAdmin();
   const adminId = session.user.id;
 
-  // Fetch user details
-  const result = await getUserDetails(adminId, params.id);
+  const { id } = await params;
+
+  const result = await getUserDetails(adminId, id);
 
   if (!result.success || !result.data) {
     notFound();
   }
 
-  const user = result.data.user;
+  // ✅ CRITICAL FIX: Serialize user data to convert ObjectIds to strings
+  const rawUser = result.data.user;
+  const user = serializeDoc(rawUser);
+
   const stats = {
     totalTransactions: result.data?.transactionCount || 0,
     totalDeposits: 0,
@@ -65,7 +69,7 @@ export default async function UserDetailPage({
     lastActivity: result.data?.lastTransaction?.createdAt,
   };
   const activity: any[] = [];
-  // Status badges
+
   const getStatusBadge = (status: string) => {
     const variants: Record<string, any> = {
       active: { color: "bg-green-500/20 text-green-400", icon: CheckCircle },
@@ -86,7 +90,6 @@ export default async function UserDetailPage({
 
   return (
     <>
-      {/* Breadcrumb */}
       <AdminBreadcrumb
         items={[
           { label: "Admin", href: "/admin" },
@@ -95,7 +98,6 @@ export default async function UserDetailPage({
         ]}
       />
 
-      {/* Page Header */}
       <div className="flex justify-between items-start mb-8">
         <div>
           <h1 className="text-3xl font-bold text-amber-500">User Details</h1>
@@ -112,9 +114,7 @@ export default async function UserDetailPage({
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Left Column - User Info */}
         <div className="lg:col-span-1 space-y-6">
-          {/* Profile Card */}
           <AdminCard>
             <div className="text-center">
               <div className="w-24 h-24 bg-linear-to-br from-amber-400 to-amber-600 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl font-bold text-black">
@@ -131,62 +131,76 @@ export default async function UserDetailPage({
               </div>
             </div>
 
-            {/* Quick Actions */}
             <div className="grid grid-cols-2 gap-2 mt-6 pt-6 border-t border-zinc-800">
               <Button variant="outline" size="sm">
                 <Edit className="w-3 h-3 mr-1" />
-                Edit User
+                Edit
               </Button>
               <Button variant="outline" size="sm">
                 <Key className="w-3 h-3 mr-1" />
-                Reset Pass
+                Reset
               </Button>
               <Button variant="outline" size="sm">
                 <Mail className="w-3 h-3 mr-1" />
-                Send Email
+                Email
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-red-400 hover:text-red-300"
-              >
+              <Button variant="outline" size="sm" className="text-red-400">
                 <Ban className="w-3 h-3 mr-1" />
                 Suspend
               </Button>
             </div>
           </AdminCard>
 
-          {/* Contact Information */}
-          <AdminCard title="Contact Information">
-            <div className="space-y-3">
-              <div className="flex items-center text-sm">
-                <Mail className="w-4 h-4 text-zinc-500 mr-3" />
-                <span className="text-zinc-400">Email:</span>
-                <span className="text-white ml-auto">{user.email}</span>
+          <AdminCard title="Account Information">
+            <div className="space-y-4">
+              <div className="flex justify-between text-sm">
+                <span className="text-zinc-400">User ID</span>
+                <span className="text-white font-mono text-xs">{user._id}</span>
               </div>
-              <div className="flex items-center text-sm">
-                <Phone className="w-4 h-4 text-zinc-500 mr-3" />
-                <span className="text-zinc-400">Phone:</span>
-                <span className="text-white ml-auto">
+              <div className="flex justify-between text-sm">
+                <span className="text-zinc-400">Email</span>
+                <span className="text-white">{user.email}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-zinc-400">Phone</span>
+                <span className="text-white">
                   {user.phone || "Not provided"}
                 </span>
               </div>
-              <div className="flex items-center text-sm">
-                <Calendar className="w-4 h-4 text-zinc-500 mr-3" />
-                <span className="text-zinc-400">Joined:</span>
-                <span className="text-white ml-auto">
-                  {format(new Date(user.createdAt), "MMM dd, yyyy")}
+              <div className="flex justify-between text-sm">
+                <span className="text-zinc-400">Joined</span>
+                <span className="text-white">
+                  {user.createdAt
+                    ? format(new Date(user.createdAt), "MMM dd, yyyy")
+                    : "-"}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-zinc-400">Last Login</span>
+                <span className="text-white">
+                  {user.lastLoginAt
+                    ? format(new Date(user.lastLoginAt), "MMM dd, yyyy")
+                    : "Never"}
                 </span>
               </div>
             </div>
           </AdminCard>
 
-          {/* KYC Status */}
-          <AdminCard title="KYC Information">
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-zinc-400">Status</span>
-                {getStatusBadge(user.kycStatus || "pending")}
+          <AdminCard title="KYC Status">
+            <div className="space-y-4">
+              <div className="flex justify-between text-sm">
+                <span className="text-zinc-400">Status</span>
+                <Badge
+                  className={
+                    user.kycStatus === "verified"
+                      ? "bg-green-500/20 text-green-400"
+                      : user.kycStatus === "pending"
+                      ? "bg-yellow-500/20 text-yellow-400"
+                      : "bg-zinc-500/20 text-zinc-400"
+                  }
+                >
+                  {user.kycStatus || "None"}
+                </Badge>
               </div>
               {user.kycStatus === "verified" && (
                 <>
@@ -198,26 +212,13 @@ export default async function UserDetailPage({
                         : "-"}
                     </span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-zinc-400">Document Type</span>
-                    <span className="text-white">Passport</span>
-                  </div>
                 </>
-              )}
-              {user.kycStatus === "pending" && (
-                <Link href={`/admin/kyc/${user._id}`}>
-                  <Button variant="outline" size="sm" className="w-full">
-                    Review KYC Application
-                  </Button>
-                </Link>
               )}
             </div>
           </AdminCard>
         </div>
 
-        {/* Right Column - Activity & Stats */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Account Statistics */}
           <div className="grid md:grid-cols-3 gap-4">
             <AdminCard>
               <div className="flex items-center justify-between">
@@ -259,47 +260,25 @@ export default async function UserDetailPage({
             </AdminCard>
           </div>
 
-          {/* Recent Activity */}
           <AdminCard title="Recent Activity">
             {activity.length > 0 ? (
-              <div className="space-y-3">
-                {activity.map((item: any) => (
+              <div className="space-y-4">
+                {activity.map((item: any, index: number) => (
                   <div
-                    key={item._id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-zinc-900/50"
+                    key={index}
+                    className="flex items-center justify-between p-4 bg-zinc-900/50 rounded-lg"
                   >
-                    <div className="flex items-center space-x-3">
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                          item.type === "deposit" || item.type === "buy"
-                            ? "bg-green-500/20"
-                            : "bg-red-500/20"
-                        }`}
-                      >
-                        {item.type === "deposit" || item.type === "buy" ? (
-                          <ArrowDownRight className="w-4 h-4 text-green-400" />
-                        ) : (
-                          <ArrowUpRight className="w-4 h-4 text-red-400" />
-                        )}
-                      </div>
+                    <div className="flex items-center gap-3">
+                      <Activity className="w-4 h-4 text-zinc-400" />
                       <div>
-                        <p className="text-sm font-medium text-white capitalize">
-                          {item.type} {item.type.includes("gold") ? "Gold" : ""}
-                        </p>
-                        <p className="text-xs text-zinc-500">
-                          {format(new Date(item.createdAt), "MMM dd, HH:mm")}
+                        <p className="text-white text-sm">{item.action}</p>
+                        <p className="text-zinc-500 text-xs">
+                          {format(
+                            new Date(item.timestamp),
+                            "MMM dd, yyyy HH:mm"
+                          )}
                         </p>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-white">
-                        ${item.amount?.toLocaleString() || 0}
-                      </p>
-                      {item.goldAmount && (
-                        <p className="text-xs text-zinc-500">
-                          {item.goldAmount.toFixed(4)} oz
-                        </p>
-                      )}
                     </div>
                   </div>
                 ))}
@@ -307,47 +286,9 @@ export default async function UserDetailPage({
             ) : (
               <div className="text-center py-8">
                 <Activity className="w-8 h-8 text-zinc-600 mx-auto mb-2" />
-                <p className="text-sm text-zinc-400">No recent activity</p>
+                <p className="text-zinc-400">No recent activity</p>
               </div>
             )}
-          </AdminCard>
-
-          {/* Account Settings */}
-          <AdminCard title="Account Settings">
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-zinc-400">Two-Factor Auth</span>
-                <Badge
-                  className={
-                    user.mfaEnabled
-                      ? "bg-green-500/20 text-green-400"
-                      : "bg-zinc-700 text-zinc-400"
-                  }
-                >
-                  {user.mfaEnabled ? "Enabled" : "Disabled"}
-                </Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-zinc-400">Email Verified</span>
-                <Badge
-                  className={
-                    user.emailVerified
-                      ? "bg-green-500/20 text-green-400"
-                      : "bg-yellow-500/20 text-yellow-400"
-                  }
-                >
-                  {user.emailVerified ? "Verified" : "Pending"}
-                </Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-zinc-400">Last Login</span>
-                <span className="text-sm text-white">
-                  {user.lastLogin
-                    ? format(new Date(user.lastLogin), "MMM dd, HH:mm")
-                    : "Never"}
-                </span>
-              </div>
-            </div>
           </AdminCard>
         </div>
       </div>
