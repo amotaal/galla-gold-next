@@ -26,6 +26,7 @@ import {
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { format } from "date-fns";
+import { getPendingTransactionsForAdmin } from "@/server/actions/admin/management";
 
 export default async function AdminDashboardPage() {
   const session = await getSession();
@@ -37,6 +38,9 @@ export default async function AdminDashboardPage() {
 
   const stats = statsResult.success ? statsResult.data : null;
   const activity = activityResult.success ? activityResult.data : [];
+
+  const pendingResult = await getPendingTransactionsForAdmin(userId!);
+  const pendingCount = pendingResult.data?.total || 0;
 
   return (
     <>
@@ -250,6 +254,26 @@ export default async function AdminDashboardPage() {
             </div>
             <TrendingDown className="w-8 h-8 text-green-400" />
           </div>
+        </AdminCard>
+
+        <AdminCard>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-zinc-400">Pending Transactions</p>
+              <p className="text-2xl font-bold text-white">{pendingCount}</p>
+              <p className="text-xs text-zinc-500 mt-1">Require action</p>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center">
+              <Clock className="w-6 h-6 text-yellow-500" />
+            </div>
+          </div>
+          {pendingCount > 0 && (
+            <Button className="mt-4 w-full" asChild>
+              <Link href="/admin/transactions?status=pending">
+                Review Pending
+              </Link>
+            </Button>
+          )}
         </AdminCard>
       </div>
     </>

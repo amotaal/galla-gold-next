@@ -15,6 +15,9 @@ import {
 } from "@/components/ui/table";
 import { Eye, Flag } from "lucide-react";
 import Link from "next/link";
+import { TransactionDetailDialog } from "@/components/dialogs/transaction";
+import { useState } from "react";
+import { useAuth } from "@/components/providers/auth";
 
 interface Transaction {
   _id: string;
@@ -36,6 +39,14 @@ export function TransactionTable({
   transactions,
   loading,
 }: TransactionTableProps) {
+  const { user } = useAuth();
+  const adminId = user?.id || ""; // Get adminId from auth context
+
+  // ... rest of the component
+
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<Transaction | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const formatAmount = (amount: number, currency: string) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -109,20 +120,33 @@ export function TransactionTable({
                   {new Date(tx.createdAt).toLocaleDateString()}
                 </TableCell>
                 <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    {tx.flagged && <Flag className="w-4 h-4 text-red-500" />}
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/admin/transactions/${tx._id}`}>
-                        <Eye className="w-4 h-4" />
-                      </Link>
-                    </Button>
-                  </div>
+                  <Button
+                    size="sm"
+                    variant={tx.status === "pending" ? "default" : "outline"}
+                    onClick={() => {
+                      setSelectedTransaction(tx);
+                      setDialogOpen(true);
+                    }}
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    {tx.status === "pending" ? "Process" : "View"}
+                  </Button>
                 </TableCell>
               </TableRow>
             ))
           )}
         </TableBody>
       </Table>
+      <TransactionDetailDialog
+        transaction={selectedTransaction}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        adminId={adminId}
+        onSuccess={() => {
+          // Refresh transactions list
+          window.location.reload();
+        }}
+      />
     </div>
   );
 }

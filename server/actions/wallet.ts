@@ -10,10 +10,7 @@ import { connectDB } from "@/server/db/connect";
 import User from "@/server/models/User";
 import Wallet from "@/server/models/Wallet";
 import Transaction from "@/server/models/Transaction";
-import {
-  depositSchema,
-  withdrawalSchema,
-} from "@/server/lib/validation";
+import { depositSchema, withdrawalSchema } from "@/server/lib/validation";
 import { convertCurrency } from "@/server/lib/currency";
 import { sendEmail } from "@/server/email/send";
 
@@ -35,7 +32,7 @@ type ActionResponse<T = void> = {
 /**
  * Serialize MongoDB documents to plain objects
  * This prevents "Objects with toJSON methods" errors in Next.js
- * 
+ *
  * @param data - Any data that might contain MongoDB documents or Date objects
  * @returns Plain object safe to pass to client components
  */
@@ -51,11 +48,11 @@ function serializeData<T>(data: T): T {
 
   // Handle arrays
   if (Array.isArray(data)) {
-    return data.map(item => serializeData(item)) as any;
+    return data.map((item) => serializeData(item)) as any;
   }
 
   // Handle objects
-  if (typeof data === 'object') {
+  if (typeof data === "object") {
     const serialized: any = {};
     for (const key in data) {
       if (Object.prototype.hasOwnProperty.call(data, key)) {
@@ -76,7 +73,7 @@ function serializeData<T>(data: T): T {
 /**
  * Get user's current wallet balance
  * @returns ActionResponse with balance data (properly serialized)
- * 
+ *
  * Returns all currency balances and gold holdings as plain objects
  * FIX: All data is now properly serialized before returning
  */
@@ -119,7 +116,8 @@ export async function getBalanceAction(): Promise<
 
     // Add gold value
     if (wallet.gold?.grams > 0) {
-      const goldValueUSD = wallet.gold.grams * (wallet.gold.averagePurchasePrice || 0);
+      const goldValueUSD =
+        wallet.gold.grams * (wallet.gold.averagePurchasePrice || 0);
       totalValueUSD += goldValueUSD;
     }
 
@@ -176,8 +174,6 @@ export async function depositAction(
     const feeAmount = (validatedData.amount * feePercent) / 100;
     const netAmount = validatedData.amount - feeAmount;
 
-
-
     // Find user's wallet
     const wallet = await Wallet.findOne({ userId: session.user.id });
 
@@ -191,12 +187,12 @@ export async function depositAction(
     // Create pending transaction
     const transaction = await Transaction.create({
       userId: session.user.id,
-      walletId: wallet._id,
+      walletId: wallet._id, // ✅ Ensure walletId is set
       type: "deposit",
       amount: validatedData.amount,
-      feeAmount: feeAmount,
-      netAmount: netAmount,
       currency: validatedData.currency,
+      fee: feeAmount, // ✅ FIXED: Use 'fee' not 'feeAmount'
+      netAmount: netAmount,
       status: "pending",
       paymentMethod: validatedData.paymentMethod,
       description: `Deposit ${validatedData.amount} ${validatedData.currency} via ${validatedData.paymentMethod}`,
@@ -285,14 +281,17 @@ export async function withdrawalAction( // ✅ FIXED: Renamed from withdrawActio
     // Create pending transaction
     const transaction = await Transaction.create({
       userId: session.user.id,
-      walletId: wallet._id,
+      walletId: wallet._id, // ✅ Ensure walletId is set
       type: "withdrawal",
       amount: validatedData.amount,
       currency: validatedData.currency,
+      fee: 0, // ✅ Add fee field (0 for withdrawals or calculate if needed)
+      netAmount: validatedData.amount, // ✅ Add netAmount field
       status: "pending",
+      paymentMethod: "bank_transfer", // ✅ Add payment method
       description: `Withdrawal ${validatedData.amount} ${validatedData.currency}`,
       metadata: {
-        bankAccount: validatedData.bankAccount, // Store in metadata instead
+        bankAccount: validatedData.bankAccount,
       },
     });
 
