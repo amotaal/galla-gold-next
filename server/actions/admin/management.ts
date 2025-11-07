@@ -14,7 +14,7 @@ import Transaction from "@/server/models/Transaction";
 import Wallet from "@/server/models/Wallet";
 import { hasPermission, PERMISSIONS } from "@/lib/permissions";
 import { auditTransactionAction } from "@/server/lib/audit";
-import { sendEmail } from "@/server/lib/email";
+import { sendEmail } from "@/server/email/send";
 import { Types } from "mongoose";
 
 // =============================================================================
@@ -149,7 +149,7 @@ export async function approveDeposit(
       adminId,
       adminEmail: permCheck.admin!.email,
       adminRole: permCheck.admin!.role,
-      action: "approve_deposit",
+      action: "approve",
       transactionId: validated.transactionId,
       userId: user._id.toString(),
       userEmail: user.email,
@@ -247,7 +247,7 @@ export async function completeWithdrawal(
       adminId,
       adminEmail: permCheck.admin!.email,
       adminRole: permCheck.admin!.role,
-      action: "complete_withdrawal",
+      action: "complete",
       transactionId: validated.transactionId,
       userId: user._id.toString(),
       userEmail: user.email,
@@ -355,7 +355,7 @@ export async function rejectTransaction(
       adminId,
       adminEmail: permCheck.admin!.email,
       adminRole: permCheck.admin!.role,
-      action: "reject_transaction",
+      action: "reject",
       transactionId: validated.transactionId,
       userId: user._id.toString(),
       userEmail: user.email,

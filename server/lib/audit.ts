@@ -255,7 +255,19 @@ export async function auditTransactionAction(params: {
   adminId: Types.ObjectId | string;
   adminEmail: string;
   adminRole: "superadmin" | "admin" | "operator";
-  action: "flag" | "unflag" | "cancel" | "refund" | "review";
+  action:
+    | "flag"
+    | "unflag"
+    | "cancel"
+    | "refund"
+    | "complete"
+    | "review"
+    | "approve"
+    | "decline"
+    | "accept"
+    | "reject"
+    | "confirm"
+    | "deny";
   transactionId: Types.ObjectId | string;
   userId: Types.ObjectId | string;
   userEmail: string;

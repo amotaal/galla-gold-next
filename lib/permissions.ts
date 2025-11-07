@@ -35,7 +35,7 @@ export const PERMISSIONS = {
   TRANSACTION_CANCEL: "transaction.cancel",
   TRANSACTION_REFUND: "transaction.refund",
   TRANSACTION_EXPORT: "transaction.export",
-  TRANSACTION_APPROVE: "transaction:approve", // ✅ ADD THIS
+  TRANSACTION_APPROVE: "transaction.approve", 
 
   // System Configuration
   CONFIG_VIEW: "config.view",
